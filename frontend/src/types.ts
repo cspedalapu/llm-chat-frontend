@@ -1,4 +1,9 @@
-﻿export type ModelId = "llama3.1:8b" | "gpt-4o-mini";
+export type ModelId = string;
+
+export interface ModelOption {
+  id: ModelId;
+  label: string;
+}
 
 export interface ResolutionSource {
   title: string;

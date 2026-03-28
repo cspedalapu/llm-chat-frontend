@@ -1,4 +1,5 @@
 ﻿import { SVGProps } from "react";
+import { appName } from "@/lib/appConfig.ts";
 import { Conversation } from "@/types.ts";
 
 function LogoIcon(props: SVGProps<SVGSVGElement>) {
@@ -172,7 +173,7 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <button className="icon-button brand-icon-button" type="button" aria-label="SAPFix AI home">
+        <button className="icon-button brand-icon-button" type="button" aria-label={`${appName} home`}>
           <LogoIcon />
         </button>
 

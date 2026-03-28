@@ -1,9 +1,11 @@
-﻿import { FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
+import { FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
-import { modelLabels, seededConversations } from "@/data/mockData.ts";
-import { requestAssistantReply } from "@/lib/chatClient.ts";
-import { Conversation, Message, ModelId } from "@/types.ts";
+import { seededConversations } from "@/data/mockData.ts";
+import { appName, composerPlaceholder, emptyStateTitle } from "@/lib/appConfig.ts";
+import { fetchAvailableModels, requestAssistantReply } from "@/lib/chatClient.ts";
+import { defaultModelOptions } from "@/lib/models.ts";
+import { Conversation, Message, ModelId, ModelOption } from "@/types.ts";
 
 function PlusIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -41,7 +43,7 @@ function buildFreshConversation(): Conversation {
     title: "New chat",
     preview: "Start a conversation",
     updatedAt: "Ready",
-    model: "gpt-4o-mini",
+    model: defaultModelOptions[0].id,
     messages: []
   };
 }
@@ -50,6 +52,7 @@ export default function App() {
   const [conversations, setConversations] = useState<Conversation[]>(seededConversations);
   const [activeConversationId, setActiveConversationId] = useState<string>(seededConversations[0].id);
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0].model);
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>(defaultModelOptions);
   const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -62,6 +65,30 @@ export default function App() {
   useEffect(() => {
     setSelectedModel(activeConversation.model);
   }, [activeConversation.id, activeConversation.model]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchAvailableModels().then((models) => {
+      if (isCancelled || models.length === 0) {
+        return;
+      }
+
+      setAvailableModels(models);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (availableModels.some((option) => option.id === selectedModel)) {
+      return;
+    }
+
+    setSelectedModel(availableModels[0]?.id ?? defaultModelOptions[0].id);
+  }, [availableModels, selectedModel]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -187,7 +214,7 @@ export default function App() {
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={handleComposerKeyDown}
-          placeholder="Ask about an SAP issue"
+          placeholder={composerPlaceholder}
           rows={1}
         />
 
@@ -213,7 +240,7 @@ export default function App() {
         <header className="workspace-topbar">
           <div className="workspace-title-row">
             <button className="chat-title-button" type="button">
-              <span>SAPFix AI</span>
+              <span>{appName}</span>
               <span className="title-caret">⌄</span>
             </button>
           </div>
@@ -224,9 +251,9 @@ export default function App() {
                 value={selectedModel}
                 onChange={(event) => setSelectedModel(event.target.value as ModelId)}
               >
-                {Object.entries(modelLabels).map(([modelId, label]) => (
-                  <option key={modelId} value={modelId}>
-                    {label}
+                {availableModels.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -236,7 +263,7 @@ export default function App() {
 
         {isEmpty ? (
           <section className="empty-state">
-            <h2 className="empty-title">Draft your issue...</h2>
+            <h2 className="empty-title">{emptyStateTitle}</h2>
             {renderComposer(true)}
           </section>
         ) : (
@@ -249,7 +276,7 @@ export default function App() {
               {isLoading ? (
                 <article className="message-row assistant">
                   <div className="message-meta assistant">
-                    <strong>SAPFix AI</strong>
+                    <strong>{appName}</strong>
                     <span>Working</span>
                   </div>
                   <div className="message-bubble assistant loading">
@@ -269,5 +296,3 @@ export default function App() {
     </div>
   );
 }
-
-

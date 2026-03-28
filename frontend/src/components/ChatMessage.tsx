@@ -1,4 +1,5 @@
-﻿import { modelLabels } from "@/data/mockData.ts";
+import { appName } from "@/lib/appConfig.ts";
+import { getModelLabel } from "@/lib/models.ts";
 import { Message } from "@/types.ts";
 
 interface ChatMessageProps {
@@ -7,7 +8,7 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message }: ChatMessageProps) {
   const isAssistant = message.role === "assistant";
-  const requestedModelLabel = message.result ? modelLabels[message.result.model] : "";
+  const requestedModelLabel = message.result ? getModelLabel(message.result.model) : "";
   const generationLabel = message.result?.generationLabel ?? requestedModelLabel;
   const usedModelLine = message.result
     ? message.result.requestedModel && generationLabel !== requestedModelLabel
@@ -19,7 +20,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
     <article className={`message-row ${message.role}`}>
       {isAssistant ? (
         <div className="message-meta assistant">
-          <strong>SAPFix AI</strong>
+          <strong>{appName}</strong>
           <span>{message.timestamp}</span>
         </div>
       ) : null}
@@ -63,6 +64,34 @@ export function ChatMessage({ message }: ChatMessageProps) {
               ))}
             </ol>
           </div>
+
+          {message.result.sections.prevention.length > 0 ? (
+            <div className="result-block wide">
+              <p className="result-block-label">Prevention</p>
+              <ul className="result-list">
+                {message.result.sections.prevention.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {message.result.sources.length > 0 ? (
+            <div className="result-block wide">
+              <p className="result-block-label">Sources</p>
+              <div className="source-list">
+                {message.result.sources.map((source) => (
+                  <article key={`${source.title}-${source.origin}`} className="source-item">
+                    <strong>{source.title}</strong>
+                    <p>{source.summary}</p>
+                    <span className="source-meta">
+                      {source.system} | {source.origin} | {source.confidence}
+                    </span>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
     </article>

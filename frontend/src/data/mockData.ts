@@ -1,15 +1,11 @@
-﻿import { AssistantResult, Conversation, ModelId, ResolutionSections, ResolutionSource } from "@/types.ts";
-
-export const modelLabels: Record<ModelId, string> = {
-  "llama3.1:8b": "Ollama Llama 3.1 8B",
-  "gpt-4o-mini": "GPT-4o-mini"
-};
+import { getModelLabel } from "@/lib/models.ts";
+import { AssistantResult, Conversation, ModelId, ResolutionSections, ResolutionSource } from "@/types.ts";
 
 export const suggestedPrompts = [
-  "Enter the numbers without any gaps",
-  "Error while accessing logical system &1",
-  "Posting change document failed in outbound delivery",
-  "Batch classification data is missing during GR"
+  "Why is my API returning 401 unauthorized?",
+  "Help me debug a request timeout to an external service",
+  "Why is my CSV upload failing validation?",
+  "How should I handle rate limits from a model provider?"
 ];
 
 interface MockResolutionTemplate {
@@ -23,31 +19,31 @@ interface MockResolutionTemplate {
 
 const fallbackTemplate: MockResolutionTemplate = {
   keywords: [],
-  diagnosticLabel: "General SAP incident triage",
+  diagnosticLabel: "General troubleshooting guidance",
   answerLead:
-    "I could not map this message to one of the seeded demo incidents, so the safest next step is to capture a fuller SAP context and run the API-backed retrieval flow.",
+    "I could not map this message to one of the seeded starter scenarios, so the safest next step is to capture more context and route the request through a real provider-backed workflow.",
   sections: {
     businessContext:
-      "The incident appears to be part of a normal SAP business transaction, but the exact module and object are not clear from the short message alone.",
+      "The request looks like a normal application or integration issue, but the exact subsystem and failure boundary are not clear yet.",
     rootCause:
-      "The current frontend is running in demo mode, so it only has a small set of seeded knowledge-base matches. The Python retrieval pipeline should provide the exact nearest cases once exposed over HTTP.",
+      "The starter UI only has a small set of seeded fallback cases. A real provider adapter or retrieval layer should supply more precise diagnostics once connected.",
     steps: [
-      "Capture the complete SAP error text, transaction code, and business step where it appears.",
-      "Include any document number, plant, warehouse, or logical system referenced in the message.",
-      "Send the enriched query through the backend API so the retriever can surface the nearest Chroma matches."
+      "Capture the complete error text, status code, and the operation that triggered it.",
+      "Record the affected environment, endpoint, payload shape, and any recent changes.",
+      "Route the enriched request through the backend so a real provider adapter can classify and answer it."
     ],
     prevention: [
-      "Use a standard incident template for SAP support handoffs.",
-      "Store verified fixes with module tags, T-codes, and system context."
+      "Use a standard troubleshooting template for incidents and regressions.",
+      "Store verified fixes with tags for service, environment, and failure type."
     ]
   },
   sources: [
     {
-      title: "Seeded demo knowledge base",
+      title: "Starter troubleshooting fallback",
       system: "Frontend fallback",
       origin: "Mock response",
-      summary: "Waiting for backend retrieval. The UI is ready to render exact matches once the API is connected.",
-      confidence: "Demo"
+      summary: "The UI is ready for backend-backed answers once a provider adapter is connected.",
+      confidence: "Starter"
     }
   ],
   latencyMs: 620
@@ -55,142 +51,142 @@ const fallbackTemplate: MockResolutionTemplate = {
 
 const templates: MockResolutionTemplate[] = [
   {
-    keywords: ["gap", "gaps", "spaces", "numbers", "number range"],
-    diagnosticLabel: "/SCWM/LT 120 - Numeric entry or number-range issue",
+    keywords: ["401", "403", "unauthorized", "forbidden", "token", "credential", "auth"],
+    diagnosticLabel: "Authentication or credential issue",
     answerLead:
-      "I found a close SAP EWM pattern. Start with the simplest cause first: remove any spaces from the numeric field, then confirm the related number range is still valid in SAP.",
+      "This looks like an authentication boundary problem. Start by checking whether the failing request is using the right token, scope, and environment-specific credentials.",
     sections: {
       businessContext:
-        "This usually appears in warehouse execution when a user enters a document, handling unit, or number-range driven identifier during an operational step.",
+        "This kind of issue usually appears when a frontend, backend, or automation worker talks to an API that expects a valid token or signed request.",
       rootCause:
-        "The input often contains hidden spaces or formatting noise. In some cases, the backing number range is exhausted or misaligned, which causes SAP to reject the value.",
+        "The most common causes are expired tokens, wrong environment secrets, missing scopes, or credentials being sent to the wrong base URL.",
       steps: [
-        "Re-enter the affected value manually and make sure it contains digits only, with no embedded spaces.",
-        "Verify the transaction field really expects a numeric identifier and not a mixed-format business key.",
-        "If the problem persists, inspect the relevant SNRO interval or warehouse-specific number range setup for available capacity.",
-        "Retry the posting or warehouse task creation after the field or number range is corrected."
+        "Confirm the request is targeting the intended environment and base URL.",
+        "Inspect the token or API key source and verify it is current and correctly injected.",
+        "Check whether the target service expects additional scopes, headers, or signed fields.",
+        "Retry with a freshly issued credential after correcting the configuration."
       ],
       prevention: [
-        "Validate copied numeric values before saving documents.",
-        "Monitor critical number ranges before they run out in production."
+        "Separate local, staging, and production credentials clearly.",
+        "Add credential rotation and expiry monitoring."
       ]
     },
     sources: [
       {
-        title: "Enter the numbers without any gaps",
-        system: "SAP EWM",
-        origin: "OpenAI resolution",
-        summary: "Check input format and ensure the number contains no gaps or formatting noise.",
+        title: "Credential and token checks",
+        system: "API gateway",
+        origin: "Starter guidance",
+        summary: "Validate token freshness, scope, and environment alignment first.",
         confidence: "High match"
       },
       {
-        title: "Number range review in SNRO",
-        system: "SAP Basis / EWM",
-        origin: "Gemini resolution",
-        summary: "Extend or correct the affected interval if the numeric object is close to exhaustion.",
+        title: "Secret configuration review",
+        system: "Backend configuration",
+        origin: "Starter guidance",
+        summary: "Confirm the backend is loading the correct secret and forwarding it in the expected format.",
         confidence: "Medium match"
       }
     ],
     latencyMs: 860
   },
   {
-    keywords: ["logical system", "bd54", "rfc", "destination"],
-    diagnosticLabel: "Logical system connectivity and assignment",
+    keywords: ["timeout", "timed out", "latency", "504", "gateway timeout", "slow"],
+    diagnosticLabel: "Timeout or upstream latency issue",
     answerLead:
-      "This looks like a landscape mapping issue. Check the logical system definition, its assignment, and the RFC destination that supports the cross-system call.",
+      "This points to a slow dependency or missing timeout strategy. Check where the request is spending time and whether retry behavior is making the issue worse.",
     sections: {
       businessContext:
-        "The failure usually shows up when one SAP component needs to call another system or client during integration, outbound processing, or master-data synchronization.",
+        "These issues usually appear when the app depends on an external model, database, search service, or third-party API with unpredictable response times.",
       rootCause:
-        "A logical system is missing, assigned incorrectly, or linked to the wrong RFC destination. Client-specific customizing can also drift between environments.",
+        "Common causes include long upstream processing, serial retries, missing caching, oversized payloads, or timeouts that are too aggressive for the workload.",
       steps: [
-        "Review the logical system entry in BD54 and confirm the expected system name exists.",
-        "Check the object or client assignment that should point to that logical system.",
-        "Validate the related RFC destination and run a connection test where appropriate.",
-        "Retry the original interface or posting after the mapping and connectivity are corrected."
+        "Measure the time spent in each dependency call and identify the slowest segment.",
+        "Check client and server timeout values to make sure they are aligned.",
+        "Reduce payload size or parallelize slow downstream calls if possible.",
+        "Add bounded retries with backoff only if the failing dependency is safely retryable."
       ],
       prevention: [
-        "Transport logical system customizing carefully between environments.",
-        "Keep an integration checklist for client copies, RFC changes, and system refreshes."
+        "Track p95 and p99 latency for critical dependencies.",
+        "Introduce caching or queue-based workflows for expensive operations."
       ]
     },
     sources: [
       {
-        title: "Error while accessing logical system &1",
-        system: "SAP integration",
-        origin: "OpenAI resolution",
-        summary: "Validate logical system assignment and the downstream RFC setup before retrying.",
+        title: "Timeout budget review",
+        system: "Application observability",
+        origin: "Starter guidance",
+        summary: "Compare client, proxy, and upstream timeout values before tuning retries.",
         confidence: "High match"
       },
       {
-        title: "BD54 logical system maintenance",
-        system: "SAP Basis",
-        origin: "Gemini resolution",
-        summary: "Confirm the object name, client mapping, and landscape consistency.",
+        title: "Dependency latency inspection",
+        system: "Service diagnostics",
+        origin: "Starter guidance",
+        summary: "Trace the slowest dependency and remove unnecessary serial work.",
         confidence: "Medium match"
       }
     ],
     latencyMs: 910
   },
   {
-    keywords: ["delivery", "posting change", "outbound", "warehouse task"],
-    diagnosticLabel: "Delivery posting or follow-on document failure",
+    keywords: ["csv", "upload", "file", "schema", "column", "parse", "validation"],
+    diagnosticLabel: "File schema or validation mismatch",
     answerLead:
-      "The incident points to a document status mismatch. Review the delivery status, queue the failed follow-on action again, and verify dependent warehouse or output steps.",
+      "This looks like a file-shape mismatch. Review the incoming file format, required columns, and the validation rules applied during parsing.",
     sections: {
       businessContext:
-        "These issues often happen when shipping, warehouse execution, and follow-on posting steps are slightly out of sync after a document update.",
+        "These problems usually appear when users upload CSV, JSON, or spreadsheet data that the app expects in a strict format.",
       rootCause:
-        "A dependent document or status update did not complete cleanly, leaving the outbound delivery in a partially processed state.",
+        "Typical causes are missing columns, renamed headers, wrong encodings, invalid delimiters, or field-level validation that does not match the uploaded data.",
       steps: [
-        "Check the delivery document status and identify which follow-on action failed.",
-        "Review application logs or queue entries tied to the delivery update.",
-        "Resolve the blocking dependency, then repeat the posting change or follow-on job.",
-        "Confirm warehouse tasks, output determination, and delivery completion are back in sync."
+        "Inspect the uploaded file and compare it with the documented expected schema.",
+        "Validate required columns, delimiters, encoding, and data types before parsing.",
+        "Return field-level validation errors instead of one generic failure message.",
+        "Retry the import after normalizing the input file."
       ],
       prevention: [
-        "Track repeated queue failures by document type.",
-        "Alert on outbound deliveries that remain in intermediate statuses for too long."
+        "Publish a template file or schema example for users.",
+        "Add preflight validation before expensive import or processing steps."
       ]
     },
     sources: [
       {
-        title: "Outbound delivery posting mismatch",
-        system: "SAP LE / EWM",
-        origin: "Operational pattern",
-        summary: "Investigate the blocked follow-on update before retrying the business step.",
+        title: "Input schema validation",
+        system: "File ingestion pipeline",
+        origin: "Starter guidance",
+        summary: "Check headers, encoding, and type expectations before processing the upload.",
         confidence: "Likely match"
       }
     ],
     latencyMs: 770
   },
   {
-    keywords: ["batch", "classification", "gr", "goods receipt", "material"],
-    diagnosticLabel: "Batch or classification data missing during receipt",
+    keywords: ["429", "rate limit", "quota", "throttle", "throttled", "capacity"],
+    diagnosticLabel: "Rate limit or quota pressure",
     answerLead:
-      "This looks like a master-data completeness issue. Check the batch management settings and whether the expected classification data exists for the material and plant.",
+      "This looks like a throughput limit rather than a functional bug. Check whether burst traffic, retries, or multiple parallel jobs are exhausting provider or service quotas.",
     sections: {
       businessContext:
-        "The error tends to appear during goods receipt or batch creation when material-specific classification data is required before the document can post.",
+        "These issues often appear in chat apps, data pipelines, or automation workflows that call the same API repeatedly in short bursts.",
       rootCause:
-        "Batch management is active, but the relevant class assignment, characteristics, or plant-level material settings are incomplete.",
+        "The most common causes are unbounded concurrency, lack of backoff, or daily or per-minute quotas being reached sooner than expected.",
       steps: [
-        "Confirm the material is correctly set up for batch management in the affected organizational scope.",
-        "Review the assigned class and required characteristics for the batch creation process.",
-        "Populate the missing classification or batch master data, then retry the goods receipt.",
-        "Validate that downstream inventory and quality processes can see the same batch attributes."
+        "Inspect request volume, concurrency, and retry behavior around the failure window.",
+        "Honor provider retry-after guidance and add exponential backoff with jitter.",
+        "Queue or batch non-interactive work so user-facing traffic gets priority.",
+        "Review whether a higher-capacity plan or caching strategy is needed."
       ],
       prevention: [
-        "Add a master-data readiness check before go-live or cutover activities.",
-        "Use validation rules for materials that require mandatory batch attributes."
+        "Set concurrency guards at the worker and API layers.",
+        "Track quota usage before user-facing requests begin to fail."
       ]
     },
     sources: [
       {
-        title: "Batch classification missing at receipt",
-        system: "SAP MM / QM",
-        origin: "Operational pattern",
-        summary: "Review class assignment and required characteristics before posting GR.",
+        title: "Rate-limit handling strategy",
+        system: "Provider integration",
+        origin: "Starter guidance",
+        summary: "Use backoff, concurrency limits, and work queues to smooth spikes.",
         confidence: "Likely match"
       }
     ],
@@ -211,8 +207,8 @@ export function buildMockResponse(query: string, model: ModelId): AssistantResul
   const template = pickTemplate(query);
   const modeSpecificTail =
     model === "gpt-4o-mini"
-      ? " Once the backend endpoint is connected, the GitHub Models GPT path can turn the retrieved snippets into a polished final answer."
-      : " Once the backend endpoint is connected, the local Llama path can synthesize the retrieved snippets without changing the UI flow.";
+      ? " Once a provider adapter is connected, the backend can swap this seeded answer for a real model response."
+      : " Once a local model adapter is connected, the backend can replace this seeded answer without changing the UI flow.";
 
   return {
     answer: `${template.answerLead}${modeSpecificTail}`,
@@ -224,15 +220,15 @@ export function buildMockResponse(query: string, model: ModelId): AssistantResul
     model,
     requestedModel: model,
     generationModel: model,
-    generationLabel: modelLabels[model]
+    generationLabel: getModelLabel(model)
   };
 }
 
 export const seededConversations: Conversation[] = [
   {
     id: "conv-new",
-    title: "New diagnosis",
-    preview: "Start a new SAP investigation",
+    title: "New chat",
+    preview: "Start a reusable AI workspace conversation",
     updatedAt: "Ready",
     model: "gpt-4o-mini",
     messages: []

@@ -1,5 +1,6 @@
-﻿import { buildMockResponse, modelLabels } from "@/data/mockData.ts";
-import { AssistantResult, Message, ModelId, ResolutionSource } from "@/types.ts";
+import { buildMockResponse } from "@/data/mockData.ts";
+import { defaultModelOptions, getModelLabel } from "@/lib/models.ts";
+import { AssistantResult, Message, ModelId, ModelOption, ResolutionSource } from "@/types.ts";
 
 export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
 export const hasApiBaseUrl = apiBaseUrl.length > 0;
@@ -8,6 +9,26 @@ interface RequestAssistantReplyArgs {
   query: string;
   model: ModelId;
   history: Message[];
+}
+
+function normalizeModelOptions(input: unknown): ModelOption[] {
+  if (!Array.isArray(input)) {
+    return defaultModelOptions;
+  }
+
+  const options = input.flatMap((entry) => {
+    if (typeof entry !== "object" || entry === null) {
+      return [];
+    }
+
+    const record = entry as Record<string, unknown>;
+    const id = String(record.id ?? "").trim();
+    const label = String(record.label ?? id).trim();
+
+    return id ? [{ id, label }] : [];
+  });
+
+  return options.length > 0 ? options : defaultModelOptions;
 }
 
 function normalizeSources(input: unknown): ResolutionSource[] {
@@ -49,8 +70,8 @@ function normalizeApiResponse(payload: Record<string, unknown>, requestedModel: 
   const generationLabel = String(
     payload.generation_label ??
     payload.generationLabel ??
-    modelLabels[responseModel] ??
-    modelLabels[requestedModel]
+    getModelLabel(responseModel) ??
+    getModelLabel(requestedModel)
   );
 
   return {
@@ -79,6 +100,25 @@ function normalizeApiResponse(payload: Record<string, unknown>, requestedModel: 
     generationLabel,
     generationNote: String(payload.generation_note ?? payload.generationNote ?? "")
   };
+}
+
+export async function fetchAvailableModels(): Promise<ModelOption[]> {
+  if (!hasApiBaseUrl) {
+    return defaultModelOptions;
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/models`);
+
+    if (!response.ok) {
+      throw new Error(`Backend returned ${response.status} from ${apiBaseUrl}/models`);
+    }
+
+    const payload = await response.json() as unknown;
+    return normalizeModelOptions(payload);
+  } catch {
+    return defaultModelOptions;
+  }
 }
 
 export async function requestAssistantReply({

@@ -482,8 +482,45 @@ svg {
   padding-left: 1.15rem;
 }
 
+.result-list {
+  margin: 0;
+  padding-left: 1.15rem;
+}
+
 .result-block li + li {
   margin-top: 0.35rem;
+}
+
+.source-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.source-item {
+  border-radius: 0.95rem;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.9rem;
+}
+
+.source-item strong,
+.source-item p,
+.source-item span {
+  display: block;
+}
+
+.source-item strong {
+  margin-bottom: 0.35rem;
+}
+
+.source-item p {
+  margin: 0 0 0.45rem;
+  line-height: 1.5;
+}
+
+.source-meta {
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .composer-panel {
