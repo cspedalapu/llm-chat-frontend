@@ -5,15 +5,17 @@ This repository is the starting point for a reusable AI chat frontend that can b
 The current foundation includes:
 
 - a `React + TypeScript + Vite` frontend in [frontend](d:\#Code\VS Code\llm-chat-frontend\frontend)
-- a root-level `Docker Compose` setup for containerized development and production-style serving
-- a Python `requirements.txt` and local `.venv` workflow for future backend utilities, scripts, and tooling
+- a minimal `FastAPI` backend in [backend](d:\#Code\VS Code\llm-chat-frontend\backend)
+- a root-level `Docker Compose` setup for running frontend and backend together
+- a Python `requirements.txt` and local `.venv` workflow for backend utilities, scripts, and API development
 - a repo-level `.gitignore` to keep generated frontend files and local environments out of version control
 
 ## Current Stack
 
 - Frontend: `React 18`, `TypeScript`, `Vite`
+- Backend: `FastAPI`, `Pydantic`, `Uvicorn`
 - Containerization: `Docker`, `Docker Compose`
-- Future Python tooling/backend foundation: `FastAPI`, `Uvicorn`, `Pydantic`, `httpx`, `pytest`, `ruff`
+- Python tooling: `httpx`, `pytest`, `ruff`
 
 ## Repository Layout
 
@@ -21,6 +23,10 @@ The current foundation includes:
 .
 |-- docs/
 |   `-- base-frontend-report.md
+|-- backend/
+|   |-- app/
+|   |-- Dockerfile
+|   `-- .dockerignore
 |-- frontend/
 |   |-- src/
 |   |-- Dockerfile
@@ -64,9 +70,11 @@ Example:
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
-If you are only working on the UI for now, you can leave `VITE_API_BASE_URL` empty and the frontend will fall back to mock behavior if the app supports it.
+The frontend is already wired to call the backend at `http://localhost:8000`.
 
-## Local Frontend Development
+## Local Development
+
+### Frontend only
 
 From the `frontend` folder:
 
@@ -75,7 +83,36 @@ npm install
 npm run dev
 ```
 
-Build locally:
+### Backend only
+
+From the repository root:
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+macOS / Linux:
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+API endpoints:
+
+```text
+GET  http://localhost:8000/health
+GET  http://localhost:8000/models
+POST http://localhost:8000/chat
+GET  http://localhost:8000/docs
+```
+
+### Frontend build
 
 ```bash
 npm run build
@@ -105,48 +142,52 @@ pip install -r requirements.txt
 
 ## Docker Usage
 
-### Development container
+### Development stack
 
-Start the frontend in Docker with live reload:
+Start frontend and backend together in Docker:
 
 ```bash
-docker compose up --build frontend
+docker compose up --build
 ```
 
 Then open:
 
 ```text
-http://localhost:5173
+Frontend: http://localhost:5173
+Backend:  http://localhost:8000
+Docs:     http://localhost:8000/docs
 ```
 
 ### Production-style container
 
-Build and run the optimized static frontend with Nginx:
+Build and run the backend plus the optimized static frontend with Nginx:
 
 ```bash
-docker compose --profile prod up --build frontend-prod
+docker compose --profile prod up --build backend frontend-prod
 ```
 
 Then open:
 
 ```text
-http://localhost:8080
+Frontend: http://localhost:8080
+Backend:  http://localhost:8000
 ```
 
 ## Included Docker Setup
 
 The Docker setup provides:
 
-- a `development` image for Vite dev server usage
+- a `backend` container running `FastAPI + Uvicorn`
+- a `development` frontend image for Vite dev server usage
 - a `production` image that builds the app and serves it through `Nginx`
 - SPA-friendly routing via `nginx.conf`
 
 ## Python Requirements Included
 
-The `requirements.txt` is intentionally small and focused on common future needs:
+The `requirements.txt` is intentionally small and focused on the starter backend plus common future needs:
 
-- `fastapi` for a future API layer
-- `uvicorn` for local API serving
+- `fastapi` for the API layer
+- `uvicorn` for API serving
 - `pydantic` for typed validation
 - `python-multipart` for file uploads
 - `httpx` for calling model/provider APIs
@@ -155,7 +196,7 @@ The `requirements.txt` is intentionally small and focused on common future needs
 
 ## Suggested Next Steps
 
-1. Keep the frontend in Docker for day-to-day development.
-2. Add a backend service later if you want the frontend to talk to a real provider adapter.
+1. Keep the frontend and backend running together in Docker for day-to-day development.
+2. Replace the seeded backend logic with a real provider adapter layer.
 3. Move toward a normalized API contract for chat, projects, files, artifacts, and streaming.
-4. When ready, add an API container to `docker-compose.yml` and wire `VITE_API_BASE_URL` to it.
+4. Add persistence, authentication, and provider configuration once the UI flow is stable.
