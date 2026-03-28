@@ -29,6 +29,7 @@ body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
+  font-size: 17px;
   overflow: hidden;
 }
 
@@ -201,14 +202,14 @@ svg {
 }
 
 .conversation-card strong {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
 .conversation-card span {
   margin-top: 0.2rem;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -279,7 +280,7 @@ svg {
   padding: 0.35rem 0.25rem;
   background: transparent;
   color: var(--text);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 600;
 }
 
@@ -349,7 +350,7 @@ svg {
   align-items: center;
   gap: 0.55rem;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.95rem;
 }
 
 .message-meta strong {
@@ -403,6 +404,12 @@ svg {
 .message-bubble.assistant p {
   line-height: 1.72;
   color: #ededed;
+  font-size: 1.05rem;
+}
+
+.message-bubble.user p {
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .result-card {
@@ -423,7 +430,7 @@ svg {
 
 .result-title {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
@@ -445,7 +452,7 @@ svg {
 .result-runtime {
   margin: 0 0 0.8rem;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.95rem;
 }
 
 .result-runtime.warning {
@@ -472,7 +479,7 @@ svg {
 .result-block-label {
   margin: 0 0 0.45rem;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -520,7 +527,7 @@ svg {
 
 .source-meta {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .composer-panel {
@@ -568,6 +575,7 @@ svg {
   color: var(--text);
   padding: 0.8rem 0.4rem;
   line-height: 1.45;
+  font-size: 1rem;
 }
 
 .composer-panel textarea::placeholder {
@@ -580,6 +588,7 @@ svg {
   border-radius: 999px;
   background: #3a3a3a;
   color: #ffffff;
+  font-size: 0.98rem;
   font-weight: 600;
 }
 
