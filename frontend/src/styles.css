@@ -51,7 +51,7 @@ svg {
 .app-shell {
   height: 100vh;
   display: grid;
-  grid-template-columns: 17.5rem minmax(0, 1fr);
+  grid-template-columns: 18.25rem minmax(0, 1fr);
   background: var(--bg);
   overflow: hidden;
   transition: grid-template-columns 180ms ease;
@@ -67,7 +67,7 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  padding: 0.85rem 0.8rem 1rem;
+  padding: 0.95rem 0.9rem 1.05rem;
   background: var(--sidebar);
   border-right: 1px solid var(--border-soft);
   overflow: hidden;
@@ -157,11 +157,11 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 2.85rem;
-  padding: 0.72rem 0.9rem;
+  min-height: 2.95rem;
+  padding: 0.76rem 0.95rem;
   background: transparent;
   color: var(--text);
-  font-size: 1.02rem;
+  font-size: 1.05rem;
   text-align: left;
 }
 
@@ -191,7 +191,7 @@ svg {
 
 .conversation-card {
   width: 100%;
-  padding: 0.8rem 0.9rem;
+  padding: 0.86rem 0.96rem;
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -203,14 +203,14 @@ svg {
 }
 
 .conversation-card strong {
-  font-size: 1.12rem;
+  font-size: 1.16rem;
   font-weight: 500;
 }
 
 .conversation-card span {
   margin-top: 0.2rem;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: 1.03rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -533,7 +533,7 @@ svg {
 
 .composer-panel {
   flex: 0 0 auto;
-  width: min(100% - 3rem, 52rem);
+  width: min(100% - 3rem, 54rem);
   margin: 0 auto 1.55rem;
   padding: 0.5rem;
   border-radius: 1.8rem;
@@ -546,7 +546,7 @@ svg {
 }
 
 .composer-panel.empty {
-  width: min(100%, 52rem);
+  width: min(100%, 54rem);
   margin: 0;
 }
 
