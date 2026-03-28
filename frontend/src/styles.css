@@ -51,14 +51,14 @@ svg {
 .app-shell {
   height: 100vh;
   display: grid;
-  grid-template-columns: 16.25rem minmax(0, 1fr);
+  grid-template-columns: 17.5rem minmax(0, 1fr);
   background: var(--bg);
   overflow: hidden;
   transition: grid-template-columns 180ms ease;
 }
 
 .app-shell.sidebar-collapsed {
-  grid-template-columns: 3.4rem minmax(0, 1fr);
+  grid-template-columns: 3.75rem minmax(0, 1fr);
 }
 
 .sidebar {
@@ -67,7 +67,7 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
-  padding: 0.75rem 0.75rem 0.9rem;
+  padding: 0.85rem 0.8rem 1rem;
   background: var(--sidebar);
   border-right: 1px solid var(--border-soft);
   overflow: hidden;
@@ -157,11 +157,11 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 2.65rem;
-  padding: 0.65rem 0.8rem;
+  min-height: 2.85rem;
+  padding: 0.72rem 0.9rem;
   background: transparent;
   color: var(--text);
-  font-size: 0.98rem;
+  font-size: 1.02rem;
   text-align: left;
 }
 
@@ -191,7 +191,7 @@ svg {
 
 .conversation-card {
   width: 100%;
-  padding: 0.7rem 0.8rem;
+  padding: 0.8rem 0.9rem;
   background: transparent;
   color: var(--text);
   text-align: left;
@@ -203,14 +203,14 @@ svg {
 }
 
 .conversation-card strong {
-  font-size: 1.06rem;
+  font-size: 1.12rem;
   font-weight: 500;
 }
 
 .conversation-card span {
   margin-top: 0.2rem;
   color: var(--muted);
-  font-size: 0.94rem;
+  font-size: 1rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -258,7 +258,7 @@ svg {
 
 .workspace-topbar {
   flex: 0 0 auto;
-  height: 3.5rem;
+  height: 3.7rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -312,7 +312,7 @@ svg {
 
 .empty-title {
   margin: 0;
-  font-size: clamp(2rem, 4.6vw, 3.35rem);
+  font-size: clamp(2rem, 4.2vw, 3rem);
   font-weight: 500;
   letter-spacing: -0.03em;
   text-align: center;
@@ -533,9 +533,9 @@ svg {
 
 .composer-panel {
   flex: 0 0 auto;
-  width: min(100% - 3rem, 48rem);
+  width: min(100% - 3rem, 52rem);
   margin: 0 auto 1.55rem;
-  padding: 0.42rem;
+  padding: 0.5rem;
   border-radius: 1.8rem;
   background: #303030;
   box-shadow: var(--shadow);
@@ -546,7 +546,7 @@ svg {
 }
 
 .composer-panel.empty {
-  width: min(100%, 48rem);
+  width: min(100%, 52rem);
   margin: 0;
 }
 
@@ -574,9 +574,9 @@ svg {
   outline: none;
   background: transparent;
   color: var(--text);
-  padding: 0.8rem 0.4rem;
+  padding: 0.9rem 0.5rem;
   line-height: 1.45;
-  font-size: 1rem;
+  font-size: 1.03rem;
 }
 
 .composer-panel textarea::placeholder {
@@ -584,8 +584,8 @@ svg {
 }
 
 .composer-submit {
-  min-width: 4.8rem;
-  padding: 0.72rem 1rem;
+  min-width: 5.1rem;
+  padding: 0.8rem 1.05rem;
   border-radius: 999px;
   background: #3a3a3a;
   color: #ffffff;
