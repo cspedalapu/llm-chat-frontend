@@ -161,6 +161,7 @@ svg {
   padding: 0.65rem 0.8rem;
   background: transparent;
   color: var(--text);
+  font-size: 0.98rem;
   text-align: left;
 }
 
@@ -172,7 +173,7 @@ svg {
   margin-top: 0.65rem;
   padding: 0 0.8rem;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -202,14 +203,14 @@ svg {
 }
 
 .conversation-card strong {
-  font-size: 1rem;
+  font-size: 1.06rem;
   font-weight: 500;
 }
 
 .conversation-card span {
   margin-top: 0.2rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.94rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
