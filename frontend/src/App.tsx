@@ -74,17 +74,20 @@ function toConversationTitle(query: string): string {
   return trimmed.length <= 28 ? trimmed : `${trimmed.slice(0, 28)}...`;
 }
 
-function buildFreshConversation(): Conversation {
-  const now = new Date();
+function toProjectTitle(existingProjects: ProjectSummary[]): string {
+  const baseTitle = "New project";
+  const existingTitles = new Set(existingProjects.map((project) => project.title));
 
-  return {
-    id: `conv-${now.getTime()}`,
-    title: "New chat",
-    preview: "Let's Build...",
-    updatedAt: "Ready",
-    model: defaultModelOptions[0].id,
-    messages: []
-  };
+  if (!existingTitles.has(baseTitle)) {
+    return baseTitle;
+  }
+
+  let index = 2;
+  while (existingTitles.has(`${baseTitle} ${index}`)) {
+    index += 1;
+  }
+
+  return `${baseTitle} ${index}`;
 }
 
 function useTypewriterPrompt(phrases: string[]): string {
@@ -132,10 +135,10 @@ function useTypewriterPrompt(phrases: string[]): string {
 }
 
 export default function App() {
-  const [projects] = useState<ProjectSummary[]>(seededProjects);
+  const [projects, setProjects] = useState<ProjectSummary[]>(seededProjects);
   const [conversations, setConversations] = useState<Conversation[]>(seededConversations);
-  const [activeConversationId, setActiveConversationId] = useState<string>(seededConversations[0].id);
-  const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0].model);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(seededConversations[0]?.id ?? null);
+  const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0]?.model ?? defaultModelOptions[0].id);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>(defaultModelOptions);
   const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -144,13 +147,19 @@ export default function App() {
   const accountName: string | null = null;
   const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
 
-  const activeConversation =
-    conversations.find((conversation) => conversation.id === activeConversationId) ?? conversations[0];
-  const isEmpty = activeConversation.messages.length === 0;
+  const activeConversation = activeConversationId
+    ? conversations.find((conversation) => conversation.id === activeConversationId) ?? null
+    : null;
+  const activeMessages = activeConversation?.messages ?? [];
+  const isEmpty = activeMessages.length === 0;
 
   useEffect(() => {
+    if (!activeConversation) {
+      return;
+    }
+
     setSelectedModel(activeConversation.model);
-  }, [activeConversation.id, activeConversation.model]);
+  }, [activeConversation]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -178,7 +187,7 @@ export default function App() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeConversation.messages.length, isLoading]);
+  }, [activeMessages.length, isLoading]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -195,13 +204,30 @@ export default function App() {
       text: query,
       timestamp: formatTime(now)
     };
+    const targetConversationId = activeConversationId ?? `conv-${now.getTime()}`;
+    const priorMessages = activeConversation?.messages ?? [];
 
     setDraft("");
     setIsLoading(true);
 
-    setConversations((currentConversations) =>
-      currentConversations.map((conversation) =>
-        conversation.id === activeConversationId
+    setConversations((currentConversations) => {
+      const existingConversation = currentConversations.find((conversation) => conversation.id === targetConversationId);
+
+      if (!existingConversation) {
+        const nextConversation: Conversation = {
+          id: targetConversationId,
+          title: toConversationTitle(query),
+          preview: "Thinking...",
+          updatedAt: formatUpdatedAt(now),
+          model: selectedModel,
+          messages: [userMessage]
+        };
+
+        return [nextConversation, ...currentConversations];
+      }
+
+      return currentConversations.map((conversation) =>
+        conversation.id === targetConversationId
           ? {
               ...conversation,
               title: conversation.messages.length === 0 ? toConversationTitle(query) : conversation.title,
@@ -211,14 +237,15 @@ export default function App() {
               messages: [...conversation.messages, userMessage]
             }
           : conversation
-      )
-    );
+      );
+    });
+    setActiveConversationId(targetConversationId);
 
     try {
       const result = await requestAssistantReply({
         query,
         model: selectedModel,
-        history: activeConversation.messages
+        history: priorMessages
       });
 
       const assistantMessage: Message = {
@@ -231,7 +258,7 @@ export default function App() {
 
       setConversations((currentConversations) =>
         currentConversations.map((conversation) =>
-          conversation.id === activeConversationId
+          conversation.id === targetConversationId
             ? {
                 ...conversation,
                 preview: result.diagnosticLabel,
@@ -256,7 +283,7 @@ export default function App() {
 
       setConversations((currentConversations) =>
         currentConversations.map((conversation) =>
-          conversation.id === activeConversationId
+          conversation.id === targetConversationId
             ? {
                 ...conversation,
                 preview: "Request needs attention",
@@ -272,11 +299,22 @@ export default function App() {
   }
 
   function handleNewConversation() {
-    const nextConversation = buildFreshConversation();
-    setConversations((currentConversations) => [nextConversation, ...currentConversations]);
-    setActiveConversationId(nextConversation.id);
-    setSelectedModel(nextConversation.model);
+    setActiveConversationId(null);
+    setSelectedModel(availableModels[0]?.id ?? defaultModelOptions[0].id);
     setDraft("");
+  }
+
+  function handleCreateProject() {
+    const projectId = `project-${Date.now()}`;
+
+    setProjects((currentProjects) => [
+      {
+        id: projectId,
+        title: toProjectTitle(currentProjects),
+        kind: "folder"
+      },
+      ...currentProjects
+    ]);
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -363,6 +401,7 @@ export default function App() {
         activeConversationId={activeConversationId}
         accountName={accountName}
         isCollapsed={isSidebarCollapsed}
+        onCreateProject={handleCreateProject}
         onNewConversation={handleNewConversation}
         onSelectConversation={setActiveConversationId}
         onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
@@ -405,7 +444,7 @@ export default function App() {
         ) : (
           <>
             <section className="thread-panel">
-              {activeConversation.messages.map((message) => (
+              {activeMessages.map((message) => (
                 <ChatMessage key={message.id} message={message} />
               ))}
 

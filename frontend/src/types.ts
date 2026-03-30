@@ -55,5 +55,5 @@ export interface Conversation {
 export interface ProjectSummary {
   id: string;
   title: string;
-  preview: string;
+  kind: "new" | "folder" | "monitor" | "more";
 }
