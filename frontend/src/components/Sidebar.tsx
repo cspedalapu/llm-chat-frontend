@@ -394,6 +394,7 @@ export function Sidebar({
   function closeProjectOverflow() {
     setIsProjectOverflowOpen(false);
     setProjectOverflowPosition(null);
+    setDropTargetProjectId(null);
   }
 
   function openProjectOverflow(event: ReactMouseEvent<HTMLButtonElement>) {
