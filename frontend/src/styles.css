@@ -363,7 +363,7 @@ svg {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.8rem;
+  gap: 1.3rem;
   padding: 3rem 1.5rem 2rem;
 }
 
@@ -377,7 +377,7 @@ svg {
 
 .empty-prompt {
   min-height: 1.8rem;
-  margin: -0.55rem 0 0;
+  margin: -0.8rem 0 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
