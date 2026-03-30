@@ -672,8 +672,10 @@ svg {
 
 .composer-icon-button-hero,
 .composer-mic-button {
-  width: 2.45rem;
-  height: 2.45rem;
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
   color: var(--muted-strong);
 }
 
@@ -712,8 +714,10 @@ svg {
 }
 
 .composer-voice-submit {
-  width: 3.05rem;
-  height: 3.05rem;
+  width: 2.25rem;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
