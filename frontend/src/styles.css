@@ -363,6 +363,16 @@ svg {
   color: var(--muted-strong);
 }
 
+.sidebar-project-item.active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-project-item.drop-target {
+  background: linear-gradient(180deg, rgba(244, 196, 20, 0.12), rgba(244, 196, 20, 0.04));
+  border-color: rgba(244, 196, 20, 0.26);
+}
+
 .sidebar-chat-list {
   gap: 0;
 }
@@ -372,6 +382,7 @@ svg {
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
   color: #f4f4f4;
+  cursor: grab;
 }
 
 .sidebar-chat-item.active {
@@ -519,6 +530,15 @@ svg {
 
 .sidebar-project-overflow-item.more {
   color: var(--muted-strong);
+}
+
+.sidebar-project-overflow-item.active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-project-overflow-item.drop-target {
+  background: linear-gradient(180deg, rgba(244, 196, 20, 0.12), rgba(244, 196, 20, 0.04));
+  border-color: rgba(244, 196, 20, 0.26);
 }
 
 .sidebar-project-overflow-icon {
