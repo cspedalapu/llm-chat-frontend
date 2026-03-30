@@ -460,6 +460,9 @@ export default function App() {
   const [projectNameDraft, setProjectNameDraft] = useState("");
   const [projectInstructionsDraft, setProjectInstructionsDraft] = useState("");
   const [selectedProjectTemplate, setSelectedProjectTemplate] = useState<ProjectTemplate>("writing");
+  const [isChatRenameModalOpen, setIsChatRenameModalOpen] = useState(false);
+  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
+  const [chatNameDraft, setChatNameDraft] = useState("");
   const [newModelName, setNewModelName] = useState("");
   const [newModelApiKey, setNewModelApiKey] = useState("");
   const [newModelInstructions, setNewModelInstructions] = useState("");
@@ -744,6 +747,45 @@ export default function App() {
   function closeProjectModal() {
     setIsProjectModalOpen(false);
     resetProjectForm("create");
+  }
+
+  function handleRenameConversation(conversationId: string) {
+    const conversation = conversations.find((currentConversation) => currentConversation.id === conversationId);
+    if (!conversation) {
+      return;
+    }
+
+    setEditingConversationId(conversation.id);
+    setChatNameDraft(conversation.title);
+    setIsChatRenameModalOpen(true);
+  }
+
+  function closeChatRenameModal() {
+    setIsChatRenameModalOpen(false);
+    setEditingConversationId(null);
+    setChatNameDraft("");
+  }
+
+  function handleChatRenameSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedName = chatNameDraft.trim();
+    if (!trimmedName || !editingConversationId) {
+      return;
+    }
+
+    setConversations((currentConversations) =>
+      currentConversations.map((conversation) =>
+        conversation.id === editingConversationId
+          ? {
+              ...conversation,
+              title: trimmedName
+            }
+          : conversation
+      )
+    );
+
+    closeChatRenameModal();
   }
 
   function handleProjectSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1633,6 +1675,7 @@ export default function App() {
         onNewConversation={handleNewConversation}
         onDeleteProject={handleDeleteProject}
         onMoveConversationToProject={handleAssignConversationToProject}
+        onRenameConversation={handleRenameConversation}
         onRenameProject={handleRenameProject}
         onSelectProject={openProjectWorkspace}
         onSelectConversation={(conversationId) => {
@@ -1795,6 +1838,54 @@ export default function App() {
 
                   <button className="workspace-modal-primary" type="submit">
                     {projectModalMode === "create" ? "Create project" : "Save changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
+
+        {isChatRenameModalOpen ? (
+          <div className="workspace-modal-backdrop" role="presentation" onClick={closeChatRenameModal}>
+            <div
+              className="workspace-modal-card chat-rename-modal-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chat-rename-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="workspace-modal-header">
+                <div>
+                  <p className="workspace-modal-kicker">Chats</p>
+                  <h3 id="chat-rename-title" className="workspace-modal-title">
+                    Rename chat
+                  </h3>
+                </div>
+
+                <button className="workspace-modal-close" type="button" aria-label="Close chat rename modal" onClick={closeChatRenameModal}>
+                  x
+                </button>
+              </div>
+
+              <form className="workspace-modal-form" onSubmit={handleChatRenameSubmit}>
+                <label className="workspace-modal-field">
+                  <span>Chat name</span>
+                  <input
+                    type="text"
+                    value={chatNameDraft}
+                    onChange={(event) => setChatNameDraft(event.target.value)}
+                    placeholder="Enter a chat name"
+                    required
+                  />
+                </label>
+
+                <div className="workspace-modal-actions">
+                  <button className="workspace-modal-secondary" type="button" onClick={closeChatRenameModal}>
+                    Cancel
+                  </button>
+
+                  <button className="workspace-modal-primary" type="submit">
+                    Save changes
                   </button>
                 </div>
               </form>

@@ -71,7 +71,8 @@ svg {
   position: relative;
   background: var(--sidebar);
   border-right: 1px solid var(--border-soft);
-  overflow: hidden;
+  overflow: visible;
+  z-index: 6;
   transition: padding 260ms cubic-bezier(0.22, 1, 0.36, 1), gap 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -96,6 +97,7 @@ svg {
 .sidebar-view {
   transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity, transform;
+  overflow: visible;
 }
 
 .sidebar-view-expanded {
@@ -207,11 +209,11 @@ svg {
 
 .sidebar-scroll-region {
   scrollbar-width: thin;
-  scrollbar-color: #575757 transparent;
+  scrollbar-color: #505050 transparent;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar {
-  width: 0.08rem;
+  width: 0.06rem;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar-track {
@@ -225,12 +227,29 @@ svg {
 }
 
 .sidebar-scroll-region::-webkit-scrollbar-thumb {
-  background: #575757;
+  background: #505050;
   border-radius: 999px;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar-thumb:hover {
-  background: #676767;
+  background: #5a5a5a;
+}
+
+.sidebar-primary-actions {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.sidebar-sections-region {
+  margin-top: 0.08rem;
+}
+
+.sidebar-nav-divider {
+  flex: 0 0 auto;
+  width: calc(100% - 1.6rem);
+  height: 1px;
+  margin: 0.22rem auto 0.14rem;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .icon-button:hover,
@@ -452,8 +471,7 @@ svg {
 }
 
 .sidebar-item-menu {
-  position: absolute;
-  right: 0.35rem;
+  position: fixed;
   padding: 0.42rem;
   display: flex;
   flex-direction: column;
@@ -462,16 +480,14 @@ svg {
   border-radius: 1.05rem;
   background: #2f2f2f;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
-  z-index: 8;
+  z-index: 80;
 }
 
 .sidebar-item-menu.project {
-  top: calc(100% - 0.16rem);
   width: 11.2rem;
 }
 
 .sidebar-item-menu.chat {
-  bottom: calc(100% - 0.16rem);
   width: 13.8rem;
 }
 
@@ -549,11 +565,11 @@ svg {
   gap: 0.08rem;
   padding-right: 0.02rem;
   scrollbar-width: thin;
-  scrollbar-color: #575757 transparent;
+  scrollbar-color: #505050 transparent;
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar {
-  width: 0.08rem;
+  width: 0.06rem;
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar-track {
@@ -567,12 +583,12 @@ svg {
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar-thumb {
-  background: #575757;
+  background: #505050;
   border-radius: 999px;
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar-thumb:hover {
-  background: #676767;
+  background: #5a5a5a;
 }
 
 .sidebar-project-overflow-item {

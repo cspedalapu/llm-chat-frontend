@@ -237,6 +237,7 @@ interface SidebarProps {
   onDeleteProject: (projectId: string) => void;
   onMoveConversationToProject: (conversationId: string, projectId: string) => void;
   onNewConversation: () => void;
+  onRenameConversation: (conversationId: string) => void;
   onSelectNav: (itemKey: string) => void;
   onSelectProject: (projectId: string) => void;
   onSelectConversation: (conversationId: string) => void;
@@ -261,6 +262,11 @@ interface SidebarMenuAction {
 interface SidebarItemMenuState {
   kind: "project" | "chat";
   id: string;
+}
+
+interface ItemMenuPosition {
+  top: number;
+  left: number;
 }
 
 interface ProjectOverflowPosition {
@@ -314,6 +320,7 @@ export function Sidebar({
   onDeleteProject,
   onMoveConversationToProject,
   onNewConversation,
+  onRenameConversation,
   onSelectNav,
   onSelectProject,
   onSelectConversation,
@@ -341,6 +348,7 @@ export function Sidebar({
   const [areChatsOpen, setAreChatsOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [openItemMenu, setOpenItemMenu] = useState<SidebarItemMenuState | null>(null);
+  const [itemMenuPosition, setItemMenuPosition] = useState<ItemMenuPosition | null>(null);
   const [isProjectOverflowOpen, setIsProjectOverflowOpen] = useState(false);
   const [projectOverflowPosition, setProjectOverflowPosition] = useState<ProjectOverflowPosition | null>(null);
   const [draggedConversationId, setDraggedConversationId] = useState<string | null>(null);
@@ -357,6 +365,7 @@ export function Sidebar({
 
       setIsAccountMenuOpen(false);
       setOpenItemMenu(null);
+      setItemMenuPosition(null);
       closeProjectOverflow();
     }
 
@@ -391,6 +400,22 @@ export function Sidebar({
     };
   }, [isProjectOverflowOpen]);
 
+  useEffect(() => {
+    if (!openItemMenu) {
+      return;
+    }
+
+    function handleWindowResize() {
+      setOpenItemMenu(null);
+      setItemMenuPosition(null);
+    }
+
+    window.addEventListener("resize", handleWindowResize);
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, [openItemMenu]);
+
   function closeProjectOverflow() {
     setIsProjectOverflowOpen(false);
     setProjectOverflowPosition(null);
@@ -412,6 +437,7 @@ export function Sidebar({
     onSelectNav(itemKey);
     setIsAccountMenuOpen(false);
     setOpenItemMenu(null);
+    setItemMenuPosition(null);
     closeProjectOverflow();
 
     if (itemKey === "new_chat") {
@@ -421,14 +447,31 @@ export function Sidebar({
 
   function handleItemMenuToggle(event: ReactMouseEvent<HTMLButtonElement>, kind: "project" | "chat", id: string) {
     event.stopPropagation();
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const panelWidth = kind === "chat" ? 221 : 179;
+    const panelHeight = kind === "chat" ? 208 : 122;
+    const left = Math.max(12, Math.min(buttonRect.right - panelWidth + 10, window.innerWidth - panelWidth - 12));
+    const preferredTop = kind === "chat" ? buttonRect.top - panelHeight + buttonRect.height + 8 : buttonRect.bottom - 10;
+    const top = Math.max(12, Math.min(preferredTop, window.innerHeight - panelHeight - 12));
+
     setIsAccountMenuOpen(false);
     closeProjectOverflow();
-    setOpenItemMenu((current) => (current?.kind === kind && current.id === id ? null : { kind, id }));
+    setOpenItemMenu((current) => {
+      const isSameMenu = current?.kind === kind && current.id === id;
+      if (isSameMenu) {
+        setItemMenuPosition(null);
+        return null;
+      }
+
+      setItemMenuPosition({ top, left });
+      return { kind, id };
+    });
   }
 
   function handleChatDragStart(conversationId: string) {
     setDraggedConversationId(conversationId);
     setOpenItemMenu(null);
+    setItemMenuPosition(null);
     setIsAccountMenuOpen(false);
   }
 
@@ -484,7 +527,12 @@ export function Sidebar({
     const menuLabel = kind === "chat" ? "Chat actions" : "Project actions";
 
     return (
-      <div className={`sidebar-item-menu ${kind}`} role="menu" aria-label={menuLabel}>
+      <div
+        className={`sidebar-item-menu ${kind}`}
+        role="menu"
+        aria-label={menuLabel}
+        style={itemMenuPosition ? { top: `${itemMenuPosition.top}px`, left: `${itemMenuPosition.left}px` } : undefined}
+      >
         {sections.map((section, sectionIndex) => (
           <div className="sidebar-item-menu-section" key={`${kind}-section-${sectionIndex}`}>
             {section.map((item) => {
@@ -498,13 +546,12 @@ export function Sidebar({
                   role="menuitem"
                   onClick={() => {
                     setOpenItemMenu(null);
+                    setItemMenuPosition(null);
 
                     if (kind !== "project") {
-                      return;
-                    }
-
-                    if (item.label === "Rename project") {
-                      onRenameProject(itemId);
+                      if (item.label === "Rename") {
+                        onRenameConversation(itemId);
+                      }
                       return;
                     }
 
@@ -557,6 +604,7 @@ export function Sidebar({
           onDrop={canShowMenu ? (event) => handleProjectDrop(project.id, event) : undefined}
           onClick={() => {
             setOpenItemMenu(null);
+            setItemMenuPosition(null);
             closeProjectOverflow();
             if (canShowMenu) {
               onSelectProject(project.id);
@@ -662,6 +710,7 @@ export function Sidebar({
           }}
           onClick={() => {
             setOpenItemMenu(null);
+            setItemMenuPosition(null);
             closeProjectOverflow();
             onSelectConversation(conversation.id);
           }}
@@ -764,33 +813,40 @@ export function Sidebar({
           </button>
         </div>
 
+        <div className="sidebar-primary-actions">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeNavKey === item.key;
+
+            return (
+              <button
+                key={item.key}
+                className={`sidebar-nav-button${isActive ? " active" : ""}${item.key === "new_chat" ? " primary" : ""}`}
+                type="button"
+                onClick={() => handleNavClick(item.key)}
+              >
+                <Icon className="sidebar-nav-icon" />
+                <span>{item.label}</span>
+                {item.shortcut ? <span className="sidebar-nav-shortcut">{item.shortcut}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="sidebar-nav-divider" aria-hidden="true" />
+
         <div
-          className="sidebar-scroll-region"
+          className="sidebar-scroll-region sidebar-sections-region"
           onScroll={() => {
             if (isProjectOverflowOpen) {
               closeProjectOverflow();
             }
+            if (openItemMenu) {
+              setOpenItemMenu(null);
+              setItemMenuPosition(null);
+            }
           }}
         >
-          <div className="sidebar-primary-actions">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeNavKey === item.key;
-
-              return (
-                <button
-                  key={item.key}
-                  className={`sidebar-nav-button${isActive ? " active" : ""}${item.key === "new_chat" ? " primary" : ""}`}
-                  type="button"
-                  onClick={() => handleNavClick(item.key)}
-                >
-                  <Icon className="sidebar-nav-icon" />
-                  <span>{item.label}</span>
-                  {item.shortcut ? <span className="sidebar-nav-shortcut">{item.shortcut}</span> : null}
-                </button>
-              );
-            })}
-          </div>
 
           <section className="sidebar-section">
             <button
@@ -799,6 +855,7 @@ export function Sidebar({
               aria-expanded={areProjectsOpen}
               onClick={() => {
                 setOpenItemMenu(null);
+                setItemMenuPosition(null);
                 closeProjectOverflow();
                 setAreProjectsOpen((current) => !current);
               }}
@@ -814,6 +871,7 @@ export function Sidebar({
                   type="button"
                   onClick={() => {
                     setOpenItemMenu(null);
+                    setItemMenuPosition(null);
                     closeProjectOverflow();
                     onCreateProject();
                   }}
@@ -834,6 +892,7 @@ export function Sidebar({
                       onClick={(event) => {
                         setIsAccountMenuOpen(false);
                         setOpenItemMenu(null);
+                        setItemMenuPosition(null);
                         if (isProjectOverflowOpen) {
                           closeProjectOverflow();
                           return;
@@ -860,6 +919,7 @@ export function Sidebar({
               aria-expanded={areChatsOpen}
               onClick={() => {
                 setOpenItemMenu(null);
+                setItemMenuPosition(null);
                 closeProjectOverflow();
                 setAreChatsOpen((current) => !current);
               }}
@@ -883,6 +943,7 @@ export function Sidebar({
             aria-expanded={isAccountMenuOpen}
             onClick={() => {
               setOpenItemMenu(null);
+              setItemMenuPosition(null);
               closeProjectOverflow();
               setIsAccountMenuOpen((current) => !current);
             }}
