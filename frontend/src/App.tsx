@@ -1007,8 +1007,18 @@ export default function App() {
         </header>
         ) : null}
 
-        {activeWorkspace === "project" && activeProject ? (
-          renderProjectWorkspace(activeProject)
+        {activeWorkspace === "project" ? (
+          activeProject ? (
+            renderProjectWorkspace(activeProject)
+          ) : (
+            <section className="workspace-placeholder">
+              <div className="workspace-placeholder-card">
+                <p className="workspace-placeholder-kicker">Projects</p>
+                <h2 className="workspace-placeholder-title">Project not found</h2>
+                <p className="workspace-placeholder-copy">This project is no longer available. Create a new one or pick another project from the sidebar.</p>
+              </div>
+            </section>
+          )
         ) : activeWorkspace !== "new_chat" ? (
           renderPlaceholderPage(activeWorkspace)
         ) : isEmpty ? (
