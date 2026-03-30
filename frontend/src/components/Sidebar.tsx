@@ -304,6 +304,7 @@ export function Sidebar({
   onSelectConversation,
   onToggleSidebar
 }: SidebarProps) {
+  const visibleProjectLimit = 7;
   const accountPrimaryLabel = accountName?.trim() || "Sign in";
   const accountSecondaryLabel = accountName ? "Plus" : "Account";
   const accountAvatarLabel =
@@ -324,6 +325,9 @@ export function Sidebar({
   const [areChatsOpen, setAreChatsOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [openItemMenu, setOpenItemMenu] = useState<SidebarItemMenuState | null>(null);
+  const [isProjectOverflowOpen, setIsProjectOverflowOpen] = useState(false);
+  const visibleProjects = projects.slice(0, visibleProjectLimit);
+  const overflowProjects = projects.slice(visibleProjectLimit);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -334,9 +338,10 @@ export function Sidebar({
 
       setIsAccountMenuOpen(false);
       setOpenItemMenu(null);
+      setIsProjectOverflowOpen(false);
     }
 
-    if (!isAccountMenuOpen && !openItemMenu) {
+    if (!isAccountMenuOpen && !openItemMenu && !isProjectOverflowOpen) {
       return;
     }
 
@@ -344,12 +349,19 @@ export function Sidebar({
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [isAccountMenuOpen, openItemMenu]);
+  }, [isAccountMenuOpen, isProjectOverflowOpen, openItemMenu]);
+
+  useEffect(() => {
+    if (overflowProjects.length === 0 && isProjectOverflowOpen) {
+      setIsProjectOverflowOpen(false);
+    }
+  }, [isProjectOverflowOpen, overflowProjects.length]);
 
   function handleNavClick(itemKey: string) {
     onSelectNav(itemKey);
     setIsAccountMenuOpen(false);
     setOpenItemMenu(null);
+    setIsProjectOverflowOpen(false);
 
     if (itemKey === "new_chat") {
       onNewConversation();
@@ -359,7 +371,19 @@ export function Sidebar({
   function handleItemMenuToggle(event: ReactMouseEvent<HTMLButtonElement>, kind: "project" | "chat", id: string) {
     event.stopPropagation();
     setIsAccountMenuOpen(false);
+    setIsProjectOverflowOpen(false);
     setOpenItemMenu((current) => (current?.kind === kind && current.id === id ? null : { kind, id }));
+  }
+
+  function getProjectIcon(project: ProjectSummary) {
+    const iconByKind = {
+      new: FolderPlusIcon,
+      folder: FolderIcon,
+      monitor: MonitorIcon,
+      more: MoreIcon
+    } as const;
+
+    return iconByKind[project.kind];
   }
 
   function renderAccountMenu(menuClassName?: string) {
@@ -417,14 +441,7 @@ export function Sidebar({
   }
 
   function renderProjectRow(project: ProjectSummary) {
-    const iconByKind = {
-      new: FolderPlusIcon,
-      folder: FolderIcon,
-      monitor: MonitorIcon,
-      more: MoreIcon
-    } as const;
-
-    const Icon = iconByKind[project.kind];
+    const Icon = getProjectIcon(project);
     const canShowMenu = project.kind === "folder";
     const isMenuOpen = openItemMenu?.kind === "project" && openItemMenu.id === project.id;
 
@@ -433,7 +450,10 @@ export function Sidebar({
         <button
           className={`sidebar-section-item sidebar-project-item${canShowMenu ? " has-menu" : ""}${project.kind === "monitor" ? " monitor" : ""}${project.kind === "more" ? " more" : ""}`}
           type="button"
-          onClick={() => setOpenItemMenu(null)}
+          onClick={() => {
+            setOpenItemMenu(null);
+            setIsProjectOverflowOpen(false);
+          }}
         >
           <Icon className="sidebar-section-icon" />
           <span className="sidebar-section-item-copy">{project.title}</span>
@@ -461,6 +481,31 @@ export function Sidebar({
     );
   }
 
+  function renderProjectOverflowPanel() {
+    return (
+      <div className="sidebar-project-overflow-panel" role="menu" aria-label="More projects">
+        <div className="sidebar-project-overflow-list">
+          {overflowProjects.map((project) => {
+            const Icon = getProjectIcon(project);
+
+            return (
+              <button
+                key={project.id}
+                className={`sidebar-project-overflow-item${project.kind === "monitor" ? " monitor" : ""}${project.kind === "more" ? " more" : ""}`}
+                type="button"
+                role="menuitem"
+                onClick={() => setIsProjectOverflowOpen(false)}
+              >
+                <Icon className="sidebar-project-overflow-icon" />
+                <span className="sidebar-project-overflow-copy">{project.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
   function renderChatRow(conversation: Conversation) {
     const isActiveConversation = conversation.id === activeConversationId;
     const isMenuOpen = openItemMenu?.kind === "chat" && openItemMenu.id === conversation.id;
@@ -472,6 +517,7 @@ export function Sidebar({
           type="button"
           onClick={() => {
             setOpenItemMenu(null);
+            setIsProjectOverflowOpen(false);
             onSelectConversation(conversation.id);
           }}
         >
@@ -604,6 +650,7 @@ export function Sidebar({
             aria-expanded={areProjectsOpen}
             onClick={() => {
               setOpenItemMenu(null);
+              setIsProjectOverflowOpen(false);
               setAreProjectsOpen((current) => !current);
             }}
           >
@@ -618,6 +665,7 @@ export function Sidebar({
                 type="button"
                 onClick={() => {
                   setOpenItemMenu(null);
+                  setIsProjectOverflowOpen(false);
                   onCreateProject();
                 }}
               >
@@ -625,7 +673,28 @@ export function Sidebar({
                 <span className="sidebar-section-item-copy">New project</span>
               </button>
 
-              {projects.map(renderProjectRow)}
+              {visibleProjects.map(renderProjectRow)}
+
+              {overflowProjects.length > 0 ? (
+                <div className={`sidebar-item-shell sidebar-menu-root${isProjectOverflowOpen ? " menu-open" : ""}`}>
+                  <button
+                    className="sidebar-section-item sidebar-project-item more"
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={isProjectOverflowOpen}
+                    onClick={() => {
+                      setIsAccountMenuOpen(false);
+                      setOpenItemMenu(null);
+                      setIsProjectOverflowOpen((current) => !current);
+                    }}
+                  >
+                    <MoreIcon className="sidebar-section-icon" />
+                    <span className="sidebar-section-item-copy">More</span>
+                  </button>
+
+                  {isProjectOverflowOpen ? renderProjectOverflowPanel() : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -637,6 +706,7 @@ export function Sidebar({
             aria-expanded={areChatsOpen}
             onClick={() => {
               setOpenItemMenu(null);
+              setIsProjectOverflowOpen(false);
               setAreChatsOpen((current) => !current);
             }}
           >
@@ -659,6 +729,7 @@ export function Sidebar({
           aria-expanded={isAccountMenuOpen}
           onClick={() => {
             setOpenItemMenu(null);
+            setIsProjectOverflowOpen(false);
             setIsAccountMenuOpen((current) => !current);
           }}
         >
