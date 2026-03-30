@@ -1,128 +1,63 @@
-# LLM Chat Frontend Foundation
+# LLM Workspace Frontend Foundation
 
-This repository is the starting point for a reusable AI chat frontend that can be extended for future projects instead of rebuilding the same base UI repeatedly.
+This repository is a reusable AI workspace foundation built for chat-first SaaS products. It combines a React frontend, a minimal FastAPI backend, and Docker-based local development so new products can start from a working shell instead of rebuilding the same app structure each time.
 
-The current foundation includes:
+## Current Product Shape
 
-- a `React + TypeScript + Vite` frontend in [frontend](d:\#Code\VS Code\llm-chat-frontend\frontend)
-- a minimal `FastAPI` backend in [backend](d:\#Code\VS Code\llm-chat-frontend\backend)
-- a root-level `Docker Compose` setup for running frontend and backend together
-- a Python `requirements.txt` and local `.venv` workflow for backend utilities, scripts, and API development
-- a repo-level `.gitignore` to keep generated frontend files and local environments out of version control
+The app already includes a substantial workspace shell:
 
-## Current Stack
+- a left navigation rail with `New chat`, `Search chats`, `Images`, `Library`, `Apps`, `Deep Research`, `Workspace`, and `LLMs`
+- a chat workspace with a centered conversation thread and composer actions
+- a project system with create, rename, and project-specific workspace views
+- `Your Chats` and `Projects` sections in the sidebar
+- a model-management flow with `Add your Model`
+- placeholder product pages for non-chat workspaces
+- a backend API contract for `health`, `models`, and `chat`
+
+The backend is intentionally still a starter implementation. It returns a placeholder response until a real provider such as OpenAI, Anthropic, Gemini, DeepSeek, Kimi, or a local model is connected.
+
+## Tech Stack
 
 - Frontend: `React 18`, `TypeScript`, `Vite`
 - Backend: `FastAPI`, `Pydantic`, `Uvicorn`
-- Containerization: `Docker`, `Docker Compose`
-- Python tooling: `httpx`, `pytest`, `ruff`
+- Local Python tooling: `httpx`, `pytest`, `pytest-asyncio`, `ruff`
+- Containers: `Docker`, `Docker Compose`
 
 ## Repository Layout
 
 ```text
 .
-|-- docs/
-|   `-- base-frontend-report.md
 |-- backend/
 |   |-- app/
-|   |-- Dockerfile
-|   `-- .dockerignore
+|   |-- .dockerignore
+|   `-- Dockerfile
+|-- docs/
+|   `-- base-frontend-report.md
 |-- frontend/
 |   |-- src/
-|   |-- Dockerfile
 |   |-- .dockerignore
 |   |-- .env.example
+|   |-- Dockerfile
 |   |-- nginx.conf
 |   `-- package.json
-|-- .gitignore
 |-- docker-compose.yml
 |-- README.md
 `-- requirements.txt
 ```
 
-## Files Intentionally Ignored
+## Quick Start
 
-The repo ignores generated or local-only files such as:
-
-- `frontend/node_modules/`
-- `frontend/dist/`
-- `*.log`
-- `.venv/`
-- Python cache files
-- local `.env` files
-- TypeScript build info files
-
-This keeps the repository cleaner and prevents large or machine-specific files from being committed.
-
-## Environment Variables
-
-Frontend variables live in the `frontend` app.
-
-Start with:
+### 1. Frontend local development
 
 ```bash
-cp frontend/.env.example frontend/.env
-```
-
-Example:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-The frontend is already wired to call the backend at `http://localhost:8000`.
-
-## Local Development
-
-### Frontend only
-
-From the `frontend` folder:
-
-```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-### Backend only
+Frontend runs at `http://localhost:5173`.
 
-From the repository root:
-
-Windows PowerShell:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-macOS / Linux:
-
-```bash
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-API endpoints:
-
-```text
-GET  http://localhost:8000/health
-GET  http://localhost:8000/models
-POST http://localhost:8000/chat
-GET  http://localhost:8000/docs
-```
-
-### Frontend build
-
-```bash
-npm run build
-```
-
-## Python Virtual Environment
-
-The repo also includes a Python requirements file for future backend scripts, automation, and API scaffolding.
-
-Create a local virtual environment at the repo root:
+### 2. Backend local development
 
 Windows PowerShell:
 
@@ -130,6 +65,7 @@ Windows PowerShell:
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 macOS / Linux:
@@ -138,65 +74,91 @@ macOS / Linux:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-## Docker Usage
+Backend runs at `http://localhost:8000`.
 
-### Development stack
-
-Start frontend and backend together in Docker:
+### 3. Full stack with Docker
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
-Then open:
+Available URLs:
 
-```text
-Frontend: http://localhost:5173
-Backend:  http://localhost:8000
-Docs:     http://localhost:8000/docs
-```
+- Frontend dev server: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- Backend docs: `http://localhost:8000/docs`
 
-### Production-style container
-
-Build and run the backend plus the optimized static frontend with Nginx:
+### 4. Production-style frontend preview
 
 ```bash
-docker compose --profile prod up --build backend frontend-prod
+docker compose --profile prod up -d --build backend frontend-prod
 ```
 
-Then open:
+Available URLs:
 
-```text
-Frontend: http://localhost:8080
-Backend:  http://localhost:8000
+- Frontend via Nginx: `http://localhost:8080`
+- Backend API: `http://localhost:8000`
+
+## Environment Variables
+
+Frontend environment variables live in `frontend/.env`.
+
+Start from:
+
+```bash
+cp frontend/.env.example frontend/.env
 ```
 
-## Included Docker Setup
+Current frontend variable:
 
-The Docker setup provides:
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
 
-- a `backend` container running `FastAPI + Uvicorn`
-- a `development` frontend image for Vite dev server usage
-- a `production` image that builds the app and serves it through `Nginx`
-- SPA-friendly routing via `nginx.conf`
+## Backend API Endpoints
 
-## Python Requirements Included
+- `GET /health`
+- `GET /models`
+- `POST /chat`
+- `GET /docs`
 
-The `requirements.txt` is intentionally small and focused on the starter backend plus common future needs:
+Current backend behavior:
 
-- `fastapi` for the API layer
-- `uvicorn` for API serving
-- `pydantic` for typed validation
-- `python-multipart` for file uploads
-- `httpx` for calling model/provider APIs
-- `pytest` and `pytest-asyncio` for tests
-- `ruff` for linting
+- `/models` returns the starter list of available models
+- `/chat` returns a placeholder assistant response until a real model provider is wired in
 
-## Suggested Next Steps
+## Docker Files
 
-1. Keep the frontend and backend running together in Docker for day-to-day development.
-2. Replace the seeded backend logic with a real provider adapter layer.
-3. Move toward a normalized API contract for chat, projects, files, artifacts, and streaming.
-4. Add persistence, authentication, and provider configuration once the UI flow is stable.
+This repo includes two Dockerfiles:
+
+- [`backend/Dockerfile`](./backend/Dockerfile): builds the FastAPI backend image
+- [`frontend/Dockerfile`](./frontend/Dockerfile): supports both Vite development and Nginx production builds
+
+The root [`docker-compose.yml`](./docker-compose.yml) ties them together for local development and production-style preview.
+
+## Python Requirements
+
+The root [`requirements.txt`](./requirements.txt) is for the backend and local Python tooling only. It does not manage frontend dependencies.
+
+It currently includes:
+
+- backend runtime dependencies
+- file-upload support
+- HTTP client utilities for future provider integrations
+- test tooling
+- lint tooling
+
+## Current Limitations
+
+- no real LLM provider is connected yet
+- authentication is not implemented yet
+- persistence is not implemented yet
+- several workspace pages are still placeholder pages with product copy
+
+## Notes
+
+- The project path currently contains `#`, and Vite warns that this can cause issues in some environments.
+- The frontend and backend are ready for UI iteration, API contract work, provider integration, and future SaaS features such as auth, storage, and organization-level workflows.

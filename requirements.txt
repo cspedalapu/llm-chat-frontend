@@ -1,12 +1,13 @@
-# Future Python API / tooling foundation
+# Backend runtime
 fastapi~=0.111
-uvicorn[standard]~=0.30
 pydantic~=2.7
 python-multipart~=0.0.9
+uvicorn[standard]~=0.30
+
+# Provider integration / HTTP utilities
 httpx~=0.27
 
-# Quality / tests
+# Local development, tests, and linting
 pytest~=8.2
 pytest-asyncio~=0.23
 ruff~=0.4
-

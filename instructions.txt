@@ -1,0 +1,2 @@
+Run the Docker Container.
+Paste in local browser. http://localhost:5173/

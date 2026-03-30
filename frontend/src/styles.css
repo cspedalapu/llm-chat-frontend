@@ -1043,44 +1043,71 @@ svg {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
 }
 
-.workspace-modal-card,
-.project-workspace,
-.thread-panel {
+.workspace-modal-card {
   scrollbar-width: thin;
   scrollbar-color: #575757 transparent;
 }
 
-.workspace-modal-card::-webkit-scrollbar,
-.project-workspace::-webkit-scrollbar,
-.thread-panel::-webkit-scrollbar {
+.workspace-modal-card::-webkit-scrollbar {
   width: 0.015rem;
 }
 
-.workspace-modal-card::-webkit-scrollbar-track,
-.project-workspace::-webkit-scrollbar-track,
-.thread-panel::-webkit-scrollbar-track {
+.workspace-modal-card::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.workspace-modal-card::-webkit-scrollbar-button,
-.project-workspace::-webkit-scrollbar-button,
-.thread-panel::-webkit-scrollbar-button {
+.workspace-modal-card::-webkit-scrollbar-button {
   width: 0;
   height: 0;
   display: none;
 }
 
-.workspace-modal-card::-webkit-scrollbar-thumb,
-.project-workspace::-webkit-scrollbar-thumb,
-.thread-panel::-webkit-scrollbar-thumb {
+.workspace-modal-card::-webkit-scrollbar-thumb {
   background: #575757;
   border-radius: 999px;
 }
 
-.workspace-modal-card::-webkit-scrollbar-thumb:hover,
-.project-workspace::-webkit-scrollbar-thumb:hover,
-.thread-panel::-webkit-scrollbar-thumb:hover {
+.workspace-modal-card::-webkit-scrollbar-thumb:hover {
   background: #676767;
+}
+
+.workspace-scroll-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+
+.workspace-scroll-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.workspace-scroll-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.workspace-custom-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0.08rem;
+  bottom: 0;
+  width: 0.1rem;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.workspace-custom-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(118, 118, 118, 0.8);
 }
 
 .workspace-modal-header {
@@ -1437,14 +1464,19 @@ svg {
 .thread-panel {
   flex: 1 1 auto;
   min-height: 0;
+  width: 100%;
+  padding: 1.5rem 0 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.thread-panel-inner {
   width: min(100%, 57rem);
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 2rem;
+  padding: 0 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .message-row {
@@ -2211,9 +2243,13 @@ svg {
 
 @media (max-width: 640px) {
   .workspace-topbar,
-  .thread-panel,
   .empty-state,
   .workspace-placeholder {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .thread-panel-inner {
     padding-left: 1rem;
     padding-right: 1rem;
   }

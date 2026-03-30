@@ -1,4 +1,4 @@
-import { CSSProperties, ChangeEvent, FormEvent, KeyboardEvent, MouseEvent as ReactMouseEvent, SVGProps, useEffect, useRef, useState } from "react";
+import { CSSProperties, ChangeEvent, FormEvent, KeyboardEvent, MouseEvent as ReactMouseEvent, ReactNode, SVGProps, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
 import { seededConversations, seededProjects } from "@/data/mockData.ts";
@@ -179,6 +179,128 @@ function QuizIcon(props: SVGProps<SVGSVGElement>) {
       <path d="m9 9.6 1.3 1.3 3-3" />
       <path d="M9 14.2h6" />
     </svg>
+  );
+}
+
+type WorkspaceScrollAreaProps = {
+  as?: "div" | "section";
+  className: string;
+  children: ReactNode;
+};
+
+function WorkspaceScrollArea({ as = "section", className, children }: WorkspaceScrollAreaProps) {
+  const viewportRef = useRef<HTMLElement | null>(null);
+  const [thumbState, setThumbState] = useState({ visible: false, height: 0, offset: 0 });
+
+  function updateThumbState() {
+    const viewport = viewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    const { clientHeight, scrollHeight, scrollTop } = viewport;
+    const maxScroll = scrollHeight - clientHeight;
+
+    if (maxScroll <= 1) {
+      setThumbState((current) => (current.visible ? { visible: false, height: 0, offset: 0 } : current));
+      return;
+    }
+
+    const height = Math.max(28, (clientHeight / scrollHeight) * clientHeight);
+    const travel = Math.max(clientHeight - height, 0);
+    const offset = travel === 0 ? 0 : (scrollTop / maxScroll) * travel;
+
+    setThumbState((current) => {
+      if (
+        current.visible &&
+        Math.abs(current.height - height) < 0.5 &&
+        Math.abs(current.offset - offset) < 0.5
+      ) {
+        return current;
+      }
+
+      return { visible: true, height, offset };
+    });
+  }
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    let frameId = 0;
+
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        updateThumbState();
+      });
+    };
+
+    scheduleUpdate();
+
+    viewport.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    const resizeObserver = new ResizeObserver(() => {
+      scheduleUpdate();
+    });
+
+    resizeObserver.observe(viewport);
+    Array.from(viewport.children).forEach((child) => resizeObserver.observe(child));
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      viewport.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      resizeObserver.disconnect();
+    };
+  }, [children]);
+
+  const viewportClassName = `${className} workspace-scroll-viewport`;
+  const customThumb = thumbState.visible ? (
+    <div className="workspace-custom-scrollbar" aria-hidden="true">
+      <div
+        className="workspace-custom-scrollbar-thumb"
+        style={{
+          height: `${thumbState.height}px`,
+          transform: `translateY(${thumbState.offset}px)`,
+        }}
+      />
+    </div>
+  ) : null;
+
+  if (as === "div") {
+    return (
+      <div className="workspace-scroll-shell">
+        <div
+          ref={(node) => {
+            viewportRef.current = node;
+          }}
+          className={viewportClassName}
+        >
+          {children}
+        </div>
+        {customThumb}
+      </div>
+    );
+  }
+
+  return (
+    <div className="workspace-scroll-shell">
+      <section
+        ref={(node) => {
+          viewportRef.current = node;
+        }}
+        className={viewportClassName}
+      >
+        {children}
+      </section>
+      {customThumb}
+    </div>
   );
 }
 
@@ -1522,7 +1644,7 @@ export default function App() {
 
   function renderProjectWorkspace(project: ProjectSummary) {
     return (
-      <section className="project-workspace">
+      <WorkspaceScrollArea className="project-workspace">
         <div className="project-hero">
           <div className="project-title-row-main">
             <ProjectFolderIcon className="project-folder-icon" />
@@ -1601,7 +1723,7 @@ export default function App() {
             </div>
           </div>
         )}
-      </section>
+      </WorkspaceScrollArea>
     );
   }
 
@@ -1763,26 +1885,28 @@ export default function App() {
           </section>
         ) : (
           <>
-            <section className="thread-panel">
-              {activeMessages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
-              ))}
+            <WorkspaceScrollArea className="thread-panel">
+              <div className="thread-panel-inner">
+                {activeMessages.map((message) => (
+                  <ChatMessage key={message.id} message={message} />
+                ))}
 
-              {isLoading ? (
-                <article className="message-row assistant">
-                  <div className="message-meta assistant">
-                    <strong>{appName}</strong>
-                    <span>Working</span>
-                  </div>
-                  <div className="message-bubble assistant loading">
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                    <span className="typing-dot" />
-                  </div>
-                </article>
-              ) : null}
-              <div ref={bottomRef} />
-            </section>
+                {isLoading ? (
+                  <article className="message-row assistant">
+                    <div className="message-meta assistant">
+                      <strong>{appName}</strong>
+                      <span>Working</span>
+                    </div>
+                    <div className="message-bubble assistant loading">
+                      <span className="typing-dot" />
+                      <span className="typing-dot" />
+                      <span className="typing-dot" />
+                    </div>
+                  </article>
+                ) : null}
+                <div ref={bottomRef} />
+              </div>
+            </WorkspaceScrollArea>
 
             {renderComposer(false)}
           </>
