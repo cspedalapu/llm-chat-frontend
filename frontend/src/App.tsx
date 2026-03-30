@@ -156,7 +156,7 @@ const workspaceLabels: Record<WorkspaceView, string> = {
 const addModelOptionValue = "__add_model__";
 
 const seededManagedModels: ManagedModelOption[] = [
-  { id: "openai-gpt-5-mini", label: "OpenAI GPT-5 mini", provider: "OpenAI" },
+  { id: "gpt-4o-mini", label: "OpenAI GPT-4o mini", provider: "OpenAI" },
   { id: "claude-sonnet-4", label: "Claude Sonnet 4", provider: "Anthropic" },
   { id: "gemini-2-5-pro", label: "Gemini 2.5 Pro", provider: "Google" },
   { id: "moonshot-kimi-k2-5", label: "Moonshot Kimi K2.5", provider: "Moonshot" },
@@ -239,7 +239,7 @@ export default function App() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(seededConversations[0]?.id ?? null);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceView>("new_chat");
   const [managedModels, setManagedModels] = useState<ManagedModelOption[]>(seededManagedModels);
-  const [selectedManagedModelId, setSelectedManagedModelId] = useState("");
+  const [selectedManagedModelId, setSelectedManagedModelId] = useState(seededManagedModels[0]?.id ?? "");
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0]?.model ?? defaultModelOptions[0].id);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>(defaultModelOptions);
   const [draft, setDraft] = useState("");
@@ -580,7 +580,6 @@ export default function App() {
           <div className="workspace-title-row">
             <label className="model-control llm-model-control">
               <select value={selectedManagedModelId} onChange={handleManagedModelChange}>
-                <option value="">Models</option>
                 <option value={addModelOptionValue}>Add your Model</option>
                 {managedModels.map((model) => (
                   <option key={model.id} value={model.id}>
@@ -606,7 +605,6 @@ export default function App() {
           <div className="workspace-title-row">
             <label className="model-control llm-model-control">
               <select value={selectedManagedModelId} onChange={handleManagedModelChange}>
-                <option value="">Models</option>
                 <option value={addModelOptionValue}>Add your Model</option>
                 {managedModels.map((model) => (
                   <option key={model.id} value={model.id}>
