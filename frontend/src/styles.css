@@ -54,7 +54,7 @@ svg {
   grid-template-columns: 18.25rem minmax(0, 1fr);
   background: var(--bg);
   overflow: hidden;
-  transition: grid-template-columns 180ms ease;
+  transition: grid-template-columns 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .app-shell.sidebar-collapsed {
@@ -68,9 +68,11 @@ svg {
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.72rem 0.6rem 0.7rem;
+  position: relative;
   background: var(--sidebar);
   border-right: 1px solid var(--border-soft);
   overflow: hidden;
+  transition: padding 260ms cubic-bezier(0.22, 1, 0.36, 1), gap 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .sidebar.collapsed {
@@ -85,6 +87,56 @@ svg {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+}
+
+.sidebar-rail-top-collapsed {
+  justify-content: center;
+}
+
+.sidebar-view {
+  transition: opacity 180ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.sidebar-view-expanded {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-view-collapsed {
+  position: absolute;
+  inset: 0;
+  padding: 0.5rem 0.32rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sidebar:not(.collapsed) .sidebar-view-expanded {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.sidebar:not(.collapsed) .sidebar-view-collapsed {
+  opacity: 0;
+  transform: translateX(-0.5rem);
+  pointer-events: none;
+}
+
+.sidebar.collapsed .sidebar-view-expanded {
+  opacity: 0;
+  transform: translateX(0.6rem);
+  pointer-events: none;
+}
+
+.sidebar.collapsed .sidebar-view-collapsed {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
 }
 
 .icon-button,
@@ -114,13 +166,13 @@ svg {
 .icon-button svg,
 .sidebar-nav-icon,
 .sidebar-section-icon {
-  width: 1.08rem;
-  height: 1.08rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .sidebar-rail-button svg {
-  width: 1.32rem;
-  height: 1.32rem;
+  width: 1.62rem;
+  height: 1.62rem;
 }
 
 .brand-icon-button {
@@ -196,7 +248,7 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.72rem;
-  min-height: 2.24rem;
+  min-height: 2.56rem;
   padding: 0.42rem 0.8rem;
   background: transparent;
   color: var(--text);
@@ -280,7 +332,7 @@ svg {
 
 .sidebar-section-item {
   width: 100%;
-  min-height: 2.04rem;
+  min-height: 2.42rem;
   display: flex;
   align-items: center;
   gap: 0.68rem;
@@ -1574,6 +1626,14 @@ svg {
   gap: 0.32rem;
 }
 
+.composer-menu-root {
+  position: relative;
+}
+
+.composer-file-input {
+  display: none;
+}
+
 .composer-hero-actions-right {
   margin-left: auto;
 }
@@ -1585,6 +1645,10 @@ svg {
   height: 2.65rem;
   min-height: 2.65rem;
   color: var(--muted-strong);
+}
+
+.composer-icon-button.composer-icon-button-hero.active {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .composer-icon-button.composer-icon-button-hero svg,
@@ -1607,8 +1671,136 @@ svg {
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
+.composer-mode-button.active {
+  background: rgba(74, 132, 210, 0.2);
+  border-color: rgba(127, 181, 255, 0.22);
+}
+
 .composer-mode-button:hover {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.composer-tools-menu,
+.composer-tools-submenu,
+.composer-thinking-menu {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 1rem;
+  background: #373737;
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.34);
+  z-index: 24;
+}
+
+.composer-tools-menu {
+  top: calc(100% + 0.45rem);
+  left: 0;
+  width: 15.6rem;
+  padding: 0.4rem;
+}
+
+.composer-tools-submenu {
+  left: calc(100% + 0.45rem);
+  bottom: 0;
+  width: 13.4rem;
+  padding: 0.4rem;
+}
+
+.composer-tools-menu-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.composer-tools-menu-section + .composer-tools-menu-section {
+  margin-top: 0.38rem;
+  padding-top: 0.38rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.composer-tools-menu-item {
+  width: 100%;
+  min-height: 2.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.66rem;
+  padding: 0.58rem 0.68rem;
+  border: 1px solid transparent;
+  border-radius: 0.78rem;
+  background: transparent;
+  color: #f1f1f1;
+  font-size: 0.98rem;
+  text-align: left;
+}
+
+.composer-tools-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.composer-tools-menu-item.has-chevron {
+  justify-content: flex-start;
+}
+
+.composer-tools-menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.composer-tools-menu-icon,
+.composer-tools-menu-chevron,
+.composer-thinking-menu-icon,
+.composer-thinking-menu-check {
+  flex: 0 0 auto;
+  width: 1.02rem;
+  height: 1.02rem;
+}
+
+.composer-tools-menu-chevron,
+.composer-thinking-menu-check {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.composer-tools-empty-state {
+  padding: 0.8rem 0.7rem;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.composer-thinking-menu {
+  top: calc(100% + 0.45rem);
+  left: 0;
+  width: 10.4rem;
+  padding: 0.5rem;
+}
+
+.composer-thinking-menu-label {
+  margin: 0 0 0.35rem;
+  padding: 0.1rem 0.35rem 0.3rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.composer-thinking-menu-item {
+  width: 100%;
+  min-height: 2.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.52rem 0.58rem;
+  border: 1px solid transparent;
+  border-radius: 0.76rem;
+  background: transparent;
+  color: #f0f0f0;
+  font-size: 0.98rem;
+  text-align: left;
+}
+
+.composer-thinking-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.composer-thinking-menu-item.active {
+  color: #ffffff;
 }
 
 .composer-mode-icon,

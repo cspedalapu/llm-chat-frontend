@@ -80,6 +80,122 @@ function DotsIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function PaperclipIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="m9.5 12.6 5.4-5.4a3 3 0 1 1 4.2 4.2l-7.8 7.8a5 5 0 1 1-7.1-7.1l7.5-7.5" />
+    </svg>
+  );
+}
+
+function FileIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="M8 4.8h5.6l3.6 3.6v9.8A1.8 1.8 0 0 1 15.4 20H8.6A1.8 1.8 0 0 1 6.8 18.2V6.6A1.8 1.8 0 0 1 8.6 4.8Z" />
+      <path d="M13.6 4.8v3.6h3.6" />
+      <path d="M9.4 12h5.2M9.4 15.2h4" />
+    </svg>
+  );
+}
+
+function ImageIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <rect x="4.8" y="6" width="10" height="10" rx="2" />
+      <path d="m7.1 13 2-2a1 1 0 0 1 1.4 0l3.3 3.3" />
+      <circle cx="10" cy="10" r="1" />
+      <path d="M9.7 18H17a2.2 2.2 0 0 0 2.2-2.2V8.6" />
+    </svg>
+  );
+}
+
+function GlobeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M4 12h16M12 4a12 12 0 0 1 0 16M12 4a12 12 0 0 0 0 16" />
+    </svg>
+  );
+}
+
+function StudyIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="m4.8 7.6 7.2-2.8 7.2 2.8v8.8L12 19.2l-7.2-2.8Z" />
+      <path d="M12 4.8v14.4" />
+      <path d="M4.8 7.6 12 10.4l7.2-2.8" />
+    </svg>
+  );
+}
+
+function AgentIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="m6 16 5.3-5.3a2.7 2.7 0 0 1 3.8 0l1.2 1.2" />
+      <path d="M13.6 6.2 18 4.8l-1.4 4.4" />
+      <path d="M4.5 12.5 3 16.8l4.3-1.5" />
+    </svg>
+  );
+}
+
+function SourcesIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <circle cx="8" cy="8" r="2.1" />
+      <circle cx="16" cy="8" r="2.1" />
+      <circle cx="8" cy="16" r="2.1" />
+      <circle cx="16" cy="16" r="2.1" />
+      <path d="M10.1 9.9 13.9 14.1" />
+    </svg>
+  );
+}
+
+function CanvasIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="M6 18 18 6" />
+      <path d="m7 7 2.5-2.5a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8L11 11" />
+      <path d="m13 13 2.5-2.5a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8L17 17" />
+      <path d="m5 19 4.5-1.2L6.2 14.5Z" />
+    </svg>
+  );
+}
+
+function QuizIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <rect x="5" y="5.4" width="14" height="13.2" rx="2.2" />
+      <path d="m9 9.6 1.3 1.3 3-3" />
+      <path d="M9 14.2h6" />
+    </svg>
+  );
+}
+
+function ClockIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 7.8v4.4l3 1.8" />
+    </svg>
+  );
+}
+
+function CheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="m6 12.5 3.4 3.4L18 7.8" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  );
+}
+
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], {
     hour: "2-digit",
@@ -163,6 +279,8 @@ function useTypewriterPrompt(phrases: string[]): string {
 type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "workspace" | "llms" | "project";
 type PlaceholderWorkspaceView = Exclude<WorkspaceView, "new_chat" | "project">;
 type ProjectTab = "chats" | "sources";
+type ComposerSubmenu = "recent_files" | "more_tools" | null;
+type ThinkingEffort = "standard" | "extended";
 
 interface ManagedModelOption {
   id: string;
@@ -279,6 +397,11 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0]?.model ?? defaultModelOptions[0].id);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>(defaultModelOptions);
   const [draft, setDraft] = useState("");
+  const [thinkingEffort, setThinkingEffort] = useState<ThinkingEffort>("standard");
+  const [isComposerToolsOpen, setIsComposerToolsOpen] = useState(false);
+  const [composerSubmenu, setComposerSubmenu] = useState<ComposerSubmenu>(null);
+  const [isThinkingMenuOpen, setIsThinkingMenuOpen] = useState(false);
+  const [composerRecentFiles, setComposerRecentFiles] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAddModelModalOpen, setIsAddModelModalOpen] = useState(false);
@@ -293,6 +416,8 @@ export default function App() {
   const [newModelInstructions, setNewModelInstructions] = useState("");
   const [uploadedModelFile, setUploadedModelFile] = useState<File | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const composerFileInputRef = useRef<HTMLInputElement | null>(null);
+  const heroComposerInputRef = useRef<HTMLTextAreaElement | null>(null);
   const modelFileInputRef = useRef<HTMLInputElement | null>(null);
   const accountName: string | null = null;
   const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
@@ -359,6 +484,26 @@ export default function App() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeMessages.length, isLoading]);
 
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(".composer-menu-root")) {
+        return;
+      }
+
+      closeComposerMenus();
+    }
+
+    if (!isComposerToolsOpen && !isThinkingMenuOpen) {
+      return;
+    }
+
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isComposerToolsOpen, isThinkingMenuOpen]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -378,6 +523,7 @@ export default function App() {
     const targetConversationId = activeConversationId ?? `conv-${now.getTime()}`;
     const priorMessages = activeConversation?.messages ?? [];
 
+    closeComposerMenus();
     setDraft("");
     setIsLoading(true);
 
@@ -474,6 +620,7 @@ export default function App() {
   }
 
   function handleNewConversation(projectId: string | null = null) {
+    closeComposerMenus();
     setActiveWorkspace("new_chat");
     setActiveProjectId(projectId);
     setActiveConversationId(null);
@@ -482,6 +629,7 @@ export default function App() {
   }
 
   function openProjectWorkspace(projectId: string) {
+    closeComposerMenus();
     setActiveProjectId(projectId);
     setActiveWorkspace("project");
     setActiveConversationId(null);
@@ -650,6 +798,329 @@ export default function App() {
     closeAddModelModal();
   }
 
+  function closeComposerMenus() {
+    setIsComposerToolsOpen(false);
+    setComposerSubmenu(null);
+    setIsThinkingMenuOpen(false);
+  }
+
+  function focusHeroComposer() {
+    window.requestAnimationFrame(() => {
+      heroComposerInputRef.current?.focus();
+    });
+  }
+
+  function handleComposerToolsToggle() {
+    if (isComposerToolsOpen) {
+      setIsComposerToolsOpen(false);
+      setComposerSubmenu(null);
+      return;
+    }
+
+    setIsThinkingMenuOpen(false);
+    setComposerSubmenu(null);
+    setIsComposerToolsOpen(true);
+  }
+
+  function handleThinkingMenuToggle() {
+    if (isThinkingMenuOpen) {
+      setIsThinkingMenuOpen(false);
+      return;
+    }
+
+    setIsComposerToolsOpen(false);
+    setComposerSubmenu(null);
+    setIsThinkingMenuOpen(true);
+  }
+
+  function openComposerFilePicker() {
+    setIsComposerToolsOpen(false);
+    setComposerSubmenu(null);
+    composerFileInputRef.current?.click();
+  }
+
+  function handleComposerFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) {
+      return;
+    }
+
+    setComposerRecentFiles((currentFiles) => [
+      ...files.map((file) => ({
+        id: `composer-file-${Date.now()}-${file.name}`,
+        name: file.name
+      })),
+      ...currentFiles
+    ].slice(0, 6));
+
+    closeComposerMenus();
+    focusHeroComposer();
+    event.target.value = "";
+  }
+
+  function applyComposerAssist(prefix: string) {
+    setDraft((currentDraft) => currentDraft || prefix);
+    closeComposerMenus();
+    focusHeroComposer();
+  }
+
+  function handleComposerToolSelect(
+    tool: "create_image" | "deep_research" | "web_search" | "study_and_learn" | "agent_mode" | "add_sources" | "canvas" | "quizzes"
+  ) {
+    switch (tool) {
+      case "create_image":
+        applyComposerAssist("Create an image for: ");
+        return;
+      case "deep_research":
+        applyComposerAssist("Deep research this topic: ");
+        return;
+      case "web_search":
+        applyComposerAssist("Search the web for: ");
+        return;
+      case "study_and_learn":
+        applyComposerAssist("Help me study: ");
+        return;
+      case "agent_mode":
+        applyComposerAssist("Agent mode task: ");
+        return;
+      case "add_sources":
+        openComposerFilePicker();
+        return;
+      case "canvas":
+        applyComposerAssist("Open a canvas for: ");
+        return;
+      case "quizzes":
+        applyComposerAssist("Create a quiz about: ");
+        return;
+    }
+  }
+
+  function renderComposerToolsMenu(inProject: boolean) {
+    const hasRecentFiles = composerRecentFiles.length > 0;
+
+    return (
+      <div className="composer-tools-menu" role="menu" aria-label="Composer tools">
+        <div className="composer-tools-menu-section">
+          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={openComposerFilePicker}>
+            <PaperclipIcon className="composer-tools-menu-icon" />
+            <span>Add photos &amp; files</span>
+          </button>
+
+          <button
+            className="composer-tools-menu-item has-chevron"
+            type="button"
+            role="menuitem"
+            aria-haspopup="menu"
+            aria-expanded={composerSubmenu === "recent_files"}
+            onMouseEnter={() => setComposerSubmenu("recent_files")}
+            onClick={() => setComposerSubmenu((current) => (current === "recent_files" ? null : "recent_files"))}
+          >
+            <FileIcon className="composer-tools-menu-icon" />
+            <span>Recent files</span>
+            <ChevronRightIcon className="composer-tools-menu-chevron" />
+          </button>
+        </div>
+
+        <div className="composer-tools-menu-section">
+          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("create_image")}>
+            <ImageIcon className="composer-tools-menu-icon" />
+            <span>Create image</span>
+          </button>
+
+          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("deep_research")}>
+            <AgentIcon className="composer-tools-menu-icon" />
+            <span>Deep research</span>
+          </button>
+
+          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("web_search")}>
+            <GlobeIcon className="composer-tools-menu-icon" />
+            <span>Web search</span>
+          </button>
+
+          <button
+            className="composer-tools-menu-item has-chevron"
+            type="button"
+            role="menuitem"
+            aria-haspopup="menu"
+            aria-expanded={composerSubmenu === "more_tools"}
+            onMouseEnter={() => setComposerSubmenu("more_tools")}
+            onClick={() => setComposerSubmenu((current) => (current === "more_tools" ? null : "more_tools"))}
+          >
+            <DotsIcon className="composer-tools-menu-icon" />
+            <span>More</span>
+            <ChevronRightIcon className="composer-tools-menu-chevron" />
+          </button>
+        </div>
+
+        {composerSubmenu === "recent_files" ? (
+          <div className="composer-tools-submenu" role="menu" aria-label="Recent files">
+            {hasRecentFiles ? (
+              composerRecentFiles.map((file) => (
+                <button
+                  key={file.id}
+                  className="composer-tools-menu-item"
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    closeComposerMenus();
+                    focusHeroComposer();
+                  }}
+                >
+                  <FileIcon className="composer-tools-menu-icon" />
+                  <span>{file.name}</span>
+                </button>
+              ))
+            ) : (
+              <div className="composer-tools-empty-state">No recent files yet</div>
+            )}
+          </div>
+        ) : null}
+
+        {composerSubmenu === "more_tools" ? (
+          <div className="composer-tools-submenu" role="menu" aria-label="More tools">
+            <button
+              className={`composer-tools-menu-item${inProject ? " disabled" : ""}`}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                if (inProject) {
+                  return;
+                }
+
+                handleComposerToolSelect("study_and_learn");
+              }}
+            >
+              <StudyIcon className="composer-tools-menu-icon" />
+              <span>Study and learn</span>
+            </button>
+
+            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("agent_mode")}>
+              <AgentIcon className="composer-tools-menu-icon" />
+              <span>Agent mode</span>
+            </button>
+
+            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("add_sources")}>
+              <SourcesIcon className="composer-tools-menu-icon" />
+              <span>Add sources</span>
+            </button>
+
+            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("canvas")}>
+              <CanvasIcon className="composer-tools-menu-icon" />
+              <span>Canvas</span>
+            </button>
+
+            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("quizzes")}>
+              <QuizIcon className="composer-tools-menu-icon" />
+              <span>Quizzes</span>
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  function renderThinkingEffortMenu() {
+    return (
+      <div className="composer-thinking-menu" role="menu" aria-label="Thinking effort">
+        <p className="composer-thinking-menu-label">Thinking effort</p>
+
+        <button
+          className={`composer-thinking-menu-item${thinkingEffort === "standard" ? " active" : ""}`}
+          type="button"
+          role="menuitemradio"
+          aria-checked={thinkingEffort === "standard"}
+          onClick={() => {
+            setThinkingEffort("standard");
+            setIsThinkingMenuOpen(false);
+          }}
+        >
+          <ClockIcon className="composer-thinking-menu-icon" />
+          <span>Standard</span>
+          {thinkingEffort === "standard" ? <CheckIcon className="composer-thinking-menu-check" /> : null}
+        </button>
+
+        <button
+          className={`composer-thinking-menu-item${thinkingEffort === "extended" ? " active" : ""}`}
+          type="button"
+          role="menuitemradio"
+          aria-checked={thinkingEffort === "extended"}
+          onClick={() => {
+            setThinkingEffort("extended");
+            setIsThinkingMenuOpen(false);
+          }}
+        >
+          <ClockIcon className="composer-thinking-menu-icon" />
+          <span>Extended</span>
+          {thinkingEffort === "extended" ? <CheckIcon className="composer-thinking-menu-check" /> : null}
+        </button>
+      </div>
+    );
+  }
+
+  function renderHeroToolbar(inProject: boolean) {
+    return (
+      <div className="composer-hero-toolbar">
+        <div className="composer-hero-actions">
+          <div className="composer-menu-root">
+            <input
+              ref={composerFileInputRef}
+              className="composer-file-input"
+              type="file"
+              accept="image/*,.pdf,.json,.doc,.docx,.txt"
+              multiple
+              onChange={handleComposerFileChange}
+            />
+
+            <button
+              className={`composer-icon-button composer-icon-button-hero${isComposerToolsOpen ? " active" : ""}`}
+              type="button"
+              aria-label="Add context"
+              aria-haspopup="menu"
+              aria-expanded={isComposerToolsOpen}
+              onClick={handleComposerToolsToggle}
+            >
+              <PlusIcon />
+            </button>
+
+            {isComposerToolsOpen ? renderComposerToolsMenu(inProject) : null}
+          </div>
+
+          <div className="composer-menu-root">
+            <button
+              className={`composer-mode-button${isThinkingMenuOpen ? " active" : ""}`}
+              type="button"
+              aria-label={`Reasoning mode: Thinking, ${thinkingEffort}`}
+              aria-haspopup="menu"
+              aria-expanded={isThinkingMenuOpen}
+              onClick={handleThinkingMenuToggle}
+            >
+              <OrbitIcon className="composer-mode-icon" />
+              <span>Thinking</span>
+              <CaretDownIcon className="composer-mode-caret" />
+            </button>
+
+            {isThinkingMenuOpen ? renderThinkingEffortMenu() : null}
+          </div>
+        </div>
+
+        <div className="composer-hero-actions composer-hero-actions-right">
+          <button className="composer-icon-button composer-mic-button" type="button" aria-label="Voice input">
+            <MicrophoneIcon />
+          </button>
+
+          <button
+            className="composer-voice-submit"
+            type="submit"
+            aria-label={isLoading ? "Working" : inProject ? "Start project chat" : "Send message"}
+            disabled={isLoading || !draft.trim()}
+          >
+            <WaveformIcon />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -665,6 +1136,7 @@ export default function App() {
       return (
         <form className="composer-panel empty composer-panel-hero" onSubmit={handleSubmit}>
           <textarea
+            ref={heroComposerInputRef}
             className="composer-hero-input"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
@@ -673,34 +1145,7 @@ export default function App() {
             rows={1}
           />
 
-          <div className="composer-hero-toolbar">
-            <div className="composer-hero-actions">
-              <button className="composer-icon-button composer-icon-button-hero" type="button" aria-label="Add context">
-                <PlusIcon />
-              </button>
-
-              <button className="composer-mode-button" type="button" aria-label="Reasoning mode: Thinking">
-                <OrbitIcon className="composer-mode-icon" />
-                <span>Thinking</span>
-                <CaretDownIcon className="composer-mode-caret" />
-              </button>
-            </div>
-
-            <div className="composer-hero-actions composer-hero-actions-right">
-              <button className="composer-icon-button composer-mic-button" type="button" aria-label="Voice input">
-                <MicrophoneIcon />
-              </button>
-
-              <button
-                className="composer-voice-submit"
-                type="submit"
-                aria-label={isLoading ? "Working" : "Send message"}
-                disabled={isLoading || !draft.trim()}
-              >
-                <WaveformIcon />
-              </button>
-            </div>
-          </div>
+          {renderHeroToolbar(false)}
         </form>
       );
     }
@@ -751,6 +1196,7 @@ export default function App() {
     return (
       <form className="composer-panel empty composer-panel-hero project-composer-panel" onSubmit={handleSubmit}>
         <textarea
+          ref={heroComposerInputRef}
           className="composer-hero-input"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -759,34 +1205,7 @@ export default function App() {
           rows={1}
         />
 
-        <div className="composer-hero-toolbar">
-          <div className="composer-hero-actions">
-            <button className="composer-icon-button composer-icon-button-hero" type="button" aria-label="Add context">
-              <PlusIcon />
-            </button>
-
-            <button className="composer-mode-button" type="button" aria-label="Reasoning mode: Thinking">
-              <OrbitIcon className="composer-mode-icon" />
-              <span>Thinking</span>
-              <CaretDownIcon className="composer-mode-caret" />
-            </button>
-          </div>
-
-          <div className="composer-hero-actions composer-hero-actions-right">
-            <button className="composer-icon-button composer-mic-button" type="button" aria-label="Voice input">
-              <MicrophoneIcon />
-            </button>
-
-            <button
-              className="composer-voice-submit"
-              type="submit"
-              aria-label={isLoading ? "Working" : "Start project chat"}
-              disabled={isLoading || !draft.trim()}
-            >
-              <WaveformIcon />
-            </button>
-          </div>
-        </div>
+        {renderHeroToolbar(true)}
       </form>
     );
   }

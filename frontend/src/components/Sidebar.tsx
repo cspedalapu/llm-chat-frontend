@@ -687,14 +687,10 @@ export function Sidebar({
     );
   }
 
-  if (isCollapsed) {
+  function renderCollapsedSidebarLayout() {
     return (
-      <aside className="sidebar collapsed">
-        <div className="sidebar-rail-top">
-          <button className="icon-button brand-icon-button" type="button" aria-label={`${appName} home`}>
-            <LogoIcon />
-          </button>
-
+      <>
+        <div className="sidebar-rail-top sidebar-rail-top-collapsed">
           <button
             className="icon-button sidebar-collapse-button"
             type="button"
@@ -746,159 +742,173 @@ export function Sidebar({
             <UserIcon />
           </button>
         </div>
-      </aside>
+      </>
+    );
+  }
+
+  function renderExpandedSidebarLayout() {
+    return (
+      <>
+        <div className="sidebar-header">
+          <button className="icon-button brand-icon-button" type="button" aria-label={`${appName} home`}>
+            <LogoIcon />
+          </button>
+
+          <button
+            className="icon-button sidebar-collapse-button"
+            type="button"
+            onClick={onToggleSidebar}
+            aria-label="Collapse sidebar"
+          >
+            <PanelIcon />
+          </button>
+        </div>
+
+        <div
+          className="sidebar-scroll-region"
+          onScroll={() => {
+            if (isProjectOverflowOpen) {
+              closeProjectOverflow();
+            }
+          }}
+        >
+          <div className="sidebar-primary-actions">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNavKey === item.key;
+
+              return (
+                <button
+                  key={item.key}
+                  className={`sidebar-nav-button${isActive ? " active" : ""}${item.key === "new_chat" ? " primary" : ""}`}
+                  type="button"
+                  onClick={() => handleNavClick(item.key)}
+                >
+                  <Icon className="sidebar-nav-icon" />
+                  <span>{item.label}</span>
+                  {item.shortcut ? <span className="sidebar-nav-shortcut">{item.shortcut}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+
+          <section className="sidebar-section">
+            <button
+              className="sidebar-section-toggle"
+              type="button"
+              aria-expanded={areProjectsOpen}
+              onClick={() => {
+                setOpenItemMenu(null);
+                closeProjectOverflow();
+                setAreProjectsOpen((current) => !current);
+              }}
+            >
+              <span>Projects</span>
+              <ChevronIcon className={`sidebar-section-chevron${areProjectsOpen ? " open" : ""}`} />
+            </button>
+
+            {areProjectsOpen ? (
+              <div className="sidebar-section-list sidebar-project-list">
+                <button
+                  className="sidebar-section-item sidebar-project-item"
+                  type="button"
+                  onClick={() => {
+                    setOpenItemMenu(null);
+                    closeProjectOverflow();
+                    onCreateProject();
+                  }}
+                >
+                  <FolderPlusIcon className="sidebar-section-icon" />
+                  <span className="sidebar-section-item-copy">New project</span>
+                </button>
+
+                {visibleProjects.map(renderProjectRow)}
+
+                {overflowProjects.length > 0 ? (
+                  <div className={`sidebar-item-shell sidebar-menu-root${isProjectOverflowOpen ? " menu-open" : ""}`}>
+                    <button
+                      className="sidebar-section-item sidebar-project-item more"
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={isProjectOverflowOpen}
+                      onClick={(event) => {
+                        setIsAccountMenuOpen(false);
+                        setOpenItemMenu(null);
+                        if (isProjectOverflowOpen) {
+                          closeProjectOverflow();
+                          return;
+                        }
+
+                        openProjectOverflow(event);
+                      }}
+                    >
+                      <MoreIcon className="sidebar-section-icon" />
+                      <span className="sidebar-section-item-copy">More</span>
+                    </button>
+
+                    {isProjectOverflowOpen ? renderProjectOverflowPanel() : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+
+          <section className="sidebar-section sidebar-chat-section">
+            <button
+              className="sidebar-section-toggle"
+              type="button"
+              aria-expanded={areChatsOpen}
+              onClick={() => {
+                setOpenItemMenu(null);
+                closeProjectOverflow();
+                setAreChatsOpen((current) => !current);
+              }}
+            >
+              <span>Your chats</span>
+              <ChevronIcon className={`sidebar-section-chevron${areChatsOpen ? " open" : ""}`} />
+            </button>
+
+            {areChatsOpen ? <div className="sidebar-section-list sidebar-chat-list">{conversations.map(renderChatRow)}</div> : null}
+          </section>
+        </div>
+
+        <div className="sidebar-footer-nav sidebar-account-menu-wrap sidebar-menu-root">
+          {isAccountMenuOpen ? renderAccountMenu() : null}
+
+          <button
+            className="sidebar-account-button"
+            type="button"
+            aria-label={accountButtonLabel}
+            aria-haspopup="menu"
+            aria-expanded={isAccountMenuOpen}
+            onClick={() => {
+              setOpenItemMenu(null);
+              closeProjectOverflow();
+              setIsAccountMenuOpen((current) => !current);
+            }}
+          >
+            <span className="sidebar-account-avatar" aria-hidden="true">
+              {accountAvatarLabel}
+            </span>
+
+            <span className="sidebar-account-copy">
+              <strong>{accountPrimaryLabel}</strong>
+              <span>{accountSecondaryLabel}</span>
+            </span>
+          </button>
+        </div>
+      </>
     );
   }
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <button className="icon-button brand-icon-button" type="button" aria-label={`${appName} home`}>
-          <LogoIcon />
-        </button>
-
-        <button
-          className="icon-button sidebar-collapse-button"
-          type="button"
-          onClick={onToggleSidebar}
-          aria-label="Collapse sidebar"
-        >
-          <PanelIcon />
-        </button>
+    <aside className={`sidebar${isCollapsed ? " collapsed" : ""}`}>
+      <div className={`sidebar-view sidebar-view-expanded${isCollapsed ? " is-hidden" : " is-visible"}`}>
+        {renderExpandedSidebarLayout()}
       </div>
 
-      <div
-        className="sidebar-scroll-region"
-        onScroll={() => {
-          if (isProjectOverflowOpen) {
-            closeProjectOverflow();
-          }
-        }}
-      >
-        <div className="sidebar-primary-actions">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeNavKey === item.key;
-
-            return (
-              <button
-                key={item.key}
-                className={`sidebar-nav-button${isActive ? " active" : ""}${item.key === "new_chat" ? " primary" : ""}`}
-                type="button"
-                onClick={() => handleNavClick(item.key)}
-              >
-                <Icon className="sidebar-nav-icon" />
-                <span>{item.label}</span>
-                {item.shortcut ? <span className="sidebar-nav-shortcut">{item.shortcut}</span> : null}
-              </button>
-            );
-          })}
-        </div>
-
-        <section className="sidebar-section">
-          <button
-            className="sidebar-section-toggle"
-            type="button"
-            aria-expanded={areProjectsOpen}
-            onClick={() => {
-              setOpenItemMenu(null);
-              closeProjectOverflow();
-              setAreProjectsOpen((current) => !current);
-            }}
-          >
-            <span>Projects</span>
-            <ChevronIcon className={`sidebar-section-chevron${areProjectsOpen ? " open" : ""}`} />
-          </button>
-
-          {areProjectsOpen ? (
-            <div className="sidebar-section-list sidebar-project-list">
-              <button
-                className="sidebar-section-item sidebar-project-item"
-                type="button"
-                onClick={() => {
-                  setOpenItemMenu(null);
-                  closeProjectOverflow();
-                  onCreateProject();
-                }}
-              >
-                <FolderPlusIcon className="sidebar-section-icon" />
-                <span className="sidebar-section-item-copy">New project</span>
-              </button>
-
-              {visibleProjects.map(renderProjectRow)}
-
-              {overflowProjects.length > 0 ? (
-                <div className={`sidebar-item-shell sidebar-menu-root${isProjectOverflowOpen ? " menu-open" : ""}`}>
-                  <button
-                    className="sidebar-section-item sidebar-project-item more"
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={isProjectOverflowOpen}
-                    onClick={(event) => {
-                      setIsAccountMenuOpen(false);
-                      setOpenItemMenu(null);
-                      if (isProjectOverflowOpen) {
-                        closeProjectOverflow();
-                        return;
-                      }
-
-                      openProjectOverflow(event);
-                    }}
-                  >
-                    <MoreIcon className="sidebar-section-icon" />
-                    <span className="sidebar-section-item-copy">More</span>
-                  </button>
-
-                  {isProjectOverflowOpen ? renderProjectOverflowPanel() : null}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </section>
-
-        <section className="sidebar-section sidebar-chat-section">
-          <button
-            className="sidebar-section-toggle"
-            type="button"
-            aria-expanded={areChatsOpen}
-            onClick={() => {
-              setOpenItemMenu(null);
-              closeProjectOverflow();
-              setAreChatsOpen((current) => !current);
-            }}
-          >
-            <span>Your chats</span>
-            <ChevronIcon className={`sidebar-section-chevron${areChatsOpen ? " open" : ""}`} />
-          </button>
-
-          {areChatsOpen ? <div className="sidebar-section-list sidebar-chat-list">{conversations.map(renderChatRow)}</div> : null}
-        </section>
-      </div>
-
-      <div className="sidebar-footer-nav sidebar-account-menu-wrap sidebar-menu-root">
-        {isAccountMenuOpen ? renderAccountMenu() : null}
-
-        <button
-          className="sidebar-account-button"
-          type="button"
-          aria-label={accountButtonLabel}
-          aria-haspopup="menu"
-          aria-expanded={isAccountMenuOpen}
-          onClick={() => {
-            setOpenItemMenu(null);
-            closeProjectOverflow();
-            setIsAccountMenuOpen((current) => !current);
-          }}
-        >
-          <span className="sidebar-account-avatar" aria-hidden="true">
-            {accountAvatarLabel}
-          </span>
-
-          <span className="sidebar-account-copy">
-            <strong>{accountPrimaryLabel}</strong>
-            <span>{accountSecondaryLabel}</span>
-          </span>
-        </button>
+      <div className={`sidebar-view sidebar-view-collapsed${isCollapsed ? " is-visible" : " is-hidden"}`}>
+        {renderCollapsedSidebarLayout()}
       </div>
     </aside>
   );
