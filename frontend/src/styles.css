@@ -1053,7 +1053,7 @@ svg {
 .workspace-modal-card::-webkit-scrollbar,
 .project-workspace::-webkit-scrollbar,
 .thread-panel::-webkit-scrollbar {
-  width: 0.03rem;
+  width: 0.015rem;
 }
 
 .workspace-modal-card::-webkit-scrollbar-track,
