@@ -375,6 +375,27 @@ svg {
   text-align: center;
 }
 
+.empty-prompt {
+  min-height: 1.8rem;
+  margin: -0.55rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+  color: var(--muted-strong);
+  font-size: clamp(1.05rem, 2.1vw, 1.3rem);
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.empty-prompt-caret {
+  width: 0.11rem;
+  height: 1.15em;
+  border-radius: 999px;
+  background: currentColor;
+  animation: blink 1s step-end infinite;
+}
+
 .thread-panel {
   flex: 1 1 auto;
   min-height: 0;
@@ -688,6 +709,17 @@ svg {
   40% {
     transform: translateY(-0.15rem);
     opacity: 1;
+  }
+}
+
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
   }
 }
 
