@@ -134,10 +134,24 @@ function useTypewriterPrompt(phrases: string[]): string {
   return currentPhrase.slice(0, visibleLength);
 }
 
+type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "codex" | "llms";
+
+const workspaceLabels: Record<WorkspaceView, string> = {
+  new_chat: "New chat",
+  search_chats: "Search chats",
+  images: "Images",
+  library: "Library",
+  apps: "Apps",
+  deep_research: "Deep research",
+  codex: "Codex",
+  llms: "LLMs"
+};
+
 export default function App() {
   const [projects, setProjects] = useState<ProjectSummary[]>(seededProjects);
   const [conversations, setConversations] = useState<Conversation[]>(seededConversations);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(seededConversations[0]?.id ?? null);
+  const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceView>("new_chat");
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0]?.model ?? defaultModelOptions[0].id);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>(defaultModelOptions);
   const [draft, setDraft] = useState("");
@@ -299,6 +313,7 @@ export default function App() {
   }
 
   function handleNewConversation() {
+    setActiveWorkspace("new_chat");
     setActiveConversationId(null);
     setSelectedModel(availableModels[0]?.id ?? defaultModelOptions[0].id);
     setDraft("");
@@ -393,9 +408,22 @@ export default function App() {
     );
   }
 
+  function renderPlaceholderPage(view: Exclude<WorkspaceView, "new_chat">) {
+    return (
+      <section className="workspace-placeholder">
+        <div className="workspace-placeholder-card">
+          <p className="workspace-placeholder-kicker">Workspace</p>
+          <h2 className="workspace-placeholder-title">{workspaceLabels[view]}</h2>
+          <p className="workspace-placeholder-copy">This page is under construction.</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <div className={`app-shell${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
       <Sidebar
+        activeNavKey={activeWorkspace}
         projects={projects}
         conversations={conversations}
         activeConversationId={activeConversationId}
@@ -403,7 +431,11 @@ export default function App() {
         isCollapsed={isSidebarCollapsed}
         onCreateProject={handleCreateProject}
         onNewConversation={handleNewConversation}
-        onSelectConversation={setActiveConversationId}
+        onSelectConversation={(conversationId) => {
+          setActiveWorkspace("new_chat");
+          setActiveConversationId(conversationId);
+        }}
+        onSelectNav={(itemKey) => setActiveWorkspace(itemKey as WorkspaceView)}
         onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
       />
 
@@ -432,7 +464,9 @@ export default function App() {
           </div>
         </header>
 
-        {isEmpty ? (
+        {activeWorkspace !== "new_chat" ? (
+          renderPlaceholderPage(activeWorkspace)
+        ) : isEmpty ? (
           <section className="empty-state">
             <h2 className="empty-title">{emptyStateTitle}</h2>
             <p className="empty-prompt" aria-label={`Ideas: ${emptyStatePrompts.join(", ")}`}>

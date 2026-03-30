@@ -226,6 +226,7 @@ function ChevronIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 interface SidebarProps {
+  activeNavKey: string;
   projects: ProjectSummary[];
   conversations: Conversation[];
   activeConversationId: string | null;
@@ -233,6 +234,7 @@ interface SidebarProps {
   isCollapsed: boolean;
   onCreateProject: () => void;
   onNewConversation: () => void;
+  onSelectNav: (itemKey: string) => void;
   onSelectConversation: (conversationId: string) => void;
   onToggleSidebar: () => void;
 }
@@ -264,7 +266,7 @@ const navItems: NavItem[] = [
   { key: "apps", label: "Apps", icon: AppsIcon },
   { key: "deep_research", label: "Deep research", icon: DeepResearchIcon },
   { key: "codex", label: "Codex", icon: CodexIcon },
-  { key: "gpts", label: "GPTs", icon: GptsIcon }
+  { key: "llms", label: "LLMs", icon: GptsIcon }
 ];
 
 const chatMenuSections: SidebarMenuAction[][] = [
@@ -290,6 +292,7 @@ const projectMenuSections: SidebarMenuAction[][] = [
 ];
 
 export function Sidebar({
+  activeNavKey,
   projects,
   conversations,
   activeConversationId,
@@ -297,6 +300,7 @@ export function Sidebar({
   isCollapsed,
   onCreateProject,
   onNewConversation,
+  onSelectNav,
   onSelectConversation,
   onToggleSidebar
 }: SidebarProps) {
@@ -316,7 +320,6 @@ export function Sidebar({
     { label: accountPrimaryLabel, icon: UserIcon }
   ];
 
-  const [activeNavKey, setActiveNavKey] = useState<string>("new_chat");
   const [areProjectsOpen, setAreProjectsOpen] = useState(true);
   const [areChatsOpen, setAreChatsOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
@@ -344,7 +347,8 @@ export function Sidebar({
   }, [isAccountMenuOpen, openItemMenu]);
 
   function handleNavClick(itemKey: string) {
-    setActiveNavKey(itemKey);
+    onSelectNav(itemKey);
+    setIsAccountMenuOpen(false);
     setOpenItemMenu(null);
 
     if (itemKey === "new_chat") {
@@ -445,7 +449,9 @@ export function Sidebar({
               aria-expanded={isMenuOpen}
               onClick={(event) => handleItemMenuToggle(event, "project", project.id)}
             >
-              <MoreIcon className="sidebar-item-menu-dots" />
+              <span className="sidebar-item-menu-dots" aria-hidden="true">
+                ...
+              </span>
             </button>
 
             {isMenuOpen ? renderItemMenu("project") : null}
@@ -480,7 +486,9 @@ export function Sidebar({
           aria-expanded={isMenuOpen}
           onClick={(event) => handleItemMenuToggle(event, "chat", conversation.id)}
         >
-          <MoreIcon className="sidebar-item-menu-dots" />
+          <span className="sidebar-item-menu-dots" aria-hidden="true">
+            ...
+          </span>
         </button>
 
         {isMenuOpen ? renderItemMenu("chat") : null}
