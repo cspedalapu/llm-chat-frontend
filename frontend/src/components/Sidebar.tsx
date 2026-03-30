@@ -1,4 +1,4 @@
-﻿import { SVGProps } from "react";
+import { SVGProps, useEffect, useRef, useState } from "react";
 import { appName } from "@/lib/appConfig.ts";
 import { Conversation } from "@/types.ts";
 
@@ -39,20 +39,45 @@ function SearchIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
-function BookIcon(props: SVGProps<SVGSVGElement>) {
+function ImagesIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
-      <path d="M5.5 6.5A2.5 2.5 0 0 1 8 4h10.5v15H8a2.5 2.5 0 0 0-2.5 2.5" />
-      <path d="M5.5 6.5V19" />
-      <path d="M8.5 8.5h6" />
+      <rect x="4.5" y="6" width="10" height="10" rx="2.2" />
+      <path d="m7 13 2.2-2.2a1 1 0 0 1 1.4 0L14.5 14.7" />
+      <path d="m11.6 12.6.9-.9a1 1 0 0 1 1.4 0l1.1 1.1" />
+      <circle cx="10" cy="10" r="1.1" />
+      <path d="M9.5 18H17a2.5 2.5 0 0 0 2.5-2.5V8" />
+      <path d="M14.5 4.5H17A2.5 2.5 0 0 1 19.5 7" />
     </svg>
   );
 }
 
-function PulseIcon(props: SVGProps<SVGSVGElement>) {
+function AppsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
-      <path d="M3 12h4l2-4 4 8 2-4h6" />
+      <circle cx="8" cy="8" r="2.1" />
+      <circle cx="16" cy="8" r="2.1" />
+      <circle cx="8" cy="16" r="2.1" />
+      <circle cx="16" cy="16" r="2.1" />
+    </svg>
+  );
+}
+
+function DeepResearchIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="m6 16 5.3-5.3a2.7 2.7 0 0 1 3.8 0l1.2 1.2" />
+      <path d="M13.6 6.2 18 4.8l-1.4 4.4" />
+      <path d="M4.5 12.5 3 16.8l4.3-1.5" />
+      <path d="m8.2 14.8 1 4.7" />
+    </svg>
+  );
+}
+
+function HealthIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="m12 20-1.2-1C6.2 15 4 12.9 4 10.1A4.1 4.1 0 0 1 8.2 6a4.4 4.4 0 0 1 3.8 2.1A4.4 4.4 0 0 1 15.8 6 4.1 4.1 0 0 1 20 10.1c0 2.8-2.2 4.9-6.8 8.9Z" />
     </svg>
   );
 }
@@ -97,13 +122,10 @@ interface SidebarProps {
 
 const mainItems = [
   { label: "Search chats", icon: SearchIcon },
-  { label: "Knowledge base", icon: BookIcon },
-  { label: "System health", icon: PulseIcon }
-];
-
-const footerItems = [
-  { label: "Settings", icon: SettingsIcon },
-  { label: "Help", icon: HelpIcon }
+  { label: "Images", icon: ImagesIcon },
+  { label: "Apps", icon: AppsIcon },
+  { label: "Deep research", icon: DeepResearchIcon },
+  { label: "Health", icon: HealthIcon }
 ];
 
 export function Sidebar({
@@ -118,6 +140,53 @@ export function Sidebar({
   const accountPrimaryLabel = accountName?.trim() || "Sign in";
   const accountSecondaryLabel = "Account";
   const accountButtonLabel = accountName ? `${accountPrimaryLabel} account` : "Sign in to your account";
+  const accountMenuItems = [
+    { label: "Settings", icon: SettingsIcon },
+    { label: "Help", icon: HelpIcon },
+    { label: accountPrimaryLabel, icon: UserIcon }
+  ];
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setIsAccountMenuOpen(false);
+      }
+    }
+
+    if (!isAccountMenuOpen) {
+      return;
+    }
+
+    window.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      window.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isAccountMenuOpen]);
+
+  function renderAccountMenu(menuClassName?: string) {
+    return (
+      <div className={`sidebar-account-menu${menuClassName ? ` ${menuClassName}` : ""}`} role="menu" aria-label="Account menu">
+        {accountMenuItems.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <button
+              key={item.label}
+              className="sidebar-account-menu-item"
+              type="button"
+              role="menuitem"
+              onClick={() => setIsAccountMenuOpen(false)}
+            >
+              <Icon className="sidebar-nav-icon" />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   if (isCollapsed) {
     return (
@@ -164,28 +233,17 @@ export function Sidebar({
 
         <div className="sidebar-rail-spacer" />
 
-        <div className="sidebar-rail-actions sidebar-rail-footer">
-          {footerItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <button
-                key={item.label}
-                className="sidebar-rail-button"
-                type="button"
-                aria-label={item.label}
-                title={item.label}
-              >
-                <Icon />
-              </button>
-            );
-          })}
+        <div className="sidebar-rail-actions sidebar-rail-footer sidebar-account-menu-wrap" ref={accountMenuRef}>
+          {isAccountMenuOpen ? renderAccountMenu("sidebar-account-menu-floating") : null}
 
           <button
             className="sidebar-rail-button"
             type="button"
             aria-label={accountButtonLabel}
             title={accountPrimaryLabel}
+            aria-haspopup="menu"
+            aria-expanded={isAccountMenuOpen}
+            onClick={() => setIsAccountMenuOpen((current) => !current)}
           >
             <UserIcon />
           </button>
@@ -249,19 +307,17 @@ export function Sidebar({
         })}
       </div>
 
-      <div className="sidebar-footer-nav">
-        {footerItems.map((item) => {
-          const Icon = item.icon;
+      <div className="sidebar-footer-nav sidebar-account-menu-wrap" ref={accountMenuRef}>
+        {isAccountMenuOpen ? renderAccountMenu() : null}
 
-          return (
-            <button key={item.label} className="sidebar-nav-button footer" type="button">
-              <Icon className="sidebar-nav-icon" />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-
-        <button className="sidebar-account-button" type="button" aria-label={accountButtonLabel}>
+        <button
+          className="sidebar-account-button"
+          type="button"
+          aria-label={accountButtonLabel}
+          aria-haspopup="menu"
+          aria-expanded={isAccountMenuOpen}
+          onClick={() => setIsAccountMenuOpen((current) => !current)}
+        >
           <span className="sidebar-account-avatar" aria-hidden="true">
             <UserIcon className="sidebar-nav-icon" />
           </span>
