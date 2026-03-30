@@ -175,6 +175,7 @@ svg {
 .chat-title-button:hover,
 .sidebar-nav-button:hover,
 .sidebar-rail-button:hover,
+.model-control-button:hover,
 .model-control select:hover,
 .composer-icon-button:hover {
   background: rgba(255, 255, 255, 0.05);
@@ -644,6 +645,25 @@ svg {
   color: var(--text);
   padding: 0.72rem 2.6rem 0.72rem 0.95rem;
   appearance: none;
+}
+
+.model-control-button {
+  min-width: 10.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 0.95rem;
+  background: #2a2a2a;
+  color: var(--text);
+  padding: 0.72rem 0.95rem;
+}
+
+.model-control-caret {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--muted);
 }
 
 .llm-workspace-topbar {
