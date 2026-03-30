@@ -1,6 +1,6 @@
 export const appName = "LLM Workspace";
 export const appDescription = "Reusable AI chat starter for multi-provider projects.";
-export const emptyStateTitle = "Let's Build...";
+export const emptyStateTitle = "What's on your mind?";
 export const emptyStatePrompts = [
   "New Project",
   "Research Planning",
