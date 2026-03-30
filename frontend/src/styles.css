@@ -113,10 +113,14 @@ svg {
 
 .icon-button svg,
 .sidebar-nav-icon,
-.sidebar-section-icon,
-.sidebar-rail-button svg {
+.sidebar-section-icon {
   width: 1.08rem;
   height: 1.08rem;
+}
+
+.sidebar-rail-button svg {
+  width: 1.32rem;
+  height: 1.32rem;
 }
 
 .brand-icon-button {
