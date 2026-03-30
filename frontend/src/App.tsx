@@ -15,6 +15,45 @@ function PlusIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function OrbitIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="12" cy="12" r="6.5" />
+      <path d="M12 2.8v2.1M19.2 12h2M12 19.1v2.1M2.8 12h2" />
+    </svg>
+  );
+}
+
+function CaretDownIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="m7 10 5 5 5-5" />
+    </svg>
+  );
+}
+
+function MicrophoneIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <rect x="9" y="4" width="6" height="10" rx="3" />
+      <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0" />
+      <path d="M12 17v3" />
+    </svg>
+  );
+}
+
+function WaveformIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" {...props}>
+      <path d="M4 12h1.5" />
+      <path d="M8 9v6" />
+      <path d="M12 6.5v11" />
+      <path d="M16 9v6" />
+      <path d="M18.5 12H20" />
+    </svg>
+  );
+}
+
 function formatTime(date: Date): string {
   return date.toLocaleTimeString([], {
     hour: "2-digit",
@@ -250,8 +289,52 @@ export default function App() {
   }
 
   function renderComposer(empty: boolean) {
+    if (empty) {
+      return (
+        <form className="composer-panel empty composer-panel-hero" onSubmit={handleSubmit}>
+          <textarea
+            className="composer-hero-input"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleComposerKeyDown}
+            placeholder={composerPlaceholder}
+            rows={2}
+          />
+
+          <div className="composer-hero-toolbar">
+            <div className="composer-hero-actions">
+              <button className="composer-icon-button composer-icon-button-hero" type="button" aria-label="Add context">
+                <PlusIcon />
+              </button>
+
+              <button className="composer-mode-button" type="button" aria-label="Reasoning mode: Thinking">
+                <OrbitIcon className="composer-mode-icon" />
+                <span>Thinking</span>
+                <CaretDownIcon className="composer-mode-caret" />
+              </button>
+            </div>
+
+            <div className="composer-hero-actions composer-hero-actions-right">
+              <button className="composer-icon-button composer-mic-button" type="button" aria-label="Voice input">
+                <MicrophoneIcon />
+              </button>
+
+              <button
+                className="composer-voice-submit"
+                type="submit"
+                aria-label={isLoading ? "Working" : "Send message"}
+                disabled={isLoading || !draft.trim()}
+              >
+                <WaveformIcon />
+              </button>
+            </div>
+          </div>
+        </form>
+      );
+    }
+
     return (
-      <form className={`composer-panel${empty ? " empty" : ""}`} onSubmit={handleSubmit}>
+      <form className="composer-panel" onSubmit={handleSubmit}>
         <button className="composer-icon-button" type="button" aria-label="Add context">
           <PlusIcon />
         </button>
