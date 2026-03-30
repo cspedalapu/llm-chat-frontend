@@ -2,7 +2,7 @@ import { FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from 
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
 import { seededConversations } from "@/data/mockData.ts";
-import { appName, composerPlaceholder, emptyStateTitle } from "@/lib/appConfig.ts";
+import { appName, composerPlaceholder, emptyStatePrompts, emptyStateTitle } from "@/lib/appConfig.ts";
 import { fetchAvailableModels, requestAssistantReply } from "@/lib/chatClient.ts";
 import { defaultModelOptions } from "@/lib/models.ts";
 import { Conversation, Message, ModelId, ModelOption } from "@/types.ts";
@@ -41,11 +41,55 @@ function buildFreshConversation(): Conversation {
   return {
     id: `conv-${now.getTime()}`,
     title: "New chat",
-    preview: "Start a conversation",
+    preview: "Let's Build...",
     updatedAt: "Ready",
     model: defaultModelOptions[0].id,
     messages: []
   };
+}
+
+function useTypewriterPrompt(phrases: string[]): string {
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [visibleLength, setVisibleLength] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (phrases.length === 0) {
+      return;
+    }
+
+    const currentPhrase = phrases[phraseIndex] ?? "";
+    const isPhraseComplete = visibleLength === currentPhrase.length;
+    const isPhraseCleared = visibleLength === 0;
+    const delay = isDeleting ? (isPhraseCleared ? 240 : 55) : isPhraseComplete ? 1100 : 95;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!isDeleting && !isPhraseComplete) {
+        setVisibleLength((current) => current + 1);
+        return;
+      }
+
+      if (!isDeleting) {
+        setIsDeleting(true);
+        return;
+      }
+
+      if (!isPhraseCleared) {
+        setVisibleLength((current) => current - 1);
+        return;
+      }
+
+      setIsDeleting(false);
+      setPhraseIndex((current) => (current + 1) % phrases.length);
+    }, delay);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isDeleting, phraseIndex, phrases, visibleLength]);
+
+  const currentPhrase = phrases[phraseIndex] ?? "";
+  return currentPhrase.slice(0, visibleLength);
 }
 
 export default function App() {
@@ -58,6 +102,7 @@ export default function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const accountName: string | null = null;
+  const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
 
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeConversationId) ?? conversations[0];
@@ -266,6 +311,10 @@ export default function App() {
         {isEmpty ? (
           <section className="empty-state">
             <h2 className="empty-title">{emptyStateTitle}</h2>
+            <p className="empty-prompt" aria-label={`Ideas: ${emptyStatePrompts.join(", ")}`}>
+              <span>{rotatingPrompt || "\u00A0"}</span>
+              <span className="empty-prompt-caret" aria-hidden="true" />
+            </p>
             {renderComposer(true)}
           </section>
         ) : (
