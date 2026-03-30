@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
+import { CSSProperties, ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
 import { seededConversations, seededProjects } from "@/data/mockData.ts";
@@ -146,6 +146,17 @@ function SourcesIcon(props: SVGProps<SVGSVGElement>) {
       <circle cx="8" cy="16" r="2.1" />
       <circle cx="16" cy="16" r="2.1" />
       <path d="M10.1 9.9 13.9 14.1" />
+    </svg>
+  );
+}
+
+function AppsChipIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <circle cx="8" cy="8" r="2.1" />
+      <circle cx="16" cy="8" r="2.1" />
+      <circle cx="8" cy="16" r="2.1" />
+      <circle cx="16" cy="16" r="2.1" />
     </svg>
   );
 }
@@ -309,6 +320,7 @@ const projectTemplateOptions: Array<{ id: ProjectTemplate; label: string; accent
 const composerAddonOptions: Array<{
   id: ComposerAddon;
   label: string;
+  menuLabel?: string;
   icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
   inMoreMenu?: boolean;
   projectRestricted?: boolean;
@@ -318,10 +330,18 @@ const composerAddonOptions: Array<{
   { id: "web_search", label: "Web search", icon: GlobeIcon },
   { id: "study_and_learn", label: "Study and learn", icon: StudyIcon, inMoreMenu: true, projectRestricted: true },
   { id: "agent_mode", label: "Agent mode", icon: AgentIcon, inMoreMenu: true },
-  { id: "add_sources", label: "Add sources", icon: SourcesIcon, inMoreMenu: true },
+  { id: "add_sources", label: "Sources", menuLabel: "Add sources", icon: SourcesIcon, inMoreMenu: true },
   { id: "canvas", label: "Canvas", icon: CanvasIcon, inMoreMenu: true },
   { id: "quizzes", label: "Quizzes", icon: QuizIcon, inMoreMenu: true }
 ];
+
+const sourceAppOptions = [
+  { id: "gmail", label: "Gmail", badge: "G", color: "#ea4335" },
+  { id: "dropbox", label: "Dropbox", badge: "D", color: "#2f76ff" },
+  { id: "google_drive", label: "Google Drive", badge: "G", color: "#34a853" }
+] as const;
+
+type SourceAppId = (typeof sourceAppOptions)[number]["id"];
 
 function getComposerAddonOption(addonId: ComposerAddon) {
   return composerAddonOptions.find((option) => option.id === addonId) ?? composerAddonOptions[0];
@@ -428,6 +448,8 @@ export default function App() {
   const [composerSubmenu, setComposerSubmenu] = useState<ComposerSubmenu>(null);
   const [isThinkingMenuOpen, setIsThinkingMenuOpen] = useState(false);
   const [selectedComposerAddons, setSelectedComposerAddons] = useState<ComposerAddon[]>([]);
+  const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const [selectedSourceApps, setSelectedSourceApps] = useState<SourceAppId[]>([]);
   const [composerRecentFiles, setComposerRecentFiles] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -519,9 +541,10 @@ export default function App() {
       }
 
       closeComposerMenus();
+      setIsAppsMenuOpen(false);
     }
 
-    if (!isComposerToolsOpen && !isThinkingMenuOpen) {
+    if (!isComposerToolsOpen && !isThinkingMenuOpen && !isAppsMenuOpen) {
       return;
     }
 
@@ -529,7 +552,7 @@ export default function App() {
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [isComposerToolsOpen, isThinkingMenuOpen]);
+  }, [isAppsMenuOpen, isComposerToolsOpen, isThinkingMenuOpen]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -545,7 +568,23 @@ export default function App() {
     const effectiveComposerAddons = shouldApplyComposerAddons
       ? selectedComposerAddons.filter((addonId) => !isComposerAddonRestricted(addonId, activeWorkspace === "project"))
       : [];
-    const addonContext = effectiveComposerAddons.map((addonId) => getComposerAddonOption(addonId).label).join(", ");
+    const addonContext = effectiveComposerAddons
+      .map((addonId) => {
+        if (addonId !== "add_sources") {
+          return getComposerAddonOption(addonId).label;
+        }
+
+        if (selectedSourceApps.length === 0) {
+          return "Sources";
+        }
+
+        const connectedLabels = selectedSourceApps
+          .map((sourceAppId) => sourceAppOptions.find((option) => option.id === sourceAppId)?.label ?? sourceAppId)
+          .join(", ");
+
+        return `Sources (${connectedLabels})`;
+      })
+      .join(", ");
     const assistantQuery = addonContext ? `[Selected tools: ${addonContext}]\n\n${query}` : query;
     const userMessage: Message = {
       id: `user-${now.getTime()}`,
@@ -835,6 +874,7 @@ export default function App() {
     setIsComposerToolsOpen(false);
     setComposerSubmenu(null);
     setIsThinkingMenuOpen(false);
+    setIsAppsMenuOpen(false);
   }
 
   function focusHeroComposer() {
@@ -850,6 +890,7 @@ export default function App() {
       return;
     }
 
+    setIsAppsMenuOpen(false);
     setIsThinkingMenuOpen(false);
     setComposerSubmenu(null);
     setIsComposerToolsOpen(true);
@@ -861,6 +902,7 @@ export default function App() {
       return;
     }
 
+    setIsAppsMenuOpen(false);
     setIsComposerToolsOpen(false);
     setComposerSubmenu(null);
     setIsThinkingMenuOpen(true);
@@ -892,15 +934,79 @@ export default function App() {
   }
 
   function toggleComposerAddon(addonId: ComposerAddon) {
-    setSelectedComposerAddons((currentAddons) =>
-      currentAddons.includes(addonId) ? currentAddons.filter((currentAddonId) => currentAddonId !== addonId) : [...currentAddons, addonId]
-    );
+    setSelectedComposerAddons((currentAddons) => {
+      const isSelected = currentAddons.includes(addonId);
+
+      if (addonId === "add_sources" && isSelected) {
+        setIsAppsMenuOpen(false);
+      }
+
+      return isSelected ? currentAddons.filter((currentAddonId) => currentAddonId !== addonId) : [...currentAddons, addonId];
+    });
   }
 
   function handleComposerAddonClick(addonId: ComposerAddon) {
     toggleComposerAddon(addonId);
     closeComposerMenus();
     focusHeroComposer();
+  }
+
+  function handleComposerAddonDoubleClick(addonId: ComposerAddon) {
+    if (!selectedComposerAddons.includes(addonId)) {
+      return;
+    }
+
+    toggleComposerAddon(addonId);
+    focusHeroComposer();
+  }
+
+  function handleSourceAppToggle(sourceAppId: SourceAppId) {
+    setSelectedSourceApps((currentApps) =>
+      currentApps.includes(sourceAppId) ? currentApps.filter((currentAppId) => currentAppId !== sourceAppId) : [...currentApps, sourceAppId]
+    );
+  }
+
+  function renderAppsMenu() {
+    return (
+      <div className="composer-apps-menu" role="menu" aria-label="Apps">
+        {sourceAppOptions.map((app) => {
+          const isSelected = selectedSourceApps.includes(app.id);
+
+          return (
+            <button
+              key={app.id}
+              className={`composer-apps-menu-item${isSelected ? " active" : ""}`}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={isSelected}
+              onClick={() => handleSourceAppToggle(app.id)}
+            >
+              <div className="composer-apps-menu-item-main">
+                <span className="composer-apps-badge" style={{ "--badge-color": app.color } as CSSProperties}>
+                  {app.badge}
+                </span>
+                <span>{app.label}</span>
+              </div>
+            </button>
+          );
+        })}
+
+        <button
+          className="composer-apps-menu-item composer-apps-menu-item-more"
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            setIsAppsMenuOpen(false);
+            focusHeroComposer();
+          }}
+        >
+          <div className="composer-apps-menu-item-main">
+            <span className="composer-apps-badge composer-apps-badge-neutral">+</span>
+            <span>Connect more</span>
+          </div>
+        </button>
+      </div>
+    );
   }
 
   function renderComposerToolsMenu(inProject: boolean) {
@@ -1041,7 +1147,7 @@ export default function App() {
               onClick={() => handleComposerAddonClick("add_sources")}
             >
               <SourcesIcon className="composer-tools-menu-icon" />
-              <span>Add sources</span>
+              <span>{getComposerAddonOption("add_sources").menuLabel ?? getComposerAddonOption("add_sources").label}</span>
             </button>
 
             <button
@@ -1141,6 +1247,41 @@ export default function App() {
 
           {visibleComposerAddons.map((addonId) => {
             const addon = getComposerAddonOption(addonId);
+            if (addon.id === "add_sources") {
+              return (
+                <div key={addon.id} className="composer-addon-pair">
+                  <button
+                    className="composer-addon-chip"
+                    type="button"
+                    aria-pressed="true"
+                    title="Double-click to remove"
+                    onDoubleClick={() => handleComposerAddonDoubleClick(addon.id)}
+                  >
+                    <SourcesIcon className="composer-addon-chip-icon" />
+                    <span>{addon.label}</span>
+                  </button>
+
+                  <div className="composer-menu-root">
+                    <button
+                      className={`composer-addon-chip composer-addon-chip-dropdown${isAppsMenuOpen ? " active" : ""}`}
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={isAppsMenuOpen}
+                      title="Click to open apps, double-click to remove"
+                      onClick={() => setIsAppsMenuOpen((currentState) => !currentState)}
+                      onDoubleClick={() => handleComposerAddonDoubleClick(addon.id)}
+                    >
+                      <AppsChipIcon className="composer-addon-chip-icon" />
+                      <span>Apps</span>
+                      <CaretDownIcon className="composer-addon-chip-caret" />
+                    </button>
+
+                    {isAppsMenuOpen ? renderAppsMenu() : null}
+                  </div>
+                </div>
+              );
+            }
+
             const AddonIcon = addon.icon;
 
             return (
@@ -1149,7 +1290,8 @@ export default function App() {
                 className="composer-addon-chip"
                 type="button"
                 aria-pressed="true"
-                onClick={() => toggleComposerAddon(addon.id)}
+                title="Double-click to remove"
+                onDoubleClick={() => handleComposerAddonDoubleClick(addon.id)}
               >
                 <AddonIcon className="composer-addon-chip-icon" />
                 <span>{addon.label}</span>
