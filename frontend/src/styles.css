@@ -192,8 +192,8 @@ svg {
   display: flex;
   align-items: center;
   gap: 0.72rem;
-  min-height: 2.34rem;
-  padding: 0.48rem 0.8rem;
+  min-height: 2.24rem;
+  padding: 0.42rem 0.8rem;
   background: transparent;
   color: var(--text);
   font-size: 1.16rem;
@@ -230,11 +230,11 @@ svg {
 }
 
 .sidebar-section {
-  margin-top: 0.9rem;
+  margin-top: 0.82rem;
 }
 
 .sidebar-chat-section {
-  margin-top: 1rem;
+  margin-top: 0.92rem;
 }
 
 .sidebar-section-toggle {
@@ -276,11 +276,11 @@ svg {
 
 .sidebar-section-item {
   width: 100%;
-  min-height: 2.12rem;
+  min-height: 2.04rem;
   display: flex;
   align-items: center;
   gap: 0.68rem;
-  padding: 0.38rem 0.8rem;
+  padding: 0.34rem 0.8rem;
   border: 1px solid transparent;
   border-radius: 0.85rem;
   background: transparent;
