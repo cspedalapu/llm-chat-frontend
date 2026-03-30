@@ -96,9 +96,9 @@ svg {
 
 .sidebar-view {
   transition:
-    opacity 260ms ease,
-    transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  will-change: opacity, transform;
+    opacity 240ms ease,
+    transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: opacity;
   overflow: visible;
   backface-visibility: hidden;
 }
@@ -124,25 +124,25 @@ svg {
 
 .sidebar:not(.collapsed) .sidebar-view-expanded {
   opacity: 1;
-  transform: translateX(0) scale(1);
+  transform: none;
   pointer-events: auto;
 }
 
 .sidebar:not(.collapsed) .sidebar-view-collapsed {
   opacity: 0;
-  transform: translateX(-0.2rem) scale(0.985);
+  transform: translateX(-0.08rem);
   pointer-events: none;
 }
 
 .sidebar.collapsed .sidebar-view-expanded {
   opacity: 0;
-  transform: translateX(0.25rem) scale(0.992);
+  transform: none;
   pointer-events: none;
 }
 
 .sidebar.collapsed .sidebar-view-collapsed {
   opacity: 1;
-  transform: translateX(0) scale(1);
+  transform: none;
   pointer-events: auto;
 }
 
@@ -218,7 +218,7 @@ svg {
 }
 
 .sidebar-scroll-region::-webkit-scrollbar {
-  width: 0.06rem;
+  width: 0.04rem;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar-track {
@@ -283,7 +283,7 @@ svg {
   background: transparent;
   color: var(--text);
   font-size: 1.16rem;
-  font-weight: 400;
+  font-weight: 350;
   line-height: 1.26;
   text-align: left;
 }
@@ -312,7 +312,7 @@ svg {
   margin-left: auto;
   color: var(--muted);
   font-size: 0.94rem;
-  font-weight: 400;
+  font-weight: 350;
 }
 
 .sidebar-section {
@@ -333,6 +333,7 @@ svg {
   background: transparent;
   color: var(--muted);
   font-size: 1.08rem;
+  font-weight: 350;
   text-align: left;
 }
 
@@ -372,7 +373,7 @@ svg {
   background: transparent;
   color: var(--text);
   font-size: 1.14rem;
-  font-weight: 400;
+  font-weight: 350;
   line-height: 1.26;
   text-align: left;
   transition: background 140ms ease, color 140ms ease;
@@ -520,6 +521,7 @@ svg {
   background: transparent;
   color: #f3f3f3;
   font-size: 1.04rem;
+  font-weight: 350;
   text-align: left;
   transition: background 140ms ease, color 140ms ease;
 }
@@ -574,7 +576,7 @@ svg {
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar {
-  width: 0.06rem;
+  width: 0.02rem;
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar-track {
@@ -608,7 +610,7 @@ svg {
   background: transparent;
   color: #f3f3f3;
   font-size: 1.04rem;
-  font-weight: 400;
+  font-weight: 350;
   text-align: left;
   transition: background 140ms ease, color 140ms ease;
 }
@@ -751,7 +753,7 @@ svg {
 
 .sidebar-account-copy strong {
   font-size: 1.06rem;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .sidebar-account-copy span {
@@ -1051,7 +1053,7 @@ svg {
 .workspace-modal-card::-webkit-scrollbar,
 .project-workspace::-webkit-scrollbar,
 .thread-panel::-webkit-scrollbar {
-  width: 0.08rem;
+  width: 0.03rem;
 }
 
 .workspace-modal-card::-webkit-scrollbar-track,
