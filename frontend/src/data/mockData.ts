@@ -1,5 +1,5 @@
 import { getModelLabel } from "@/lib/models.ts";
-import { AssistantResult, Conversation, ModelId, ResolutionSections, ResolutionSource } from "@/types.ts";
+import { AssistantResult, Conversation, ModelId, ProjectSummary, ResolutionSections, ResolutionSource } from "@/types.ts";
 
 export const suggestedPrompts = [
   "Why is my API returning 401 unauthorized?",
@@ -224,11 +224,24 @@ export function buildMockResponse(query: string, model: ModelId): AssistantResul
   };
 }
 
+export const seededProjects: ProjectSummary[] = [
+  {
+    id: "project-research-planning",
+    title: "Research Planning",
+    preview: "Scope goals, sources, and next steps"
+  },
+  {
+    id: "project-prototype-lab",
+    title: "Prototype Lab",
+    preview: "Turn ideas into clickable concepts"
+  }
+];
+
 export const seededConversations: Conversation[] = [
   {
     id: "conv-new",
-    title: "New chat",
-    preview: "Start a reusable AI workspace conversation",
+    title: "Your chat",
+    preview: "Continue your latest workspace conversation",
     updatedAt: "Ready",
     model: "gpt-4o-mini",
     messages: []

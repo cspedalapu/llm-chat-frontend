@@ -1,11 +1,11 @@
 import { FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
-import { seededConversations } from "@/data/mockData.ts";
+import { seededConversations, seededProjects } from "@/data/mockData.ts";
 import { appName, composerPlaceholder, emptyStatePrompts, emptyStateTitle } from "@/lib/appConfig.ts";
 import { fetchAvailableModels, requestAssistantReply } from "@/lib/chatClient.ts";
 import { defaultModelOptions } from "@/lib/models.ts";
-import { Conversation, Message, ModelId, ModelOption } from "@/types.ts";
+import { Conversation, Message, ModelId, ModelOption, ProjectSummary } from "@/types.ts";
 
 function PlusIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -132,6 +132,7 @@ function useTypewriterPrompt(phrases: string[]): string {
 }
 
 export default function App() {
+  const [projects] = useState<ProjectSummary[]>(seededProjects);
   const [conversations, setConversations] = useState<Conversation[]>(seededConversations);
   const [activeConversationId, setActiveConversationId] = useState<string>(seededConversations[0].id);
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0].model);
@@ -357,6 +358,7 @@ export default function App() {
   return (
     <div className={`app-shell${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
       <Sidebar
+        projects={projects}
         conversations={conversations}
         activeConversationId={activeConversationId}
         accountName={accountName}

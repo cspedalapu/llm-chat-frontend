@@ -51,3 +51,9 @@ export interface Conversation {
   model: ModelId;
   messages: Message[];
 }
+
+export interface ProjectSummary {
+  id: string;
+  title: string;
+  preview: string;
+}

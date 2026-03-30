@@ -1,6 +1,6 @@
 import { SVGProps, useEffect, useRef, useState } from "react";
 import { appName } from "@/lib/appConfig.ts";
-import { Conversation } from "@/types.ts";
+import { Conversation, ProjectSummary } from "@/types.ts";
 
 function LogoIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -111,6 +111,7 @@ function UserIcon(props: SVGProps<SVGSVGElement>) {
 }
 
 interface SidebarProps {
+  projects: ProjectSummary[];
   conversations: Conversation[];
   activeConversationId: string;
   accountName?: string | null;
@@ -129,6 +130,7 @@ const mainItems = [
 ];
 
 export function Sidebar({
+  projects,
   conversations,
   activeConversationId,
   accountName,
@@ -287,7 +289,18 @@ export function Sidebar({
         })}
       </div>
 
-      <div className="conversation-section-title">Recent</div>
+      <div className="conversation-section-title">Projects</div>
+
+      <div className="sidebar-section-list">
+        {projects.map((project) => (
+          <button key={project.id} className="conversation-card project-card" type="button">
+            <strong>{project.title}</strong>
+            <span>{project.preview}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="conversation-section-title">Your chats</div>
 
       <div className="conversation-list">
         {conversations.map((conversation) => {
