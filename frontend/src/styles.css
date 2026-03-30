@@ -292,7 +292,7 @@ svg {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--text);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-50%);
@@ -310,12 +310,23 @@ svg {
 
 .sidebar-item-menu-trigger:hover {
   background: transparent;
-  color: #ffffff;
+  color: var(--text);
 }
 
 .sidebar-item-menu-dots {
   width: 1rem;
   height: 1rem;
+  display: block;
+  color: var(--text);
+  stroke: currentColor;
+}
+
+.sidebar-item-shell:hover .sidebar-item-menu-dots,
+.sidebar-item-shell:focus-within .sidebar-item-menu-dots,
+.sidebar-item-shell.menu-open .sidebar-item-menu-dots,
+.sidebar-item-menu-trigger.visible .sidebar-item-menu-dots {
+  color: var(--text);
+  stroke: currentColor;
 }
 
 .sidebar-project-item.monitor {
