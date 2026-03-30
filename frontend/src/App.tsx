@@ -305,7 +305,7 @@ const workspaceLabels: Record<PlaceholderWorkspaceView, string> = {
   images: "Images",
   library: "Library",
   apps: "Apps",
-  deep_research: "Deep research",
+  deep_research: "Deep Research",
   workspace: "Workspace",
   llms: "LLMs"
 };
@@ -326,7 +326,7 @@ const composerAddonOptions: Array<{
   projectRestricted?: boolean;
 }> = [
   { id: "create_image", label: "Create image", icon: ImageIcon },
-  { id: "deep_research", label: "Deep research", icon: AgentIcon },
+  { id: "deep_research", label: "Deep Research", icon: AgentIcon },
   { id: "web_search", label: "Web search", icon: GlobeIcon },
   { id: "study_and_learn", label: "Study and learn", icon: StudyIcon, inMoreMenu: true, projectRestricted: true },
   { id: "agent_mode", label: "Agent mode", icon: AgentIcon, inMoreMenu: true },
@@ -848,6 +848,24 @@ export default function App() {
     }
   }
 
+  function handleDeleteConversation(conversationId: string) {
+    const targetConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
+
+    setConversations((currentConversations) => currentConversations.filter((conversation) => conversation.id !== conversationId));
+
+    if (activeConversationId === conversationId) {
+      setActiveConversationId(null);
+      setActiveProjectId(targetConversation?.projectId ?? null);
+      if (activeWorkspace === "project" && !targetConversation?.projectId) {
+        setActiveWorkspace("new_chat");
+      }
+    }
+
+    if (editingConversationId === conversationId) {
+      closeChatRenameModal();
+    }
+  }
+
   function handleAssignConversationToProject(conversationId: string, projectId: string) {
     setConversations((currentConversations) =>
       currentConversations.map((conversation) =>
@@ -1134,7 +1152,7 @@ export default function App() {
             onClick={() => handleComposerAddonClick("deep_research")}
           >
             <AgentIcon className="composer-tools-menu-icon" />
-            <span>Deep research</span>
+            <span>Deep Research</span>
           </button>
 
           <button
@@ -1540,7 +1558,7 @@ export default function App() {
 
         {activeProjectTab === "chats" ? (
           <div className="project-content-panel">
-            <p className="project-panel-note">Drag chats from Your chats into this project, or start a new project chat above.</p>
+            <p className="project-panel-note">Drag chats from Your Chats into this project, or start a new project chat above.</p>
 
             {projectConversations.length > 0 ? (
               <div className="project-chat-grid">
@@ -1562,7 +1580,7 @@ export default function App() {
             ) : (
               <div className="project-empty-card">
                 <h3>No chats yet</h3>
-                <p>Chats in {project.title} will live here. Start a project chat above or drag one in from Your chats.</p>
+                <p>Chats in {project.title} will live here. Start a project chat above or drag one in from Your Chats.</p>
               </div>
             )}
           </div>
@@ -1674,6 +1692,7 @@ export default function App() {
         onCreateProject={handleCreateProject}
         onNewConversation={handleNewConversation}
         onDeleteProject={handleDeleteProject}
+        onDeleteConversation={handleDeleteConversation}
         onMoveConversationToProject={handleAssignConversationToProject}
         onRenameConversation={handleRenameConversation}
         onRenameProject={handleRenameProject}

@@ -235,6 +235,7 @@ interface SidebarProps {
   isCollapsed: boolean;
   onCreateProject: () => void;
   onDeleteProject: (projectId: string) => void;
+  onDeleteConversation: (conversationId: string) => void;
   onMoveConversationToProject: (conversationId: string, projectId: string) => void;
   onNewConversation: () => void;
   onRenameConversation: (conversationId: string) => void;
@@ -281,7 +282,7 @@ const navItems: NavItem[] = [
   { key: "images", label: "Images", icon: ImagesIcon },
   { key: "library", label: "Library", icon: LibraryIcon },
   { key: "apps", label: "Apps", icon: AppsIcon },
-  { key: "deep_research", label: "Deep research", icon: DeepResearchIcon },
+  { key: "deep_research", label: "Deep Research", icon: DeepResearchIcon },
   { key: "workspace", label: "Workspace", icon: CodexIcon },
   { key: "llms", label: "LLMs", icon: GptsIcon }
 ];
@@ -318,6 +319,7 @@ export function Sidebar({
   isCollapsed,
   onCreateProject,
   onDeleteProject,
+  onDeleteConversation,
   onMoveConversationToProject,
   onNewConversation,
   onRenameConversation,
@@ -551,6 +553,8 @@ export function Sidebar({
                     if (kind !== "project") {
                       if (item.label === "Rename") {
                         onRenameConversation(itemId);
+                      } else if (item.label === "Delete") {
+                        onDeleteConversation(itemId);
                       }
                       return;
                     }
@@ -924,7 +928,7 @@ export function Sidebar({
                 setAreChatsOpen((current) => !current);
               }}
             >
-              <span>Your chats</span>
+              <span>Your Chats</span>
               <ChevronIcon className={`sidebar-section-chevron${areChatsOpen ? " open" : ""}`} />
             </button>
 
