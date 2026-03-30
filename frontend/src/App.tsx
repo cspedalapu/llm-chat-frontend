@@ -573,6 +573,60 @@ export default function App() {
     );
   }
 
+  function renderWorkspaceHeader() {
+    if (activeWorkspace === "new_chat") {
+      return (
+        <header className="workspace-topbar">
+          <div className="workspace-title-row">
+            <button className="chat-title-button" type="button">
+              <span>{appName}</span>
+              <span className="title-caret">âŒ„</span>
+            </button>
+          </div>
+
+          <div className="workspace-actions">
+            <label className="model-control">
+              <select
+                value={selectedModel}
+                onChange={(event) => setSelectedModel(event.target.value as ModelId)}
+              >
+                {availableModels.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </header>
+      );
+    }
+
+    if (activeWorkspace === "llms") {
+      return (
+        <header className="workspace-topbar llm-workspace-topbar">
+          <div className="workspace-title-row">
+            <label className="model-control llm-model-control">
+              <select value={selectedManagedModelId} onChange={handleManagedModelChange}>
+                <option value="">Models</option>
+                <option value={addModelOptionValue}>Add your Model</option>
+                {managedModels.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <div className="workspace-actions llm-workspace-actions-empty" aria-hidden="true" />
+        </header>
+      );
+    }
+
+    return null;
+  }
+
   return (
     <div className={`app-shell${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
       <Sidebar
