@@ -710,7 +710,7 @@ export default function App() {
           </>
         )}
 
-        {activeWorkspace === "llms" && isAddModelModalOpen ? (
+        {(activeWorkspace === "new_chat" || activeWorkspace === "llms") && isAddModelModalOpen ? (
           <div className="workspace-modal-backdrop" role="presentation" onClick={closeAddModelModal}>
             <div
               className="workspace-modal-card"
