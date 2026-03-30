@@ -670,18 +670,19 @@ svg {
   margin-left: auto;
 }
 
-.composer-icon-button-hero,
-.composer-mic-button {
-  width: 2.25rem;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  min-height: 2.25rem;
+.composer-icon-button.composer-icon-button-hero,
+.composer-icon-button.composer-mic-button {
+  width: 2.65rem;
+  min-width: 2.65rem;
+  height: 2.65rem;
+  min-height: 2.65rem;
   color: var(--muted-strong);
 }
 
-.composer-icon-button-hero svg {
-  width: 1.42rem;
-  height: 1.42rem;
+.composer-icon-button.composer-icon-button-hero svg,
+.composer-icon-button.composer-mic-button svg {
+  width: 1.52rem;
+  height: 1.52rem;
 }
 
 .composer-mode-button {
@@ -702,7 +703,6 @@ svg {
 
 .composer-mode-icon,
 .composer-mode-caret,
-.composer-mic-button svg,
 .composer-voice-submit svg {
   width: 1.35rem;
   height: 1.35rem;
@@ -714,10 +714,10 @@ svg {
 }
 
 .composer-voice-submit {
-  width: 2.25rem;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  min-height: 2.25rem;
+  width: 3.1rem;
+  min-width: 3.1rem;
+  height: 3.1rem;
+  min-height: 3.1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -727,6 +727,11 @@ svg {
   color: #ffffff;
   box-shadow: 0 8px 20px rgba(242, 106, 11, 0.34);
   transition: transform 140ms ease, opacity 140ms ease, box-shadow 140ms ease;
+}
+
+.composer-voice-submit svg {
+  width: 1.48rem;
+  height: 1.48rem;
 }
 
 .composer-voice-submit:hover {
