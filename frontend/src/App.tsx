@@ -57,6 +57,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const accountName: string | null = null;
 
   const activeConversation =
     conversations.find((conversation) => conversation.id === activeConversationId) ?? conversations[0];
@@ -230,6 +231,7 @@ export default function App() {
       <Sidebar
         conversations={conversations}
         activeConversationId={activeConversationId}
+        accountName={accountName}
         isCollapsed={isSidebarCollapsed}
         onNewConversation={handleNewConversation}
         onSelectConversation={setActiveConversationId}

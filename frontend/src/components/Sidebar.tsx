@@ -76,9 +76,19 @@ function SettingsIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function UserIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <circle cx="12" cy="8.2" r="3.2" />
+      <path d="M5.5 18.5a6.5 6.5 0 0 1 13 0" />
+    </svg>
+  );
+}
+
 interface SidebarProps {
   conversations: Conversation[];
   activeConversationId: string;
+  accountName?: string | null;
   isCollapsed: boolean;
   onNewConversation: () => void;
   onSelectConversation: (conversationId: string) => void;
@@ -99,11 +109,16 @@ const footerItems = [
 export function Sidebar({
   conversations,
   activeConversationId,
+  accountName,
   isCollapsed,
   onNewConversation,
   onSelectConversation,
   onToggleSidebar
 }: SidebarProps) {
+  const accountPrimaryLabel = accountName?.trim() || "Sign in";
+  const accountSecondaryLabel = "Account";
+  const accountButtonLabel = accountName ? `${accountPrimaryLabel} account` : "Sign in to your account";
+
   if (isCollapsed) {
     return (
       <aside className="sidebar collapsed">
@@ -165,6 +180,15 @@ export function Sidebar({
               </button>
             );
           })}
+
+          <button
+            className="sidebar-rail-button"
+            type="button"
+            aria-label={accountButtonLabel}
+            title={accountPrimaryLabel}
+          >
+            <UserIcon />
+          </button>
         </div>
       </aside>
     );
@@ -236,6 +260,17 @@ export function Sidebar({
             </button>
           );
         })}
+
+        <button className="sidebar-account-button" type="button" aria-label={accountButtonLabel}>
+          <span className="sidebar-account-avatar" aria-hidden="true">
+            <UserIcon className="sidebar-nav-icon" />
+          </span>
+
+          <span className="sidebar-account-copy">
+            <strong>{accountPrimaryLabel}</strong>
+            <span>{accountSecondaryLabel}</span>
+          </span>
+        </button>
       </div>
     </aside>
   );
