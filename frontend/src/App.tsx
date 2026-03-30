@@ -5,7 +5,7 @@ import { seededConversations, seededProjects } from "@/data/mockData.ts";
 import { appName, composerPlaceholder, emptyStatePrompts, emptyStateTitle } from "@/lib/appConfig.ts";
 import { fetchAvailableModels, requestAssistantReply } from "@/lib/chatClient.ts";
 import { defaultModelOptions } from "@/lib/models.ts";
-import { Conversation, Message, ModelId, ModelOption, ProjectSummary } from "@/types.ts";
+import { Conversation, Message, ModelId, ModelOption, ProjectSummary, ProjectTemplate } from "@/types.ts";
 
 function PlusIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -50,6 +50,32 @@ function WaveformIcon(props: SVGProps<SVGSVGElement>) {
       <path d="M12 6.5v11" />
       <path d="M16 9v6" />
       <path d="M18.5 12H20" />
+    </svg>
+  );
+}
+
+function ProjectFolderIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
+      <path d="M4.8 8.2h5l1.5 1.7h7.9a1.8 1.8 0 0 1 1.8 1.8v6.5A1.8 1.8 0 0 1 19.2 20H4.8A1.8 1.8 0 0 1 3 18.2V10A1.8 1.8 0 0 1 4.8 8.2Z" />
+    </svg>
+  );
+}
+
+function ShareIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="M12 15.5V4.8" />
+      <path d="m8.6 8.2 3.4-3.4 3.4 3.4" />
+      <path d="M5.2 12.6V17a2.2 2.2 0 0 0 2.2 2.2h9.2a2.2 2.2 0 0 0 2.2-2.2v-4.4" />
+    </svg>
+  );
+}
+
+function DotsIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="M6 12h.01M12 12h.01M18 12h.01" />
     </svg>
   );
 }
@@ -134,7 +160,9 @@ function useTypewriterPrompt(phrases: string[]): string {
   return currentPhrase.slice(0, visibleLength);
 }
 
-type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "workspace" | "llms";
+type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "workspace" | "llms" | "project";
+type PlaceholderWorkspaceView = Exclude<WorkspaceView, "new_chat" | "project">;
+type ProjectTab = "chats" | "sources";
 
 interface ManagedModelOption {
   id: string;
@@ -142,8 +170,7 @@ interface ManagedModelOption {
   provider: string;
 }
 
-const workspaceLabels: Record<WorkspaceView, string> = {
-  new_chat: "New chat",
+const workspaceLabels: Record<PlaceholderWorkspaceView, string> = {
   search_chats: "Search chats",
   images: "Images",
   library: "Library",
@@ -152,6 +179,13 @@ const workspaceLabels: Record<WorkspaceView, string> = {
   workspace: "Workspace",
   llms: "LLMs"
 };
+
+const projectTemplateOptions: Array<{ id: ProjectTemplate; label: string; accent: string }> = [
+  { id: "investing", label: "Investing", accent: "#46d18c" },
+  { id: "homework", label: "Homework", accent: "#5aa7ff" },
+  { id: "writing", label: "Writing", accent: "#b186ff" },
+  { id: "travel", label: "Travel", accent: "#f0c44f" }
+];
 
 const addModelOptionValue = "__add_model__";
 
@@ -165,7 +199,7 @@ const seededManagedModels: ManagedModelOption[] = [
 
 const workspacePageDetails: Partial<
   Record<
-    Exclude<WorkspaceView, "new_chat">,
+    PlaceholderWorkspaceView,
     {
       kicker: string;
       description: string;
@@ -238,6 +272,8 @@ export default function App() {
   const [conversations, setConversations] = useState<Conversation[]>(seededConversations);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(seededConversations[0]?.id ?? null);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceView>("new_chat");
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [activeProjectTab, setActiveProjectTab] = useState<ProjectTab>("chats");
   const [managedModels, setManagedModels] = useState<ManagedModelOption[]>(seededManagedModels);
   const [selectedManagedModelId, setSelectedManagedModelId] = useState(seededManagedModels[0]?.id ?? "");
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0]?.model ?? defaultModelOptions[0].id);
@@ -246,6 +282,12 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isAddModelModalOpen, setIsAddModelModalOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [projectModalMode, setProjectModalMode] = useState<"create" | "rename">("create");
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [projectNameDraft, setProjectNameDraft] = useState("");
+  const [projectInstructionsDraft, setProjectInstructionsDraft] = useState("");
+  const [selectedProjectTemplate, setSelectedProjectTemplate] = useState<ProjectTemplate>("writing");
   const [newModelName, setNewModelName] = useState("");
   const [newModelApiKey, setNewModelApiKey] = useState("");
   const [newModelInstructions, setNewModelInstructions] = useState("");
@@ -258,8 +300,12 @@ export default function App() {
   const activeConversation = activeConversationId
     ? conversations.find((conversation) => conversation.id === activeConversationId) ?? null
     : null;
+  const activeProject = activeProjectId ? projects.find((project) => project.id === activeProjectId) ?? null : null;
+  const projectConversations = activeProject ? conversations.filter((conversation) => conversation.projectId === activeProject.id) : [];
+  const sidebarConversations = conversations.filter((conversation) => !conversation.projectId);
+  const highlightedProjectId = activeWorkspace === "project" ? activeProjectId : activeConversation?.projectId ?? null;
   const activeMessages = activeConversation?.messages ?? [];
-  const isEmpty = activeMessages.length === 0;
+  const isEmpty = activeWorkspace === "new_chat" && activeMessages.length === 0;
 
   useEffect(() => {
     if (!activeConversation) {
@@ -268,6 +314,22 @@ export default function App() {
 
     setSelectedModel(activeConversation.model);
   }, [activeConversation]);
+
+  useEffect(() => {
+    if (!activeProjectId) {
+      return;
+    }
+
+    const hasProject = projects.some((project) => project.id === activeProjectId);
+    if (hasProject) {
+      return;
+    }
+
+    setActiveProjectId(null);
+    if (activeWorkspace === "project") {
+      setActiveWorkspace("new_chat");
+    }
+  }, [activeProjectId, activeWorkspace, projects]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -306,6 +368,7 @@ export default function App() {
     }
 
     const now = new Date();
+    const projectContextId = activeWorkspace === "project" ? activeProjectId : activeConversation?.projectId ?? null;
     const userMessage: Message = {
       id: `user-${now.getTime()}`,
       role: "user",
@@ -328,6 +391,7 @@ export default function App() {
           preview: "Thinking...",
           updatedAt: formatUpdatedAt(now),
           model: selectedModel,
+          projectId: projectContextId,
           messages: [userMessage]
         };
 
@@ -342,12 +406,15 @@ export default function App() {
               preview: "Thinking...",
               updatedAt: formatUpdatedAt(now),
               model: selectedModel,
+              projectId: conversation.projectId ?? projectContextId,
               messages: [...conversation.messages, userMessage]
             }
           : conversation
       );
     });
     setActiveConversationId(targetConversationId);
+    setActiveWorkspace("new_chat");
+    setActiveProjectId(projectContextId);
 
     try {
       const result = await requestAssistantReply({
@@ -406,24 +473,131 @@ export default function App() {
     }
   }
 
-  function handleNewConversation() {
+  function handleNewConversation(projectId: string | null = null) {
     setActiveWorkspace("new_chat");
+    setActiveProjectId(projectId);
     setActiveConversationId(null);
     setSelectedModel(availableModels[0]?.id ?? defaultModelOptions[0].id);
     setDraft("");
   }
 
-  function handleCreateProject() {
-    const projectId = `project-${Date.now()}`;
+  function openProjectWorkspace(projectId: string) {
+    setActiveProjectId(projectId);
+    setActiveWorkspace("project");
+    setActiveConversationId(null);
+    setDraft("");
+    setActiveProjectTab("chats");
+  }
 
-    setProjects((currentProjects) => [
-      {
-        id: projectId,
-        title: toProjectTitle(currentProjects),
-        kind: "folder"
-      },
-      ...currentProjects
-    ]);
+  function resetProjectForm(nextMode: "create" | "rename" = "create", project?: ProjectSummary) {
+    setProjectModalMode(nextMode);
+    setEditingProjectId(project?.id ?? null);
+    setProjectNameDraft(project?.title ?? toProjectTitle(projects));
+    setProjectInstructionsDraft(project?.instructions ?? "");
+    setSelectedProjectTemplate(project?.template ?? "writing");
+  }
+
+  function handleCreateProject() {
+    resetProjectForm("create");
+    setIsProjectModalOpen(true);
+  }
+
+  function handleRenameProject(projectId: string) {
+    const project = projects.find((currentProject) => currentProject.id === projectId);
+    if (!project) {
+      return;
+    }
+
+    resetProjectForm("rename", project);
+    setIsProjectModalOpen(true);
+  }
+
+  function closeProjectModal() {
+    setIsProjectModalOpen(false);
+    resetProjectForm("create");
+  }
+
+  function handleProjectSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedName = projectNameDraft.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    if (projectModalMode === "rename" && editingProjectId) {
+      setProjects((currentProjects) =>
+        currentProjects.map((project) =>
+          project.id === editingProjectId
+            ? {
+                ...project,
+                title: trimmedName,
+                instructions: projectInstructionsDraft.trim(),
+                template: selectedProjectTemplate
+              }
+            : project
+        )
+      );
+      closeProjectModal();
+      return;
+    }
+
+    const projectId = `project-${Date.now()}`;
+    const nextProject: ProjectSummary = {
+      id: projectId,
+      title: trimmedName,
+      kind: "folder",
+      instructions: projectInstructionsDraft.trim(),
+      template: selectedProjectTemplate
+    };
+
+    setProjects((currentProjects) => [nextProject, ...currentProjects]);
+    closeProjectModal();
+    openProjectWorkspace(projectId);
+  }
+
+  function handleDeleteProject(projectId: string) {
+    setProjects((currentProjects) => currentProjects.filter((project) => project.id !== projectId));
+    setConversations((currentConversations) =>
+      currentConversations.map((conversation) =>
+        conversation.projectId === projectId
+          ? {
+              ...conversation,
+              projectId: null
+            }
+          : conversation
+      )
+    );
+
+    if (activeProjectId === projectId) {
+      setActiveProjectId(null);
+      if (activeWorkspace === "project") {
+        setActiveWorkspace("new_chat");
+      }
+    }
+  }
+
+  function handleAssignConversationToProject(conversationId: string, projectId: string) {
+    setConversations((currentConversations) =>
+      currentConversations.map((conversation) =>
+        conversation.id === conversationId
+          ? {
+              ...conversation,
+              projectId
+            }
+          : conversation
+      )
+    );
+
+    if (activeConversationId === conversationId) {
+      setActiveProjectId(projectId);
+    }
+  }
+
+  function handleSelectProjectConversation(conversationId: string, projectId: string) {
+    setActiveProjectId(projectId);
+    setActiveWorkspace("new_chat");
+    setActiveConversationId(conversationId);
   }
 
   function resetAddModelForm() {
@@ -552,7 +726,7 @@ export default function App() {
     );
   }
 
-  function renderPlaceholderPage(view: Exclude<WorkspaceView, "new_chat">) {
+  function renderPlaceholderPage(view: PlaceholderWorkspaceView) {
     const pageDetails = workspacePageDetails[view];
 
     return (
@@ -569,6 +743,135 @@ export default function App() {
             </div>
           ) : null}
         </div>
+      </section>
+    );
+  }
+
+  function renderProjectComposer(project: ProjectSummary) {
+    return (
+      <form className="composer-panel empty composer-panel-hero project-composer-panel" onSubmit={handleSubmit}>
+        <textarea
+          className="composer-hero-input"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={handleComposerKeyDown}
+          placeholder={`New chat in ${project.title}`}
+          rows={1}
+        />
+
+        <div className="composer-hero-toolbar">
+          <div className="composer-hero-actions">
+            <button className="composer-icon-button composer-icon-button-hero" type="button" aria-label="Add context">
+              <PlusIcon />
+            </button>
+
+            <button className="composer-mode-button" type="button" aria-label="Reasoning mode: Thinking">
+              <OrbitIcon className="composer-mode-icon" />
+              <span>Thinking</span>
+              <CaretDownIcon className="composer-mode-caret" />
+            </button>
+          </div>
+
+          <div className="composer-hero-actions composer-hero-actions-right">
+            <button className="composer-icon-button composer-mic-button" type="button" aria-label="Voice input">
+              <MicrophoneIcon />
+            </button>
+
+            <button
+              className="composer-voice-submit"
+              type="submit"
+              aria-label={isLoading ? "Working" : "Start project chat"}
+              disabled={isLoading || !draft.trim()}
+            >
+              <WaveformIcon />
+            </button>
+          </div>
+        </div>
+      </form>
+    );
+  }
+
+  function renderProjectWorkspace(project: ProjectSummary) {
+    return (
+      <section className="project-workspace">
+        <div className="project-hero">
+          <div className="project-title-row-main">
+            <ProjectFolderIcon className="project-folder-icon" />
+            <h1 className="project-title">{project.title}</h1>
+          </div>
+
+          <p className="project-subtitle">
+            {project.instructions?.trim()
+              ? project.instructions
+              : "Projects keep related chats, notes, and custom instructions in one place so the work stays organized."}
+          </p>
+
+          <div className="project-composer-wrap">{renderProjectComposer(project)}</div>
+        </div>
+
+        <div className="project-tabs">
+          <button
+            className={`project-tab-button${activeProjectTab === "chats" ? " active" : ""}`}
+            type="button"
+            onClick={() => setActiveProjectTab("chats")}
+          >
+            Chats
+          </button>
+
+          <button
+            className={`project-tab-button${activeProjectTab === "sources" ? " active" : ""}`}
+            type="button"
+            onClick={() => setActiveProjectTab("sources")}
+          >
+            Sources
+          </button>
+        </div>
+
+        {activeProjectTab === "chats" ? (
+          <div className="project-content-panel">
+            <p className="project-panel-note">Drag chats from Your chats into this project, or start a new project chat above.</p>
+
+            {projectConversations.length > 0 ? (
+              <div className="project-chat-grid">
+                {projectConversations.map((conversation) => (
+                  <button
+                    key={conversation.id}
+                    className="project-chat-card"
+                    type="button"
+                    onClick={() => handleSelectProjectConversation(conversation.id, project.id)}
+                  >
+                    <div className="project-chat-card-top">
+                      <strong>{conversation.title}</strong>
+                      <span>{conversation.updatedAt}</span>
+                    </div>
+                    <p>{conversation.preview}</p>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="project-empty-card">
+                <h3>No chats yet</h3>
+                <p>Chats in {project.title} will live here. Start a project chat above or drag one in from Your chats.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="project-content-panel">
+            <div className="project-source-card">
+              <p className="project-source-kicker">Key instructions</p>
+              <p className="project-source-copy">
+                {project.instructions?.trim() || "Add project instructions to guide tone, goals, and how this workspace should behave."}
+              </p>
+            </div>
+
+            <div className="project-source-card secondary">
+              <p className="project-source-kicker">Sources</p>
+              <p className="project-source-copy">
+                This section is ready for future uploads, notes, and project files so each workspace can keep its own supporting material.
+              </p>
+            </div>
+          </div>
+        )}
       </section>
     );
   }
@@ -620,6 +923,30 @@ export default function App() {
       );
     }
 
+    if (activeWorkspace === "project" && activeProject) {
+      return (
+        <header className="workspace-topbar project-workspace-topbar">
+          <div className="workspace-title-row">
+            <button className="chat-title-button" type="button">
+              <span>{appName}</span>
+              <CaretDownIcon className="project-topbar-caret" />
+            </button>
+          </div>
+
+          <div className="workspace-actions">
+            <button className="project-topbar-button" type="button">
+              <ShareIcon />
+              <span>Share</span>
+            </button>
+
+            <button className="icon-button project-topbar-icon" type="button" aria-label="Project options">
+              <DotsIcon />
+            </button>
+          </div>
+        </header>
+      );
+    }
+
     return null;
   }
 
@@ -628,17 +955,27 @@ export default function App() {
       <Sidebar
         activeNavKey={activeWorkspace}
         projects={projects}
-        conversations={conversations}
+        conversations={sidebarConversations}
         activeConversationId={activeConversationId}
+        activeProjectId={highlightedProjectId}
         accountName={accountName}
         isCollapsed={isSidebarCollapsed}
         onCreateProject={handleCreateProject}
         onNewConversation={handleNewConversation}
+        onDeleteProject={handleDeleteProject}
+        onMoveConversationToProject={handleAssignConversationToProject}
+        onRenameProject={handleRenameProject}
+        onSelectProject={openProjectWorkspace}
         onSelectConversation={(conversationId) => {
+          const nextConversation = conversations.find((conversation) => conversation.id === conversationId) ?? null;
           setActiveWorkspace("new_chat");
+          setActiveProjectId(nextConversation?.projectId ?? null);
           setActiveConversationId(conversationId);
         }}
-        onSelectNav={(itemKey) => setActiveWorkspace(itemKey as WorkspaceView)}
+        onSelectNav={(itemKey) => {
+          setActiveProjectId(null);
+          setActiveWorkspace(itemKey as WorkspaceView);
+        }}
         onToggleSidebar={() => setIsSidebarCollapsed((current) => !current)}
       />
 
@@ -670,7 +1007,9 @@ export default function App() {
         </header>
         ) : null}
 
-        {activeWorkspace !== "new_chat" ? (
+        {activeWorkspace === "project" && activeProject ? (
+          renderProjectWorkspace(activeProject)
+        ) : activeWorkspace !== "new_chat" ? (
           renderPlaceholderPage(activeWorkspace)
         ) : isEmpty ? (
           <section className="empty-state">
@@ -707,6 +1046,82 @@ export default function App() {
             {renderComposer(false)}
           </>
         )}
+
+        {isProjectModalOpen ? (
+          <div className="workspace-modal-backdrop" role="presentation" onClick={closeProjectModal}>
+            <div
+              className="workspace-modal-card project-modal-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="project-modal-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="workspace-modal-header">
+                <div>
+                  <p className="workspace-modal-kicker">Projects</p>
+                  <h3 id="project-modal-title" className="workspace-modal-title">
+                    {projectModalMode === "create" ? "Create project" : "Rename project"}
+                  </h3>
+                </div>
+
+                <button className="workspace-modal-close" type="button" aria-label="Close project modal" onClick={closeProjectModal}>
+                  x
+                </button>
+              </div>
+
+              <form className="workspace-modal-form" onSubmit={handleProjectSubmit}>
+                <label className="workspace-modal-field">
+                  <span>Project name</span>
+                  <input
+                    type="text"
+                    value={projectNameDraft}
+                    onChange={(event) => setProjectNameDraft(event.target.value)}
+                    placeholder="Enter a project name"
+                    required
+                  />
+                </label>
+
+                <div className="project-template-row">
+                  {projectTemplateOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      className={`project-template-chip${selectedProjectTemplate === option.id ? " active" : ""}`}
+                      type="button"
+                      onClick={() => setSelectedProjectTemplate(option.id)}
+                    >
+                      <span className="project-template-dot" style={{ backgroundColor: option.accent }} aria-hidden="true" />
+                      <span>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <label className="workspace-modal-field">
+                  <span>Key instructions</span>
+                  <textarea
+                    value={projectInstructionsDraft}
+                    onChange={(event) => setProjectInstructionsDraft(event.target.value)}
+                    placeholder="Add key instructions, goals, guardrails, or context for this project"
+                    rows={6}
+                  />
+                </label>
+
+                <div className="project-modal-note">
+                  Projects keep chats, files, and custom instructions together so ongoing work stays organized and easy to return to.
+                </div>
+
+                <div className="workspace-modal-actions">
+                  <button className="workspace-modal-secondary" type="button" onClick={closeProjectModal}>
+                    Cancel
+                  </button>
+
+                  <button className="workspace-modal-primary" type="submit">
+                    {projectModalMode === "create" ? "Create project" : "Save changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
 
         {(activeWorkspace === "new_chat" || activeWorkspace === "llms") && isAddModelModalOpen ? (
           <div className="workspace-modal-backdrop" role="presentation" onClick={closeAddModelModal}>

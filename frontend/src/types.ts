@@ -1,4 +1,5 @@
 export type ModelId = string;
+export type ProjectTemplate = "investing" | "homework" | "writing" | "travel";
 
 export interface ModelOption {
   id: ModelId;
@@ -49,6 +50,7 @@ export interface Conversation {
   preview: string;
   updatedAt: string;
   model: ModelId;
+  projectId?: string | null;
   messages: Message[];
 }
 
@@ -56,4 +58,6 @@ export interface ProjectSummary {
   id: string;
   title: string;
   kind: "new" | "folder" | "monitor" | "more";
+  instructions?: string;
+  template?: ProjectTemplate | null;
 }

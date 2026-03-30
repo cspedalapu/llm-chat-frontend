@@ -459,20 +459,17 @@ svg {
 }
 
 .sidebar-project-overflow-panel {
-  position: absolute;
-  left: calc(100% - 0.1rem);
-  bottom: -0.1rem;
+  position: fixed;
   width: min(16.6rem, calc(100vw - 2.2rem));
   padding: 0.46rem;
   border: 1px solid var(--border);
   border-radius: 1.08rem;
   background: #373737;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.34);
-  z-index: 8;
+  z-index: 40;
 }
 
 .sidebar-project-overflow-list {
-  max-height: 19rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
