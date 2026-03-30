@@ -591,7 +591,11 @@ export default function App() {
             </label>
           </div>
 
-          <div className="workspace-actions llm-workspace-actions-empty" aria-hidden="true" />
+          <div className="workspace-actions">
+            <button className="sample-control-button" type="button">
+              <span>Sample</span>
+            </button>
+          </div>
         </header>
       );
     }

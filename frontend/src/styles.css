@@ -666,6 +666,18 @@ svg {
   color: var(--muted);
 }
 
+.sample-control-button {
+  min-width: 8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 0.95rem;
+  background: #2a2a2a;
+  color: var(--text);
+  padding: 0.72rem 0.95rem;
+}
+
 .llm-workspace-topbar {
   justify-content: space-between;
 }
