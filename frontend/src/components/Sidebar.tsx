@@ -1,4 +1,4 @@
-import { SVGProps, useEffect, useRef, useState } from "react";
+import { MouseEvent as ReactMouseEvent, SVGProps, useEffect, useState } from "react";
 import { appName } from "@/lib/appConfig.ts";
 import { Conversation, ProjectSummary } from "@/types.ts";
 
@@ -122,11 +122,62 @@ function HelpIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+function ShareIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="M12 15.5V4.8" />
+      <path d="m8.6 8.2 3.4-3.4 3.4 3.4" />
+      <path d="M5.2 12.6V17a2.2 2.2 0 0 0 2.2 2.2h9.2a2.2 2.2 0 0 0 2.2-2.2v-4.4" />
+    </svg>
+  );
+}
+
+function GroupChatIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <circle cx="10" cy="8.2" r="2.7" />
+      <path d="M5.3 17.5a4.7 4.7 0 0 1 9.4 0" />
+      <path d="M18.2 8.5v5" />
+      <path d="M15.7 11h5" />
+    </svg>
+  );
+}
+
 function UserIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" {...props}>
       <circle cx="12" cy="8.2" r="3.2" />
       <path d="M5.5 18.5a6.5 6.5 0 0 1 13 0" />
+    </svg>
+  );
+}
+
+function PinIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="m14.8 4.8 4.4 4.4-2.5 1.4-3.1 5.2-1.4-1.4-5.2 3.1 3.1-5.2-1.4-1.4 5.2-3.1Z" />
+      <path d="M7.3 16.7 4.8 19.2" />
+    </svg>
+  );
+}
+
+function ArchiveIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <rect x="4.8" y="6.2" width="14.4" height="12.8" rx="2.1" />
+      <path d="M4.2 8.6h15.6" />
+      <path d="M10 12h4" />
+    </svg>
+  );
+}
+
+function TrashIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" {...props}>
+      <path d="M5.8 7.2h12.4" />
+      <path d="M9.2 7.2V5.4h5.6v1.8" />
+      <path d="M7.4 7.2 8.2 19a1.5 1.5 0 0 0 1.5 1.4h4.6a1.5 1.5 0 0 0 1.5-1.4l.8-11.8" />
+      <path d="M10.2 10.4v6.1M13.8 10.4v6.1" />
     </svg>
   );
 }
@@ -193,6 +244,18 @@ interface NavItem {
   shortcut?: string;
 }
 
+interface SidebarMenuAction {
+  label: string;
+  icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
+  tone?: "danger";
+  hasChevron?: boolean;
+}
+
+interface SidebarItemMenuState {
+  kind: "project" | "chat";
+  id: string;
+}
+
 const navItems: NavItem[] = [
   { key: "new_chat", label: "New chat", icon: EditIcon, shortcut: "Ctrl + Shift + O" },
   { key: "search_chats", label: "Search chats", icon: SearchIcon },
@@ -202,6 +265,28 @@ const navItems: NavItem[] = [
   { key: "deep_research", label: "Deep research", icon: DeepResearchIcon },
   { key: "codex", label: "Codex", icon: CodexIcon },
   { key: "gpts", label: "GPTs", icon: GptsIcon }
+];
+
+const chatMenuSections: SidebarMenuAction[][] = [
+  [
+    { label: "Share", icon: ShareIcon },
+    { label: "Start a group chat", icon: GroupChatIcon },
+    { label: "Rename", icon: EditIcon },
+    { label: "Move to project", icon: FolderIcon, hasChevron: true }
+  ],
+  [
+    { label: "Pin chat", icon: PinIcon },
+    { label: "Archive", icon: ArchiveIcon }
+  ],
+  [{ label: "Delete", icon: TrashIcon, tone: "danger" }]
+];
+
+const projectMenuSections: SidebarMenuAction[][] = [
+  [
+    { label: "Share", icon: ShareIcon },
+    { label: "Rename project", icon: EditIcon }
+  ],
+  [{ label: "Delete project", icon: TrashIcon, tone: "danger" }]
 ];
 
 export function Sidebar({
@@ -235,16 +320,20 @@ export function Sidebar({
   const [areProjectsOpen, setAreProjectsOpen] = useState(true);
   const [areChatsOpen, setAreChatsOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-  const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const [openItemMenu, setOpenItemMenu] = useState<SidebarItemMenuState | null>(null);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
-      if (!accountMenuRef.current?.contains(event.target as Node)) {
-        setIsAccountMenuOpen(false);
+      const target = event.target as HTMLElement | null;
+      if (target?.closest(".sidebar-menu-root")) {
+        return;
       }
+
+      setIsAccountMenuOpen(false);
+      setOpenItemMenu(null);
     }
 
-    if (!isAccountMenuOpen) {
+    if (!isAccountMenuOpen && !openItemMenu) {
       return;
     }
 
@@ -252,14 +341,21 @@ export function Sidebar({
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [isAccountMenuOpen]);
+  }, [isAccountMenuOpen, openItemMenu]);
 
   function handleNavClick(itemKey: string) {
     setActiveNavKey(itemKey);
+    setOpenItemMenu(null);
 
     if (itemKey === "new_chat") {
       onNewConversation();
     }
+  }
+
+  function handleItemMenuToggle(event: ReactMouseEvent<HTMLButtonElement>, kind: "project" | "chat", id: string) {
+    event.stopPropagation();
+    setIsAccountMenuOpen(false);
+    setOpenItemMenu((current) => (current?.kind === kind && current.id === id ? null : { kind, id }));
   }
 
   function renderAccountMenu(menuClassName?: string) {
@@ -285,6 +381,37 @@ export function Sidebar({
     );
   }
 
+  function renderItemMenu(kind: "project" | "chat") {
+    const sections = kind === "chat" ? chatMenuSections : projectMenuSections;
+    const menuLabel = kind === "chat" ? "Chat actions" : "Project actions";
+
+    return (
+      <div className={`sidebar-item-menu ${kind}`} role="menu" aria-label={menuLabel}>
+        {sections.map((section, sectionIndex) => (
+          <div className="sidebar-item-menu-section" key={`${kind}-section-${sectionIndex}`}>
+            {section.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <button
+                  key={item.label}
+                  className={`sidebar-item-menu-action${item.tone === "danger" ? " danger" : ""}`}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => setOpenItemMenu(null)}
+                >
+                  <Icon className="sidebar-item-menu-icon" />
+                  <span className="sidebar-item-menu-label">{item.label}</span>
+                  {item.hasChevron ? <ChevronIcon className="sidebar-item-menu-chevron" /> : null}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   function renderProjectRow(project: ProjectSummary) {
     const iconByKind = {
       new: FolderPlusIcon,
@@ -294,31 +421,70 @@ export function Sidebar({
     } as const;
 
     const Icon = iconByKind[project.kind];
+    const canShowMenu = project.kind === "folder";
+    const isMenuOpen = openItemMenu?.kind === "project" && openItemMenu.id === project.id;
 
     return (
-      <button
-        key={project.id}
-        className={`sidebar-section-item sidebar-project-item${project.kind === "monitor" ? " monitor" : ""}${project.kind === "more" ? " more" : ""}`}
-        type="button"
-      >
-        <Icon className="sidebar-section-icon" />
-        <span>{project.title}</span>
-      </button>
+      <div key={project.id} className={`sidebar-item-shell sidebar-menu-root${isMenuOpen ? " menu-open" : ""}`}>
+        <button
+          className={`sidebar-section-item sidebar-project-item${canShowMenu ? " has-menu" : ""}${project.kind === "monitor" ? " monitor" : ""}${project.kind === "more" ? " more" : ""}`}
+          type="button"
+          onClick={() => setOpenItemMenu(null)}
+        >
+          <Icon className="sidebar-section-icon" />
+          <span className="sidebar-section-item-copy">{project.title}</span>
+        </button>
+
+        {canShowMenu ? (
+          <>
+            <button
+              className={`sidebar-item-menu-trigger${isMenuOpen ? " visible" : ""}`}
+              type="button"
+              aria-label={`More actions for ${project.title}`}
+              aria-haspopup="menu"
+              aria-expanded={isMenuOpen}
+              onClick={(event) => handleItemMenuToggle(event, "project", project.id)}
+            >
+              <MoreIcon className="sidebar-item-menu-dots" />
+            </button>
+
+            {isMenuOpen ? renderItemMenu("project") : null}
+          </>
+        ) : null}
+      </div>
     );
   }
 
   function renderChatRow(conversation: Conversation) {
     const isActiveConversation = conversation.id === activeConversationId;
+    const isMenuOpen = openItemMenu?.kind === "chat" && openItemMenu.id === conversation.id;
 
     return (
-      <button
-        key={conversation.id}
-        className={`sidebar-section-item sidebar-chat-item${isActiveConversation ? " active" : ""}`}
-        type="button"
-        onClick={() => onSelectConversation(conversation.id)}
-      >
-        <span>{conversation.title}</span>
-      </button>
+      <div key={conversation.id} className={`sidebar-item-shell sidebar-menu-root${isMenuOpen ? " menu-open" : ""}`}>
+        <button
+          className={`sidebar-section-item sidebar-chat-item has-menu${isActiveConversation ? " active" : ""}`}
+          type="button"
+          onClick={() => {
+            setOpenItemMenu(null);
+            onSelectConversation(conversation.id);
+          }}
+        >
+          <span className="sidebar-section-item-copy">{conversation.title}</span>
+        </button>
+
+        <button
+          className={`sidebar-item-menu-trigger${isMenuOpen ? " visible" : ""}`}
+          type="button"
+          aria-label={`More actions for ${conversation.title}`}
+          aria-haspopup="menu"
+          aria-expanded={isMenuOpen}
+          onClick={(event) => handleItemMenuToggle(event, "chat", conversation.id)}
+        >
+          <MoreIcon className="sidebar-item-menu-dots" />
+        </button>
+
+        {isMenuOpen ? renderItemMenu("chat") : null}
+      </div>
     );
   }
 
@@ -363,7 +529,7 @@ export function Sidebar({
 
         <div className="sidebar-rail-spacer" />
 
-        <div className="sidebar-rail-actions sidebar-rail-footer sidebar-account-menu-wrap" ref={accountMenuRef}>
+        <div className="sidebar-rail-actions sidebar-rail-footer sidebar-account-menu-wrap sidebar-menu-root">
           {isAccountMenuOpen ? renderAccountMenu("sidebar-account-menu-floating") : null}
 
           <button
@@ -373,7 +539,10 @@ export function Sidebar({
             title={accountPrimaryLabel}
             aria-haspopup="menu"
             aria-expanded={isAccountMenuOpen}
-            onClick={() => setIsAccountMenuOpen((current) => !current)}
+            onClick={() => {
+              setOpenItemMenu(null);
+              setIsAccountMenuOpen((current) => !current);
+            }}
           >
             <UserIcon />
           </button>
@@ -425,7 +594,10 @@ export function Sidebar({
             className="sidebar-section-toggle"
             type="button"
             aria-expanded={areProjectsOpen}
-            onClick={() => setAreProjectsOpen((current) => !current)}
+            onClick={() => {
+              setOpenItemMenu(null);
+              setAreProjectsOpen((current) => !current);
+            }}
           >
             <span>Projects</span>
             <ChevronIcon className={`sidebar-section-chevron${areProjectsOpen ? " open" : ""}`} />
@@ -436,10 +608,13 @@ export function Sidebar({
               <button
                 className="sidebar-section-item sidebar-project-item"
                 type="button"
-                onClick={onCreateProject}
+                onClick={() => {
+                  setOpenItemMenu(null);
+                  onCreateProject();
+                }}
               >
                 <FolderPlusIcon className="sidebar-section-icon" />
-                <span>New project</span>
+                <span className="sidebar-section-item-copy">New project</span>
               </button>
 
               {projects.map(renderProjectRow)}
@@ -452,7 +627,10 @@ export function Sidebar({
             className="sidebar-section-toggle"
             type="button"
             aria-expanded={areChatsOpen}
-            onClick={() => setAreChatsOpen((current) => !current)}
+            onClick={() => {
+              setOpenItemMenu(null);
+              setAreChatsOpen((current) => !current);
+            }}
           >
             <span>Your chats</span>
             <ChevronIcon className={`sidebar-section-chevron${areChatsOpen ? " open" : ""}`} />
@@ -462,7 +640,7 @@ export function Sidebar({
         </section>
       </div>
 
-      <div className="sidebar-footer-nav sidebar-account-menu-wrap" ref={accountMenuRef}>
+      <div className="sidebar-footer-nav sidebar-account-menu-wrap sidebar-menu-root">
         {isAccountMenuOpen ? renderAccountMenu() : null}
 
         <button
@@ -471,7 +649,10 @@ export function Sidebar({
           aria-label={accountButtonLabel}
           aria-haspopup="menu"
           aria-expanded={isAccountMenuOpen}
-          onClick={() => setIsAccountMenuOpen((current) => !current)}
+          onClick={() => {
+            setOpenItemMenu(null);
+            setIsAccountMenuOpen((current) => !current);
+          }}
         >
           <span className="sidebar-account-avatar" aria-hidden="true">
             {accountAvatarLabel}
