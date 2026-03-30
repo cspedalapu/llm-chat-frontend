@@ -1,4 +1,4 @@
-import { FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
 import { seededConversations, seededProjects } from "@/data/mockData.ts";
@@ -136,6 +136,12 @@ function useTypewriterPrompt(phrases: string[]): string {
 
 type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "workspace" | "llms";
 
+interface ManagedModelOption {
+  id: string;
+  label: string;
+  provider: string;
+}
+
 const workspaceLabels: Record<WorkspaceView, string> = {
   new_chat: "New chat",
   search_chats: "Search chats",
@@ -146,6 +152,16 @@ const workspaceLabels: Record<WorkspaceView, string> = {
   workspace: "Workspace",
   llms: "LLMs"
 };
+
+const addModelOptionValue = "__add_model__";
+
+const seededManagedModels: ManagedModelOption[] = [
+  { id: "openai-gpt-5-mini", label: "OpenAI GPT-5 mini", provider: "OpenAI" },
+  { id: "claude-sonnet-4", label: "Claude Sonnet 4", provider: "Anthropic" },
+  { id: "gemini-2-5-pro", label: "Gemini 2.5 Pro", provider: "Google" },
+  { id: "kimi-k2-5", label: "Kimi K2.5", provider: "Moonshot" },
+  { id: "deepseek-v3-2-exp", label: "DeepSeek V3.2-Exp", provider: "DeepSeek" }
+];
 
 const workspacePageDetails: Partial<
   Record<
@@ -159,6 +175,38 @@ const workspacePageDetails: Partial<
     }
   >
 > = {
+  search_chats: {
+    kicker: "Search",
+    description: "This page is under construction and is being designed as the fastest way to find past conversations, decisions, prompts, and outputs across projects.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "Search Chats is intended to help users revisit previous work without starting from scratch. It should make it easier to recover earlier discussions, trace decisions, reuse strong prompts, and connect past insights to current tasks across projects and teams.",
+    featured: true
+  },
+  images: {
+    kicker: "Visuals",
+    description: "This page is under construction and is being shaped as a visual workspace for generating, organizing, and reusing image-based assets.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "Images is meant for tasks that need visual output, such as concept sketches, product graphics, UI references, diagrams, branded assets, and research visuals. It should help users keep image workflows organized and separate from writing, coding, and research-heavy tasks.",
+    featured: true
+  },
+  library: {
+    kicker: "Knowledge",
+    description: "This page is under construction and is being designed as a structured knowledge space for storing references, documents, reusable materials, and project context.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "Library is where users should keep the information that supports long-term work, including documents, notes, references, templates, datasets, and source material. It is intended to become the knowledge layer of the platform, helping teams build continuity across projects instead of losing context in scattered files and chats.",
+    featured: true
+  },
+  apps: {
+    kicker: "Apps",
+    description: "This page is under construction and is being shaped as a connection layer for tools, services, and workflows that extend the platform.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "Apps is intended to help users, developers, and employers connect the right tools to the right tasks. It should make it easier to bring external services, utilities, automations, and task-specific applications into one workflow without jumping across disconnected platforms.",
+    featured: true
+  },
   deep_research: {
     kicker: "Research",
     description: "This page is under construction and is being shaped as a deeper research workspace.",
@@ -174,6 +222,14 @@ const workspacePageDetails: Partial<
     aboutCopy:
       "Workspace brings together UI, UX, coding agents, research tools, and useful free applications from different organizations so researchers and teams can work directly in one place with less friction.",
     featured: true
+  },
+  llms: {
+    kicker: "Models",
+    description: "This page is under construction and is being designed as the model layer for selecting, comparing, and connecting large language models to the right use cases.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "LLMs should help users understand which models are best suited for different tasks, whether that is research, writing, coding, reasoning, summarization, or workflow automation. It is intended to become the place where teams connect the right model to the right application with more clarity and control.",
+    featured: true
   }
 };
 
@@ -182,12 +238,20 @@ export default function App() {
   const [conversations, setConversations] = useState<Conversation[]>(seededConversations);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(seededConversations[0]?.id ?? null);
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceView>("new_chat");
+  const [managedModels, setManagedModels] = useState<ManagedModelOption[]>(seededManagedModels);
+  const [selectedManagedModelId, setSelectedManagedModelId] = useState("");
   const [selectedModel, setSelectedModel] = useState<ModelId>(seededConversations[0]?.model ?? defaultModelOptions[0].id);
   const [availableModels, setAvailableModels] = useState<ModelOption[]>(defaultModelOptions);
   const [draft, setDraft] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isAddModelModalOpen, setIsAddModelModalOpen] = useState(false);
+  const [newModelName, setNewModelName] = useState("");
+  const [newModelApiKey, setNewModelApiKey] = useState("");
+  const [newModelInstructions, setNewModelInstructions] = useState("");
+  const [uploadedModelFile, setUploadedModelFile] = useState<File | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const modelFileInputRef = useRef<HTMLInputElement | null>(null);
   const accountName: string | null = null;
   const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
 
@@ -360,6 +424,56 @@ export default function App() {
       },
       ...currentProjects
     ]);
+  }
+
+  function resetAddModelForm() {
+    setNewModelName("");
+    setNewModelApiKey("");
+    setNewModelInstructions("");
+    setUploadedModelFile(null);
+
+    if (modelFileInputRef.current) {
+      modelFileInputRef.current.value = "";
+    }
+  }
+
+  function closeAddModelModal() {
+    setIsAddModelModalOpen(false);
+    resetAddModelForm();
+  }
+
+  function handleManagedModelChange(event: ChangeEvent<HTMLSelectElement>) {
+    const nextValue = event.target.value;
+
+    if (nextValue === addModelOptionValue) {
+      setIsAddModelModalOpen(true);
+      return;
+    }
+
+    setSelectedManagedModelId(nextValue);
+  }
+
+  function handleModelFileChange(event: ChangeEvent<HTMLInputElement>) {
+    setUploadedModelFile(event.target.files?.[0] ?? null);
+  }
+
+  function handleAddModelSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedName = newModelName.trim();
+    if (!trimmedName) {
+      return;
+    }
+
+    const nextModel: ManagedModelOption = {
+      id: `custom-model-${Date.now()}`,
+      label: trimmedName,
+      provider: "Custom"
+    };
+
+    setManagedModels((currentModels) => [nextModel, ...currentModels]);
+    setSelectedManagedModelId(nextModel.id);
+    closeAddModelModal();
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
