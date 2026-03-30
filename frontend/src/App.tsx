@@ -298,7 +298,7 @@ export default function App() {
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={handleComposerKeyDown}
             placeholder={composerPlaceholder}
-            rows={2}
+            rows={1}
           />
 
           <div className="composer-hero-toolbar">
