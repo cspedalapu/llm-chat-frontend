@@ -357,7 +357,7 @@ export function Sidebar({
 
       setIsAccountMenuOpen(false);
       setOpenItemMenu(null);
-      setIsProjectOverflowOpen(false);
+      closeProjectOverflow();
     }
 
     if (!isAccountMenuOpen && !openItemMenu && !isProjectOverflowOpen) {
