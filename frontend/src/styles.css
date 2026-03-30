@@ -202,29 +202,35 @@ svg {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 0.1rem;
+  padding-right: 0.02rem;
 }
 
 .sidebar-scroll-region {
   scrollbar-width: thin;
-  scrollbar-color: #6b6b6b transparent;
+  scrollbar-color: #575757 transparent;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar {
-  width: 0.24rem;
+  width: 0.08rem;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar-track {
   background: transparent;
 }
 
+.sidebar-scroll-region::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 .sidebar-scroll-region::-webkit-scrollbar-thumb {
-  background: #6b6b6b;
+  background: #575757;
   border-radius: 999px;
 }
 
 .sidebar-scroll-region::-webkit-scrollbar-thumb:hover {
-  background: #8a8a8a;
+  background: #676767;
 }
 
 .icon-button:hover,
@@ -541,22 +547,32 @@ svg {
   display: flex;
   flex-direction: column;
   gap: 0.08rem;
-  padding-right: 0.08rem;
+  padding-right: 0.02rem;
   scrollbar-width: thin;
-  scrollbar-color: #6b6b6b transparent;
+  scrollbar-color: #575757 transparent;
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar {
-  width: 0.24rem;
+  width: 0.08rem;
 }
 
 .sidebar-project-overflow-list::-webkit-scrollbar-track {
   background: transparent;
 }
 
+.sidebar-project-overflow-list::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
 .sidebar-project-overflow-list::-webkit-scrollbar-thumb {
-  background: #6b6b6b;
+  background: #575757;
   border-radius: 999px;
+}
+
+.sidebar-project-overflow-list::-webkit-scrollbar-thumb:hover {
+  background: #676767;
 }
 
 .sidebar-project-overflow-item {
@@ -1002,6 +1018,46 @@ svg {
   border-radius: 1.5rem;
   background: linear-gradient(180deg, rgba(40, 40, 40, 0.98), rgba(27, 27, 27, 0.98));
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
+.workspace-modal-card,
+.project-workspace,
+.thread-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #575757 transparent;
+}
+
+.workspace-modal-card::-webkit-scrollbar,
+.project-workspace::-webkit-scrollbar,
+.thread-panel::-webkit-scrollbar {
+  width: 0.08rem;
+}
+
+.workspace-modal-card::-webkit-scrollbar-track,
+.project-workspace::-webkit-scrollbar-track,
+.thread-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workspace-modal-card::-webkit-scrollbar-button,
+.project-workspace::-webkit-scrollbar-button,
+.thread-panel::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.workspace-modal-card::-webkit-scrollbar-thumb,
+.project-workspace::-webkit-scrollbar-thumb,
+.thread-panel::-webkit-scrollbar-thumb {
+  background: #575757;
+  border-radius: 999px;
+}
+
+.workspace-modal-card::-webkit-scrollbar-thumb:hover,
+.project-workspace::-webkit-scrollbar-thumb:hover,
+.thread-panel::-webkit-scrollbar-thumb:hover {
+  background: #676767;
 }
 
 .workspace-modal-header {
