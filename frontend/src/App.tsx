@@ -159,7 +159,7 @@ const seededManagedModels: ManagedModelOption[] = [
   { id: "openai-gpt-5-mini", label: "OpenAI GPT-5 mini", provider: "OpenAI" },
   { id: "claude-sonnet-4", label: "Claude Sonnet 4", provider: "Anthropic" },
   { id: "gemini-2-5-pro", label: "Gemini 2.5 Pro", provider: "Google" },
-  { id: "kimi-k2-5", label: "Kimi K2.5", provider: "Moonshot" },
+  { id: "moonshot-kimi-k2-5", label: "Moonshot Kimi K2.5", provider: "Moonshot" },
   { id: "deepseek-v3-2-exp", label: "DeepSeek V3.2-Exp", provider: "DeepSeek" }
 ];
 
@@ -647,7 +647,8 @@ export default function App() {
       />
 
       <main className="workspace">
-        {activeWorkspace === "new_chat" ? (
+        {renderWorkspaceHeader()}
+        {false ? (
         <header className="workspace-topbar">
           <div className="workspace-title-row">
             <button className="chat-title-button" type="button">
@@ -710,6 +711,97 @@ export default function App() {
             {renderComposer(false)}
           </>
         )}
+
+        {activeWorkspace === "llms" && isAddModelModalOpen ? (
+          <div className="workspace-modal-backdrop" role="presentation" onClick={closeAddModelModal}>
+            <div
+              className="workspace-modal-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="add-model-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="workspace-modal-header">
+                <div>
+                  <p className="workspace-modal-kicker">Models</p>
+                  <h3 id="add-model-title" className="workspace-modal-title">
+                    Add your Model
+                  </h3>
+                </div>
+
+                <button className="workspace-modal-close" type="button" aria-label="Close add model modal" onClick={closeAddModelModal}>
+                  x
+                </button>
+              </div>
+
+              <form className="workspace-modal-form" onSubmit={handleAddModelSubmit}>
+                <label className="workspace-modal-field">
+                  <span>Model name</span>
+                  <input
+                    type="text"
+                    value={newModelName}
+                    onChange={(event) => setNewModelName(event.target.value)}
+                    placeholder="Enter your model name"
+                    required
+                  />
+                </label>
+
+                <label className="workspace-modal-field">
+                  <span>API key</span>
+                  <input
+                    type="password"
+                    value={newModelApiKey}
+                    onChange={(event) => setNewModelApiKey(event.target.value)}
+                    placeholder="Paste your API key"
+                  />
+                </label>
+
+                <div className="workspace-modal-field">
+                  <span>Upload document</span>
+                  <div className="workspace-modal-upload-row">
+                    <input
+                      ref={modelFileInputRef}
+                      className="workspace-modal-file-input"
+                      type="file"
+                      accept=".pdf,.json,.doc,.docx"
+                      onChange={handleModelFileChange}
+                    />
+
+                    <button
+                      className="workspace-modal-upload-button"
+                      type="button"
+                      onClick={() => modelFileInputRef.current?.click()}
+                    >
+                      Upload file
+                    </button>
+
+                    <span className="workspace-modal-file-name">{uploadedModelFile?.name ?? "PDF, Word, or JSON"}</span>
+                  </div>
+                </div>
+
+                <label className="workspace-modal-field">
+                  <span>Prompt instructions, guardrails, and configuration</span>
+                  <textarea
+                    value={newModelInstructions}
+                    onChange={(event) => setNewModelInstructions(event.target.value)}
+                    placeholder="Add prompt instructions, guardrails, safety notes, or configuration details"
+                    rows={7}
+                  />
+                </label>
+
+                <div className="workspace-modal-actions">
+                  <button className="workspace-modal-secondary" type="button" onClick={closeAddModelModal}>
+                    Cancel
+                  </button>
+
+                  <button className="workspace-modal-primary" type="submit">
+                    Save model
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
       </main>
     </div>
   );

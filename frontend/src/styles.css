@@ -597,6 +597,7 @@ svg {
   min-width: 0;
   height: 100vh;
   min-height: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -643,6 +644,18 @@ svg {
   color: var(--text);
   padding: 0.72rem 2.6rem 0.72rem 0.95rem;
   appearance: none;
+}
+
+.llm-workspace-topbar {
+  justify-content: space-between;
+}
+
+.llm-model-control select {
+  min-width: 14rem;
+}
+
+.llm-workspace-actions-empty {
+  min-width: 10.75rem;
 }
 
 .empty-state {
@@ -753,6 +766,143 @@ svg {
   color: var(--text);
   font-size: 1rem;
   line-height: 1.65;
+}
+
+.workspace-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.44);
+  backdrop-filter: blur(4px);
+}
+
+.workspace-modal-card {
+  width: min(100%, 38rem);
+  max-height: min(100%, 42rem);
+  overflow-y: auto;
+  padding: 1.3rem;
+  border: 1px solid var(--border);
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg, rgba(40, 40, 40, 0.98), rgba(27, 27, 27, 0.98));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.34);
+}
+
+.workspace-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.workspace-modal-kicker {
+  margin: 0 0 0.38rem;
+  color: #d7bf69;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspace-modal-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.55rem;
+  font-weight: 500;
+}
+
+.workspace-modal-close {
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-strong);
+}
+
+.workspace-modal-form {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.workspace-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: var(--muted-strong);
+  font-size: 0.95rem;
+}
+
+.workspace-modal-field input,
+.workspace-modal-field textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: #262626;
+  color: var(--text);
+  padding: 0.9rem 1rem;
+}
+
+.workspace-modal-field textarea {
+  resize: vertical;
+  min-height: 9.5rem;
+}
+
+.workspace-modal-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.workspace-modal-file-input {
+  display: none;
+}
+
+.workspace-modal-upload-button,
+.workspace-modal-primary,
+.workspace-modal-secondary {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.72rem 1.15rem;
+}
+
+.workspace-modal-upload-button {
+  background: #303030;
+  color: var(--text);
+}
+
+.workspace-modal-file-name {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.workspace-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.72rem;
+  margin-top: 0.35rem;
+}
+
+.workspace-modal-secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted-strong);
+}
+
+.workspace-modal-primary {
+  background: linear-gradient(180deg, rgba(244, 196, 20, 0.18), rgba(244, 196, 20, 0.08));
+  border-color: rgba(244, 196, 20, 0.25);
+  color: #f7e7aa;
 }
 
 .thread-panel {
