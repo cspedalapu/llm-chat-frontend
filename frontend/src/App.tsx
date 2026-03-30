@@ -281,6 +281,7 @@ type PlaceholderWorkspaceView = Exclude<WorkspaceView, "new_chat" | "project">;
 type ProjectTab = "chats" | "sources";
 type ComposerSubmenu = "recent_files" | "more_tools" | null;
 type ThinkingEffort = "standard" | "extended";
+type ComposerAddon = "create_image" | "deep_research" | "web_search" | "study_and_learn" | "agent_mode" | "add_sources" | "canvas" | "quizzes";
 
 interface ManagedModelOption {
   id: string;
@@ -304,6 +305,31 @@ const projectTemplateOptions: Array<{ id: ProjectTemplate; label: string; accent
   { id: "writing", label: "Writing", accent: "#b186ff" },
   { id: "travel", label: "Travel", accent: "#f0c44f" }
 ];
+
+const composerAddonOptions: Array<{
+  id: ComposerAddon;
+  label: string;
+  icon: (props: SVGProps<SVGSVGElement>) => JSX.Element;
+  inMoreMenu?: boolean;
+  projectRestricted?: boolean;
+}> = [
+  { id: "create_image", label: "Create image", icon: ImageIcon },
+  { id: "deep_research", label: "Deep research", icon: AgentIcon },
+  { id: "web_search", label: "Web search", icon: GlobeIcon },
+  { id: "study_and_learn", label: "Study and learn", icon: StudyIcon, inMoreMenu: true, projectRestricted: true },
+  { id: "agent_mode", label: "Agent mode", icon: AgentIcon, inMoreMenu: true },
+  { id: "add_sources", label: "Add sources", icon: SourcesIcon, inMoreMenu: true },
+  { id: "canvas", label: "Canvas", icon: CanvasIcon, inMoreMenu: true },
+  { id: "quizzes", label: "Quizzes", icon: QuizIcon, inMoreMenu: true }
+];
+
+function getComposerAddonOption(addonId: ComposerAddon) {
+  return composerAddonOptions.find((option) => option.id === addonId) ?? composerAddonOptions[0];
+}
+
+function isComposerAddonRestricted(addonId: ComposerAddon, inProject: boolean) {
+  return Boolean(inProject && getComposerAddonOption(addonId)?.projectRestricted);
+}
 
 const addModelOptionValue = "__add_model__";
 
@@ -401,6 +427,7 @@ export default function App() {
   const [isComposerToolsOpen, setIsComposerToolsOpen] = useState(false);
   const [composerSubmenu, setComposerSubmenu] = useState<ComposerSubmenu>(null);
   const [isThinkingMenuOpen, setIsThinkingMenuOpen] = useState(false);
+  const [selectedComposerAddons, setSelectedComposerAddons] = useState<ComposerAddon[]>([]);
   const [composerRecentFiles, setComposerRecentFiles] = useState<Array<{ id: string; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -513,7 +540,13 @@ export default function App() {
     }
 
     const now = new Date();
+    const shouldApplyComposerAddons = activeWorkspace === "project" || isEmpty;
     const projectContextId = activeWorkspace === "project" ? activeProjectId : activeConversation?.projectId ?? null;
+    const effectiveComposerAddons = shouldApplyComposerAddons
+      ? selectedComposerAddons.filter((addonId) => !isComposerAddonRestricted(addonId, activeWorkspace === "project"))
+      : [];
+    const addonContext = effectiveComposerAddons.map((addonId) => getComposerAddonOption(addonId).label).join(", ");
+    const assistantQuery = addonContext ? `[Selected tools: ${addonContext}]\n\n${query}` : query;
     const userMessage: Message = {
       id: `user-${now.getTime()}`,
       role: "user",
@@ -564,7 +597,7 @@ export default function App() {
 
     try {
       const result = await requestAssistantReply({
-        query,
+        query: assistantQuery,
         model: selectedModel,
         history: priorMessages
       });
@@ -858,45 +891,21 @@ export default function App() {
     event.target.value = "";
   }
 
-  function applyComposerAssist(prefix: string) {
-    setDraft((currentDraft) => currentDraft || prefix);
+  function toggleComposerAddon(addonId: ComposerAddon) {
+    setSelectedComposerAddons((currentAddons) =>
+      currentAddons.includes(addonId) ? currentAddons.filter((currentAddonId) => currentAddonId !== addonId) : [...currentAddons, addonId]
+    );
+  }
+
+  function handleComposerAddonClick(addonId: ComposerAddon) {
+    toggleComposerAddon(addonId);
     closeComposerMenus();
     focusHeroComposer();
   }
 
-  function handleComposerToolSelect(
-    tool: "create_image" | "deep_research" | "web_search" | "study_and_learn" | "agent_mode" | "add_sources" | "canvas" | "quizzes"
-  ) {
-    switch (tool) {
-      case "create_image":
-        applyComposerAssist("Create an image for: ");
-        return;
-      case "deep_research":
-        applyComposerAssist("Deep research this topic: ");
-        return;
-      case "web_search":
-        applyComposerAssist("Search the web for: ");
-        return;
-      case "study_and_learn":
-        applyComposerAssist("Help me study: ");
-        return;
-      case "agent_mode":
-        applyComposerAssist("Agent mode task: ");
-        return;
-      case "add_sources":
-        openComposerFilePicker();
-        return;
-      case "canvas":
-        applyComposerAssist("Open a canvas for: ");
-        return;
-      case "quizzes":
-        applyComposerAssist("Create a quiz about: ");
-        return;
-    }
-  }
-
   function renderComposerToolsMenu(inProject: boolean) {
     const hasRecentFiles = composerRecentFiles.length > 0;
+    const activeComposerAddons = selectedComposerAddons.filter((addonId) => !isComposerAddonRestricted(addonId, inProject));
 
     return (
       <div className="composer-tools-menu" role="menu" aria-label="Composer tools">
@@ -922,17 +931,35 @@ export default function App() {
         </div>
 
         <div className="composer-tools-menu-section">
-          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("create_image")}>
+          <button
+            className={`composer-tools-menu-item${activeComposerAddons.includes("create_image") ? " active" : ""}`}
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={activeComposerAddons.includes("create_image")}
+            onClick={() => handleComposerAddonClick("create_image")}
+          >
             <ImageIcon className="composer-tools-menu-icon" />
             <span>Create image</span>
           </button>
 
-          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("deep_research")}>
+          <button
+            className={`composer-tools-menu-item${activeComposerAddons.includes("deep_research") ? " active" : ""}`}
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={activeComposerAddons.includes("deep_research")}
+            onClick={() => handleComposerAddonClick("deep_research")}
+          >
             <AgentIcon className="composer-tools-menu-icon" />
             <span>Deep research</span>
           </button>
 
-          <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("web_search")}>
+          <button
+            className={`composer-tools-menu-item${activeComposerAddons.includes("web_search") ? " active" : ""}`}
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={activeComposerAddons.includes("web_search")}
+            onClick={() => handleComposerAddonClick("web_search")}
+          >
             <GlobeIcon className="composer-tools-menu-icon" />
             <span>Web search</span>
           </button>
@@ -979,37 +1006,62 @@ export default function App() {
         {composerSubmenu === "more_tools" ? (
           <div className="composer-tools-submenu" role="menu" aria-label="More tools">
             <button
-              className={`composer-tools-menu-item${inProject ? " disabled" : ""}`}
+              className={`composer-tools-menu-item${inProject ? " disabled" : ""}${activeComposerAddons.includes("study_and_learn") ? " active" : ""}`}
               type="button"
-              role="menuitem"
+              role="menuitemcheckbox"
+              aria-checked={activeComposerAddons.includes("study_and_learn")}
               onClick={() => {
                 if (inProject) {
                   return;
                 }
 
-                handleComposerToolSelect("study_and_learn");
+                handleComposerAddonClick("study_and_learn");
               }}
             >
               <StudyIcon className="composer-tools-menu-icon" />
               <span>Study and learn</span>
             </button>
 
-            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("agent_mode")}>
+            <button
+              className={`composer-tools-menu-item${activeComposerAddons.includes("agent_mode") ? " active" : ""}`}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={activeComposerAddons.includes("agent_mode")}
+              onClick={() => handleComposerAddonClick("agent_mode")}
+            >
               <AgentIcon className="composer-tools-menu-icon" />
               <span>Agent mode</span>
             </button>
 
-            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("add_sources")}>
+            <button
+              className={`composer-tools-menu-item${activeComposerAddons.includes("add_sources") ? " active" : ""}`}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={activeComposerAddons.includes("add_sources")}
+              onClick={() => handleComposerAddonClick("add_sources")}
+            >
               <SourcesIcon className="composer-tools-menu-icon" />
               <span>Add sources</span>
             </button>
 
-            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("canvas")}>
+            <button
+              className={`composer-tools-menu-item${activeComposerAddons.includes("canvas") ? " active" : ""}`}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={activeComposerAddons.includes("canvas")}
+              onClick={() => handleComposerAddonClick("canvas")}
+            >
               <CanvasIcon className="composer-tools-menu-icon" />
               <span>Canvas</span>
             </button>
 
-            <button className="composer-tools-menu-item" type="button" role="menuitem" onClick={() => handleComposerToolSelect("quizzes")}>
+            <button
+              className={`composer-tools-menu-item${activeComposerAddons.includes("quizzes") ? " active" : ""}`}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={activeComposerAddons.includes("quizzes")}
+              onClick={() => handleComposerAddonClick("quizzes")}
+            >
               <QuizIcon className="composer-tools-menu-icon" />
               <span>Quizzes</span>
             </button>
@@ -1058,6 +1110,8 @@ export default function App() {
   }
 
   function renderHeroToolbar(inProject: boolean) {
+    const visibleComposerAddons = selectedComposerAddons.filter((addonId) => !isComposerAddonRestricted(addonId, inProject));
+
     return (
       <div className="composer-hero-toolbar">
         <div className="composer-hero-actions">
@@ -1084,6 +1138,24 @@ export default function App() {
 
             {isComposerToolsOpen ? renderComposerToolsMenu(inProject) : null}
           </div>
+
+          {visibleComposerAddons.map((addonId) => {
+            const addon = getComposerAddonOption(addonId);
+            const AddonIcon = addon.icon;
+
+            return (
+              <button
+                key={addon.id}
+                className="composer-addon-chip"
+                type="button"
+                aria-pressed="true"
+                onClick={() => toggleComposerAddon(addon.id)}
+              >
+                <AddonIcon className="composer-addon-chip-icon" />
+                <span>{addon.label}</span>
+              </button>
+            );
+          })}
 
           <div className="composer-menu-root">
             <button

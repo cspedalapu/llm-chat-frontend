@@ -1624,6 +1624,8 @@ svg {
 
 .composer-hero-actions {
   gap: 0.32rem;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .composer-menu-root {
@@ -1680,6 +1682,34 @@ svg {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.composer-addon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-height: 2.35rem;
+  padding: 0.38rem 0.72rem;
+  border: 1px solid rgba(127, 181, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(74, 132, 210, 0.16);
+  color: #f4f8ff;
+  font-family: inherit;
+  font-size: 0.98rem;
+  line-height: 1;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.composer-addon-chip:hover {
+  background: rgba(74, 132, 210, 0.22);
+  border-color: rgba(127, 181, 255, 0.28);
+}
+
+.composer-addon-chip-icon {
+  flex: 0 0 auto;
+  width: 1.12rem;
+  height: 1.12rem;
+  color: #8fc0ff;
+}
+
 .composer-tools-menu,
 .composer-tools-submenu,
 .composer-thinking-menu {
@@ -1734,6 +1764,11 @@ svg {
 
 .composer-tools-menu-item:hover {
   background: rgba(255, 255, 255, 0.06);
+}
+
+.composer-tools-menu-item.active {
+  background: rgba(74, 132, 210, 0.16);
+  border-color: rgba(127, 181, 255, 0.22);
 }
 
 .composer-tools-menu-item.has-chevron {
