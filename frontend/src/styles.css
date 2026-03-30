@@ -1709,9 +1709,25 @@ svg {
   gap: 0.32rem;
 }
 
+.composer-addon-chip-dropdown {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f4f4;
+}
+
+.composer-addon-chip-dropdown:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
 .composer-addon-chip-dropdown.active {
-  background: rgba(74, 132, 210, 0.22);
-  border-color: rgba(127, 181, 255, 0.28);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.42);
+}
+
+.composer-addon-chip-dropdown .composer-addon-chip-icon,
+.composer-addon-chip-dropdown .composer-addon-chip-caret {
+  color: #ececec;
 }
 
 .composer-addon-chip-icon {

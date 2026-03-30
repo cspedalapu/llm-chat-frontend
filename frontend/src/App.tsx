@@ -1,4 +1,4 @@
-import { CSSProperties, ChangeEvent, FormEvent, KeyboardEvent, SVGProps, useEffect, useRef, useState } from "react";
+import { CSSProperties, ChangeEvent, FormEvent, KeyboardEvent, MouseEvent as ReactMouseEvent, SVGProps, useEffect, useRef, useState } from "react";
 import { ChatMessage } from "@/components/ChatMessage.tsx";
 import { Sidebar } from "@/components/Sidebar.tsx";
 import { seededConversations, seededProjects } from "@/data/mockData.ts";
@@ -468,6 +468,7 @@ export default function App() {
   const composerFileInputRef = useRef<HTMLInputElement | null>(null);
   const heroComposerInputRef = useRef<HTMLTextAreaElement | null>(null);
   const modelFileInputRef = useRef<HTMLInputElement | null>(null);
+  const appsChipClickTimeoutRef = useRef<number | null>(null);
   const accountName: string | null = null;
   const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
 
@@ -553,6 +554,14 @@ export default function App() {
       window.removeEventListener("mousedown", handlePointerDown);
     };
   }, [isAppsMenuOpen, isComposerToolsOpen, isThinkingMenuOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (appsChipClickTimeoutRef.current !== null) {
+        window.clearTimeout(appsChipClickTimeoutRef.current);
+      }
+    };
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -960,6 +969,33 @@ export default function App() {
     focusHeroComposer();
   }
 
+  function clearAppsChipClickTimeout() {
+    if (appsChipClickTimeoutRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(appsChipClickTimeoutRef.current);
+    appsChipClickTimeoutRef.current = null;
+  }
+
+  function handleAppsChipClick(event: ReactMouseEvent<HTMLButtonElement>) {
+    if (event.detail > 1) {
+      clearAppsChipClickTimeout();
+      return;
+    }
+
+    clearAppsChipClickTimeout();
+    appsChipClickTimeoutRef.current = window.setTimeout(() => {
+      setIsAppsMenuOpen((currentState) => !currentState);
+      appsChipClickTimeoutRef.current = null;
+    }, 180);
+  }
+
+  function handleAppsChipDoubleClick() {
+    clearAppsChipClickTimeout();
+    handleComposerAddonDoubleClick("add_sources");
+  }
+
   function handleSourceAppToggle(sourceAppId: SourceAppId) {
     setSelectedSourceApps((currentApps) =>
       currentApps.includes(sourceAppId) ? currentApps.filter((currentAppId) => currentAppId !== sourceAppId) : [...currentApps, sourceAppId]
@@ -1268,8 +1304,8 @@ export default function App() {
                       aria-haspopup="menu"
                       aria-expanded={isAppsMenuOpen}
                       title="Click to open apps, double-click to remove"
-                      onClick={() => setIsAppsMenuOpen((currentState) => !currentState)}
-                      onDoubleClick={() => handleComposerAddonDoubleClick(addon.id)}
+                      onClick={handleAppsChipClick}
+                      onDoubleClick={handleAppsChipDoubleClick}
                     >
                       <AppsChipIcon className="composer-addon-chip-icon" />
                       <span>Apps</span>
