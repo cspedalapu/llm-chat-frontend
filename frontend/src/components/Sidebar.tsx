@@ -265,7 +265,7 @@ const navItems: NavItem[] = [
   { key: "library", label: "Library", icon: LibraryIcon },
   { key: "apps", label: "Apps", icon: AppsIcon },
   { key: "deep_research", label: "Deep research", icon: DeepResearchIcon },
-  { key: "codex", label: "Codex", icon: CodexIcon },
+  { key: "workspace", label: "Workspace", icon: CodexIcon },
   { key: "llms", label: "LLMs", icon: GptsIcon }
 ];
 

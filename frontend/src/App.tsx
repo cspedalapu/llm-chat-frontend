@@ -134,7 +134,7 @@ function useTypewriterPrompt(phrases: string[]): string {
   return currentPhrase.slice(0, visibleLength);
 }
 
-type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "codex" | "llms";
+type WorkspaceView = "new_chat" | "search_chats" | "images" | "library" | "apps" | "deep_research" | "workspace" | "llms";
 
 const workspaceLabels: Record<WorkspaceView, string> = {
   new_chat: "New chat",
@@ -143,8 +143,38 @@ const workspaceLabels: Record<WorkspaceView, string> = {
   library: "Library",
   apps: "Apps",
   deep_research: "Deep research",
-  codex: "Codex",
+  workspace: "Workspace",
   llms: "LLMs"
+};
+
+const workspacePageDetails: Partial<
+  Record<
+    Exclude<WorkspaceView, "new_chat">,
+    {
+      kicker: string;
+      description: string;
+      aboutTitle?: string;
+      aboutCopy?: string;
+      featured?: boolean;
+    }
+  >
+> = {
+  deep_research: {
+    kicker: "Research",
+    description: "This page is under construction and is being shaped as a deeper research workspace.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "Deep Research is designed to help researchers investigate topics more thoroughly, organize evidence, compare findings, and move from raw questions to clearer insights in one focused workflow.",
+    featured: true
+  },
+  workspace: {
+    kicker: "Workspace",
+    description: "This page is under construction and is being shaped as an all-in-one workspace for building and research.",
+    aboutTitle: "About this Page",
+    aboutCopy:
+      "Workspace brings together UI, UX, coding agents, research tools, and useful free applications from different organizations so researchers and teams can work directly in one place with less friction.",
+    featured: true
+  }
 };
 
 export default function App() {
@@ -409,12 +439,21 @@ export default function App() {
   }
 
   function renderPlaceholderPage(view: Exclude<WorkspaceView, "new_chat">) {
+    const pageDetails = workspacePageDetails[view];
+
     return (
       <section className="workspace-placeholder">
-        <div className="workspace-placeholder-card">
-          <p className="workspace-placeholder-kicker">Workspace</p>
+        <div className={`workspace-placeholder-card${pageDetails?.featured ? " featured" : ""}`}>
+          <p className="workspace-placeholder-kicker">{pageDetails?.kicker ?? "Workspace"}</p>
           <h2 className="workspace-placeholder-title">{workspaceLabels[view]}</h2>
-          <p className="workspace-placeholder-copy">This page is under construction.</p>
+          <p className="workspace-placeholder-copy">{pageDetails?.description ?? "This page is under construction."}</p>
+
+          {pageDetails?.aboutTitle && pageDetails.aboutCopy ? (
+            <div className="workspace-placeholder-highlight">
+              <p className="workspace-placeholder-about-title">{pageDetails.aboutTitle}</p>
+              <p className="workspace-placeholder-about-copy">{pageDetails.aboutCopy}</p>
+            </div>
+          ) : null}
         </div>
       </section>
     );
@@ -440,6 +479,7 @@ export default function App() {
       />
 
       <main className="workspace">
+        {activeWorkspace === "new_chat" ? (
         <header className="workspace-topbar">
           <div className="workspace-title-row">
             <button className="chat-title-button" type="button">
@@ -463,6 +503,7 @@ export default function App() {
             </label>
           </div>
         </header>
+        ) : null}
 
         {activeWorkspace !== "new_chat" ? (
           renderPlaceholderPage(activeWorkspace)
