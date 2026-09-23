@@ -11,6 +11,7 @@ pnpm-debug.log*
 # Frontend generated files
 frontend/node_modules/
 frontend/dist/
+frontend/vite.config.d.ts
 frontend/*.log
 frontend/*.err.log
 frontend/*.out.log
@@ -42,4 +43,6 @@ Thumbs.db
 
 # Docker / local overrides
 docker-data/
+docker-compose.override.yml
+docker-compose.*.local.yml
 
