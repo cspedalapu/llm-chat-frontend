@@ -1,10 +1,20 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+import time
+from collections import defaultdict, deque
+from threading import Lock
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from .schemas import ChatRequest, ChatResponse, HealthResponse, ModelDescriptor, ResolutionSections
-
+from .schemas import (
+    ChatRequest,
+    ChatResponse,
+    HealthResponse,
+    ModelDescriptor,
+    ResolutionSections,
+)
 
 MODEL_LABELS = {
     "llama3.1:8b": "Local Llama 3.1 8B",
@@ -20,11 +30,54 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+RATE_LIMIT_REQUESTS = 30
+RATE_LIMIT_WINDOW_SECONDS = 60.0
+RATE_LIMITED_PATHS = ("/chat",)
+
+_hits: dict[str, deque[float]] = defaultdict(deque)
+_hits_lock = Lock()
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    """Cap per-client calls on the expensive endpoints.
+
+    The stub backend is cheap, but /chat is the path that will forward to a paid
+    LLM provider, so the ceiling belongs here before that wiring lands.
+    """
+    if not request.url.path.startswith(RATE_LIMITED_PATHS):
+        return await call_next(request)
+
+    client = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    cutoff = now - RATE_LIMIT_WINDOW_SECONDS
+
+    with _hits_lock:
+        seen = _hits[client]
+        while seen and seen[0] < cutoff:
+            seen.popleft()
+        if len(seen) >= RATE_LIMIT_REQUESTS:
+            retry_after = max(1, int(seen[0] - cutoff) + 1)
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down."},
+                headers={"Retry-After": str(retry_after)},
+            )
+        seen.append(now)
+
+    return await call_next(request)
 
 
 @app.get("/health", response_model=HealthResponse)
