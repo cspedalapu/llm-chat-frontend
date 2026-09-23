@@ -2,8 +2,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .schemas import ChatHistoryMessage, ChatResponse, ModelId, ResolutionSections, ResolutionSource
-
+from .schemas import (
+    ChatHistoryMessage,
+    ChatResponse,
+    ModelId,
+    ResolutionSections,
+    ResolutionSource,
+)
 
 MODEL_LABELS: dict[ModelId, str] = {
     "llama3.1:8b": "Ollama Llama 3.1 8B",
