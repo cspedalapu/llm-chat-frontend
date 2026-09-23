@@ -1,0 +1,17 @@
+# Explicit rule selection so lint results do not drift with the ruff version.
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# EXE002 fires on every file because the Docker bind mount presents the Windows
+# working tree as mode 0755 inside Linux; git itself records 100644.
+ignore = ["EXE002"]
+
+[lint.isort]
+known-first-party = ["backend"]
+
+[lint.per-file-ignores]
+# mock_engine.py is a prose data file; rewrapping its strings would edit the
+# answer text the UI displays, so long lines are accepted there.
+"app/mock_engine.py" = ["E501"]
