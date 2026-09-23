@@ -4,21 +4,26 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-
 ModelId = Literal["llama3.1:8b", "gpt-4o-mini"]
 MessageRole = Literal["assistant", "user"]
 
 
+MAX_MESSAGE_CHARS = 8_000
+MAX_HISTORY_MESSAGES = 50
+
+
 class ChatHistoryMessage(BaseModel):
     role: MessageRole
-    text: str = Field(min_length=1)
+    text: str = Field(min_length=1, max_length=MAX_MESSAGE_CHARS)
 
 
 class ChatRequest(BaseModel):
-    query: str = Field(min_length=1)
+    query: str = Field(min_length=1, max_length=MAX_MESSAGE_CHARS)
     model: ModelId
     top_k: int = Field(default=3, ge=1, le=20)
-    history: list[ChatHistoryMessage] = Field(default_factory=list)
+    history: list[ChatHistoryMessage] = Field(
+        default_factory=list, max_length=MAX_HISTORY_MESSAGES
+    )
 
 
 class ResolutionSource(BaseModel):
