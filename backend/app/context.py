@@ -4,6 +4,13 @@ import json
 
 from fastapi import HTTPException
 
+CATEGORY_HINTS = {
+    "writing": "This is writing work: favour clear prose, structure and a consistent voice.",
+    "homework": "This is learning work: explain reasoning step by step.",
+    "investing": "This is research work: separate evidence from interpretation.",
+    "travel": "This is planning work: give concrete options, trade-offs and next actions.",
+}
+
 
 def token_bound(text):
     # One token per UTF-8 byte is deliberately conservative across unknown providers.
@@ -14,6 +21,11 @@ def token_bound(text):
 def assemble(provider, conversation, project, preset, query, sources):
     system = "You are a helpful assistant. Be clear and acknowledge uncertainty."
     if project:
+        # The category was stored but never reached the model; surface it as a short
+        # framing hint so the picker in the project editor actually does something.
+        hint = CATEGORY_HINTS.get(project.get("template") or "")
+        if hint:
+            system += "\n\n" + hint
         system += "\n\nProject instructions:\n" + project.get("instructions", "")
         system += "\n\nUser-maintained project memory:\n" + project.get("memory", "")
     if preset:
