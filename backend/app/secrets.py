@@ -1,4 +1,5 @@
 """Keys never leave the backend. Back up the local encryption key with the database."""
+
 import os
 
 from cryptography.fernet import Fernet
@@ -30,5 +31,7 @@ def decrypt(value: str) -> str:
 
 
 def public_provider(item):
-    return {**{key: value for key, value in item.items() if key != "secret"},
-            "has_key": bool(item.get("secret"))}
+    return {
+        **{key: value for key, value in item.items() if key != "secret"},
+        "has_key": bool(item.get("secret")),
+    }
