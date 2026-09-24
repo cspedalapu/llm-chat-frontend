@@ -9,7 +9,9 @@ const API_URL = process.env.TEST_API_URL || "http://127.0.0.1:8011";
 test("configure a provider, stream, persist, search, bookmark and branch", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
-  await page.getByRole("button", { name: "Add your first model" }).click();
+  // The landing page no longer carries a setup button; add the first model
+  // through the model selector, which is the remaining primary entry point.
+  await page.getByLabel("Model", { exact: true }).selectOption("__add");
   await page.getByLabel("Connection name").fill("Local fixture");
   await page.getByLabel("API base URL").fill("http://127.0.0.1:8012/v1");
   await page.getByLabel("Model ID", { exact: true }).fill("fixture-one");
