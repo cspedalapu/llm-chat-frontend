@@ -27,9 +27,14 @@ class ProviderInput(BaseModel):
         if parsed.username or parsed.password or parsed.query or parsed.fragment:
             raise ValueError("Keep credentials and query parameters out of the base URL")
         if parsed.scheme == "http" and parsed.hostname not in (
-            "localhost", "127.0.0.1", "::1", "host.docker.internal"
+            "localhost",
+            "127.0.0.1",
+            "::1",
+            "host.docker.internal",
         ):
-            raise ValueError("Remote providers require HTTPS; HTTP is allowed only for local models")
+            raise ValueError(
+                "Remote providers require HTTPS; HTTP is allowed only for local models"
+            )
         if self.max_output_tokens + 1024 >= self.context_tokens:
             raise ValueError("Context limit must leave at least 1024 tokens for input")
         self.base_url = self.base_url.rstrip("/")
