@@ -48,6 +48,7 @@ export default function App() {
   const [modelId, setModelId] = useState("");
   const [presetId, setPresetId] = useState("");
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
+  const [reasoning, setReasoning] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [editor, setEditor] = useState<Editor>(null);
   const [projectTab, setProjectTab] = useState<"chats" | "sources">("chats");
@@ -111,7 +112,7 @@ export default function App() {
       } finally { creating.current = false; }
     }
     const targetId = target.id;
-    await send(target, text, modelId, selectedDocuments, presetId, () => {
+    await send(target, text, modelId, selectedDocuments, presetId, reasoning, () => {
       accepted(); setConversationId(targetId); setView("new_chat"); setInitialDraft(""); stickToBottom.current = true;
     });
   }
@@ -136,7 +137,7 @@ export default function App() {
     upsertConversation(branch); setConversationId(branch.id); setInitialDraft(text); setView("new_chat"); stickToBottom.current = true;
     const documents = (point.documentIds || []).filter(id => availableDocuments.some(d => d.id === id));
     setSelectedDocuments(documents);
-    if (regenerate && model) await send(branch, text, modelId, documents, point.presetId || "", () => setInitialDraft(""));
+    if (regenerate && model) await send(branch, text, modelId, documents, point.presetId || "", reasoning, () => setInitialDraft(""));
   }
   function usePreset(preset: Preset) {
     setPresetId(preset.id);
@@ -153,6 +154,7 @@ export default function App() {
     draftKey={conversation?.id || "new:" + (project?.id || "root")} initialText={initialDraft}
     busy={busy} disabled={!ready || !model || Boolean(conversation?.archived)}
     documents={availableDocuments} presets={data.presets} selectedDocuments={selectedDocuments} onDocuments={setSelectedDocuments}
+    reasoning={reasoning} onReasoning={setReasoning}
     presetId={presetId} onPreset={id => { setPresetId(id); const preset = data.presets.find(p => p.id === id); if (preset) usePreset(preset); }}
     onSend={sendMessage} onStop={() => conversation && run(() => stop(conversation.id, lastMessage?.result?.request_id))}
     onUpload={files => upload(files)} placeholder={!model ? "Add a model connection to start chatting" : project ? "Ask in " + project.title : "Ask anything"} empty={empty} />;
@@ -204,8 +206,7 @@ export default function App() {
         </section>
         : !conversation?.messages.length ? <section className="empty-state"><h2 className="empty-title">{emptyStateTitle}</h2>
           <p className="empty-prompt" aria-label={`Ideas: ${emptyStatePrompts.join(", ")}`}><span>{rotatingPrompt || " "}</span><span className="empty-prompt-caret" aria-hidden="true" /></p>
-          {!data.models.length && <p className="muted">Connect a model to make this workspace yours.</p>}
-          {!data.models.length && <button className="setup-model-button" onClick={() => setEditor({ type: "provider" })}>Add your first model</button>}{composer(true)}</section>
+          {composer(true)}</section>
         : <><section className="thread-panel functional-thread" ref={thread} onScroll={() => { const e = thread.current; if (e) stickToBottom.current = e.scrollHeight - e.scrollTop - e.clientHeight < 100; }}>
           <div className="thread-panel-inner">
             {conversation.parentId && <p className="muted">Branched conversation · <button className="subtle-button" onClick={() => openChat(conversation.parentId!)}>Open original</button></p>}
