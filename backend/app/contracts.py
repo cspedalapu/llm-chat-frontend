@@ -71,6 +71,8 @@ class GenerateInput(BaseModel):
     preset_id: str | None = None
     document_ids: list[str] = Field(default_factory=list, max_length=20)
     expected_message_count: int = Field(ge=0)
+    # Per-message override of the connection's configured thinking effort.
+    reasoning: Literal["", "low", "medium", "high"] = ""
 
 
 class BranchInput(BaseModel):
