@@ -169,40 +169,42 @@ async def stream(provider, messages):
     finished = False
     timeout = httpx.Timeout(connect=15, read=120, write=30, pool=15)
     try:
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
-            async with client.stream("POST", url, headers=headers, json=body) as response:
-                if response.status_code >= 300:
-                    # Never reflect raw provider bodies: they may contain keys or prompt content.
-                    hints = {
-                        401: "Check the API key.",
-                        403: "Check model access and permissions.",
-                        404: "Check the base URL and model ID.",
-                        429: "Provider quota or rate limit reached. Retry later.",
-                        400: "Check the model settings and supported request options.",
-                    }
-                    raise ProviderError(
-                        f"Provider returned HTTP {response.status_code}. "
-                        + hints.get(response.status_code, "Try again later.")
-                    )
-                async for line in response.aiter_lines():
-                    if provider["kind"] == "ollama":
-                        payload = line.strip()
-                    elif line.startswith("data:"):
-                        payload = line[5:].strip()
-                    else:
-                        continue
-                    if not payload:
-                        continue
-                    if payload == "[DONE]":
-                        finished = True
-                        break
-                    for event in normalize_chunk(provider["kind"], json.loads(payload)):
-                        finished = finished or bool(event.get("done") or event.get("finish"))
-                        yield event
-                if not finished:
-                    raise ProviderError(
-                        "Provider stream ended unexpectedly. Partial output was saved."
-                    )
+        async with (
+            httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client,
+            client.stream("POST", url, headers=headers, json=body) as response,
+        ):
+            if response.status_code >= 300:
+                # Never reflect raw provider bodies: they may contain keys or prompt content.
+                hints = {
+                    401: "Check the API key.",
+                    403: "Check model access and permissions.",
+                    404: "Check the base URL and model ID.",
+                    429: "Provider quota or rate limit reached. Retry later.",
+                    400: "Check the model settings and supported request options.",
+                }
+                raise ProviderError(
+                    f"Provider returned HTTP {response.status_code}. "
+                    + hints.get(response.status_code, "Try again later.")
+                )
+            async for line in response.aiter_lines():
+                if provider["kind"] == "ollama":
+                    payload = line.strip()
+                elif line.startswith("data:"):
+                    payload = line[5:].strip()
+                else:
+                    continue
+                if not payload:
+                    continue
+                if payload == "[DONE]":
+                    finished = True
+                    break
+                for event in normalize_chunk(provider["kind"], json.loads(payload)):
+                    finished = finished or bool(event.get("done") or event.get("finish"))
+                    yield event
+            if not finished:
+                raise ProviderError(
+                    "Provider stream ended unexpectedly. Partial output was saved."
+                )
     except httpx.TimeoutException as exc:
         raise ProviderError("Provider timed out. Check the connection and retry.") from exc
     except httpx.HTTPError as exc:
