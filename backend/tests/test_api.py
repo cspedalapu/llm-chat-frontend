@@ -371,6 +371,34 @@ def test_provider_request_protocols(client, kind, ending):
     )
 
 
+def test_per_request_reasoning_overrides_the_connection_default(client):
+    """The composer sends a thinking effort per message; it must beat the stored one."""
+    public = model(client, kind="openai")
+    with store.db() as con:
+        provider = store.get(con, "provider", public["id"])
+
+    assert not provider.get("reasoning")
+    _, _, body = build_request(provider, [{"role": "user", "content": "Hi"}])
+    assert "reasoning_effort" not in body
+
+    overridden = {**provider, "reasoning": "high"}
+    _, _, body = build_request(overridden, [{"role": "user", "content": "Hi"}])
+    assert body["reasoning_effort"] == "high"
+
+
+def test_generate_rejects_an_unknown_reasoning_level(client):
+    conversation_id = conversation(client)
+    response = client.post(
+        f"/conversations/{conversation_id}/generate",
+        json={
+            "request_id": "r1", "query": "Hi", "model": model(client)["id"],
+            "expected_message_count": 0, "reasoning": "extreme",
+        },
+        headers=HEADERS,
+    )
+    assert response.status_code == 422
+
+
 @pytest.mark.parametrize(
     "kind,payload",
     [
