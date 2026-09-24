@@ -29,14 +29,18 @@ def extract(name: str, content: bytes):
                     raise ValueError("Document exceeds extracted text limit")
                 pages.append((i + 1, text))
         except Exception as exc:
-            raise HTTPException(422, "Cannot read PDF. Use a text PDF under 300 pages / 500k characters.") from exc
+            raise HTTPException(
+                422, "Cannot read PDF. Use a text PDF under 300 pages / 500k characters."
+            ) from exc
     elif suffix in (".txt", ".md", ".csv", ".json", ".py", ".js", ".ts", ".log"):
         try:
             pages = [(1, content.decode("utf-8-sig"))]
         except UnicodeDecodeError as exc:
             raise HTTPException(422, "Save text files as UTF-8 before uploading.") from exc
     else:
-        raise HTTPException(415, "Supported: text PDF, TXT, Markdown, CSV, JSON and text code files.")
+        raise HTTPException(
+            415, "Supported: text PDF, TXT, Markdown, CSV, JSON and text code files."
+        )
     if sum(len(text) for _, text in pages) > MAX_TEXT_CHARS:
         raise HTTPException(413, "Document exceeds 500,000 extracted characters.")
     if not any(text.strip() for _, text in pages):
@@ -45,16 +49,25 @@ def extract(name: str, content: bytes):
 
 
 def save_document(con, name, pages, project_id):
-    document = {"id": store.uid(), "name": name[:200], "projectId": project_id,
-                "pages": len(pages), "createdAt": store.now()}
+    document = {
+        "id": store.uid(),
+        "name": name[:200],
+        "projectId": project_id,
+        "pages": len(pages),
+        "createdAt": store.now(),
+    }
     for page, text in pages:
         for start in range(0, len(text), 1400):
-            passage = text[start:start + 1700].strip()
+            passage = text[start : start + 1700].strip()
             if not passage:
                 continue
             chunk_id = store.uid()
-            con.execute("INSERT INTO chunks VALUES(?,?,?,?)", (chunk_id, document["id"], page, passage))
-            con.execute("INSERT INTO chunk_search VALUES(?,?,?)", (chunk_id, document["id"], passage))
+            con.execute(
+                "INSERT INTO chunks VALUES(?,?,?,?)", (chunk_id, document["id"], page, passage)
+            )
+            con.execute(
+                "INSERT INTO chunk_search VALUES(?,?,?)", (chunk_id, document["id"], passage)
+            )
     return store.put(con, "document", document)
 
 
@@ -76,7 +89,14 @@ def retrieve(con, query, document_ids, limit=5):
         f"AND c.document_id IN ({placeholders}) ORDER BY rank LIMIT ?",
         (expression, *document_ids, limit),
     ).fetchall()
-    return [{"id": row["id"], "documentId": row["document_id"],
-             "title": store.get(con, "document", row["document_id"])["name"],
-             "page": row["page"], "excerpt": row["text"], "number": i + 1}
-            for i, row in enumerate(rows)]
+    return [
+        {
+            "id": row["id"],
+            "documentId": row["document_id"],
+            "title": store.get(con, "document", row["document_id"])["name"],
+            "page": row["page"],
+            "excerpt": row["text"],
+            "number": i + 1,
+        }
+        for i, row in enumerate(rows)
+    ]
