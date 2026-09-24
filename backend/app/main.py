@@ -1,116 +1,291 @@
 from __future__ import annotations
 
-import time
-from collections import defaultdict, deque
-from threading import Lock
+import asyncio
+from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from .schemas import (
-    ChatRequest,
-    ChatResponse,
-    HealthResponse,
-    ModelDescriptor,
-    ResolutionSections,
+from . import documents, providers, store
+from .contracts import (
+    BranchInput, ConversationInput, MessageUpdate, PresetInput,
+    ProjectInput, ProviderInput, SettingsInput,
 )
+from .generation import ensure_idle, required, router, tasks
+from .secrets import encrypt, public_provider
 
-MODEL_LABELS = {
-    "llama3.1:8b": "Local Llama 3.1 8B",
-    "gpt-4o-mini": "OpenAI GPT-4o mini",
-}
-
-
-app = FastAPI(
-    title="LLM Chat Starter Backend",
-    version="0.1.0",
-    description="A minimal FastAPI backend that serves the frontend starter contract.",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:8080",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+ORIGINS = [f"http://{host}:{port}" for host in ("localhost", "127.0.0.1")
+           for port in (5173, 8080, 4173)]
 
 
-RATE_LIMIT_REQUESTS = 30
-RATE_LIMIT_WINDOW_SECONDS = 60.0
-RATE_LIMITED_PATHS = ("/chat",)
+@asynccontextmanager
+async def lifespan(app):
+    store.init_store()
+    yield
+    running = list(tasks.values())
+    for task in running:
+        task.cancel()
+    await asyncio.gather(*running, return_exceptions=True)
 
-_hits: dict[str, deque[float]] = defaultdict(deque)
-_hits_lock = Lock()
+
+app = FastAPI(title="Local LLM Workspace", version="0.2.0", lifespan=lifespan)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
+app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
+                   allow_methods=["GET", "POST", "PATCH", "DELETE"],
+                   allow_headers=["Content-Type", "X-Workspace-Client"])
+app.include_router(router)
 
 
 @app.middleware("http")
-async def rate_limit(request: Request, call_next):
-    """Cap per-client calls on the expensive endpoints.
-
-    The stub backend is cheap, but /chat is the path that will forward to a paid
-    LLM provider, so the ceiling belongs here before that wiring lands.
-    """
-    if not request.url.path.startswith(RATE_LIMITED_PATHS):
-        return await call_next(request)
-
-    client = request.client.host if request.client else "unknown"
-    now = time.monotonic()
-    cutoff = now - RATE_LIMIT_WINDOW_SECONDS
-
-    with _hits_lock:
-        seen = _hits[client]
-        while seen and seen[0] < cutoff:
-            seen.popleft()
-        if len(seen) >= RATE_LIMIT_REQUESTS:
-            retry_after = max(1, int(seen[0] - cutoff) + 1)
-            return JSONResponse(
-                status_code=429,
-                content={"detail": "Too many requests. Please slow down."},
-                headers={"Retry-After": str(retry_after)},
-            )
-        seen.append(now)
-
-    return await call_next(request)
+async def local_boundary(request: Request, call_next):
+    origin = request.headers.get("origin")
+    if origin and origin not in ORIGINS and origin != str(request.base_url).rstrip("/"):
+        return JSONResponse({"detail": "This personal workspace only accepts local origins."}, 403)
+    if request.method not in ("GET", "HEAD", "OPTIONS"):
+        if request.headers.get("X-Workspace-Client") != "local-chat":
+            return JSONResponse({"detail": "Missing workspace request header."}, 403)
+    size = request.headers.get("content-length", "0")
+    if not size.isdigit() or int(size) > documents.MAX_FILE_BYTES + 65536:
+        return JSONResponse({"detail": "Request exceeds 10 MB."}, 413)
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
-@app.get("/health", response_model=HealthResponse)
-def health() -> HealthResponse:
-    return HealthResponse(status="ok", service="llm-chat-starter-backend")
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "local-llm-workspace"}
 
 
-@app.get("/models", response_model=list[ModelDescriptor])
-def list_models() -> list[ModelDescriptor]:
-    return [ModelDescriptor(id=model_id, label=label) for model_id, label in MODEL_LABELS.items()]
+@app.get("/workspace")
+def workspace():
+    with store.db() as con:
+        conversations = store.all_records(con, "conversation")
+        return {"projects": store.all_records(con, "project"),
+                "conversations": sorted(conversations, key=lambda c: c["updatedAt"], reverse=True),
+                "models": [public_provider(p) for p in store.all_records(con, "provider")],
+                "documents": store.all_records(con, "document"),
+                "presets": store.all_records(con, "preset"),
+                "settings": store.get(con, "settings", "local") or {"daily_request_limit": 200}}
 
 
-@app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
-    answer = (
-        "Backend is connected, but no real LLM provider is configured yet. "
-        "Connect OpenAI, Anthropic, Gemini, DeepSeek, Kimi, or a local model to get real answers."
-    )
+@app.get("/models")
+def models():
+    with store.db() as con:
+        return [public_provider(p) for p in store.all_records(con, "provider")]
 
-    return ChatResponse(
-        answer=answer,
-        diagnostic_label="",
-        sections=ResolutionSections(
-            businessContext="",
-            rootCause="",
-            steps=[],
-            prevention=[],
-        ),
-        sources=[],
-        latency_ms=0,
-        model=request.model,
-        requested_model=request.model,
-        generation_model=request.model,
-        generation_label=MODEL_LABELS.get(request.model, request.model),
-        generation_note="",
-    )
+
+@app.post("/models")
+def create_provider(body: ProviderInput):
+    item = {**body.model_dump(exclude={"api_key"}), "id": store.uid(),
+            "secret": encrypt(body.api_key)}
+    with store.db() as con:
+        store.put(con, "provider", item)
+    return public_provider(item)
+
+
+@app.patch("/models/{model_id}")
+def update_provider(model_id: str, body: ProviderInput):
+    with store.db() as con:
+        existing = required(con, "provider", model_id)
+        item = {**body.model_dump(exclude={"api_key"}), "id": model_id,
+                "secret": encrypt(body.api_key) if body.api_key else existing.get("secret", "")}
+        store.put(con, "provider", item)
+    return public_provider(item)
+
+
+@app.delete("/models/{model_id}")
+def delete_provider(model_id: str):
+    with store.db() as con:
+        required(con, "provider", model_id)
+        store.delete(con, "provider", model_id)
+    return {"ok": True}
+
+
+@app.post("/models/{model_id}/test")
+async def test_provider(model_id: str):
+    with store.db() as con:
+        provider = required(con, "provider", model_id)
+    provider["max_output_tokens"] = 64
+    try:
+        async with asyncio.timeout(30):
+            async for event in providers.stream(provider, [{"role": "user", "content": "Reply OK."}]):
+                if event.get("text"):
+                    return {"ok": True, "detail": "Provider returned text successfully."}
+        raise providers.ProviderError("Provider returned no text.")
+    except (providers.ProviderError, TimeoutError) as exc:
+        raise HTTPException(502, str(exc) or "Connection test timed out.") from exc
+
+
+@app.post("/projects")
+def create_project(body: ProjectInput):
+    with store.db() as con:
+        return store.put(con, "project", {**body.model_dump(), "id": store.uid(), "kind": "folder"})
+
+
+@app.patch("/projects/{project_id}")
+def update_project(project_id: str, body: ProjectInput):
+    with store.db() as con:
+        existing = required(con, "project", project_id)
+        return store.put(con, "project", {**existing, **body.model_dump()})
+
+
+@app.delete("/projects/{project_id}")
+def delete_project(project_id: str):
+    with store.db() as con:
+        required(con, "project", project_id)
+        for item in store.all_records(con, "conversation"):
+            if item.get("projectId") == project_id:
+                ensure_idle(con, item["id"])
+                item["projectId"] = None
+                store.put(con, "conversation", item)
+        for item in store.all_records(con, "document"):
+            if item.get("projectId") == project_id:
+                item["projectId"] = None
+                store.put(con, "document", item)
+        store.delete(con, "project", project_id)
+    return {"ok": True}
+
+
+@app.post("/conversations")
+def create_conversation(body: ConversationInput):
+    with store.db() as con:
+        if body.projectId:
+            required(con, "project", body.projectId)
+        return store.put(con, "conversation", {**body.model_dump(), "id": store.uid(),
+            "messages": [], "preview": "", "updatedAt": store.now()})
+
+
+@app.get("/conversations/{conversation_id}")
+def get_conversation(conversation_id: str):
+    with store.db() as con:
+        return required(con, "conversation", conversation_id)
+
+
+@app.patch("/conversations/{conversation_id}")
+def update_conversation(conversation_id: str, body: ConversationInput):
+    with store.db() as con:
+        item = required(con, "conversation", conversation_id)
+        ensure_idle(con, conversation_id)
+        if body.projectId:
+            required(con, "project", body.projectId)
+        return store.put(con, "conversation", {**item, **body.model_dump(exclude_unset=True)})
+
+
+@app.delete("/conversations/{conversation_id}")
+def delete_conversation(conversation_id: str):
+    with store.db() as con:
+        required(con, "conversation", conversation_id)
+        ensure_idle(con, conversation_id)
+        store.delete(con, "conversation", conversation_id)
+    return {"ok": True}
+
+
+@app.post("/conversations/{conversation_id}/branch")
+def branch(conversation_id: str, body: BranchInput):
+    with store.db() as con:
+        item = required(con, "conversation", conversation_id)
+        ensure_idle(con, conversation_id)
+        index = next((i for i, m in enumerate(item["messages"]) if m["id"] == body.message_id), -1)
+        if index < 0:
+            raise HTTPException(404, "Message not found")
+        messages = item["messages"][:index + int(body.include_message)]
+        for message in messages:
+            message["id"] = store.uid()
+            message["saved"] = False
+        return store.put(con, "conversation", {
+            **item, "id": store.uid(), "title": item["title"][:130] + " (branch)",
+            "messages": messages, "parentId": conversation_id, "archived": False,
+            "updatedAt": store.now(), "preview": messages[-1]["text"][:120] if messages else "",
+        })
+
+
+@app.patch("/conversations/{conversation_id}/messages/{message_id}")
+def bookmark(conversation_id: str, message_id: str, body: MessageUpdate):
+    with store.db() as con:
+        item = required(con, "conversation", conversation_id)
+        message = next((m for m in item["messages"] if m["id"] == message_id), None)
+        if message is None:
+            raise HTTPException(404, "Message not found")
+        message["saved"] = body.saved
+        return store.put(con, "conversation", item)
+
+
+@app.get("/search")
+def search(q: str = "", archived: bool = False):
+    with store.db() as con:
+        expression = documents.search_expression(q)
+        if expression:
+            ids = [row["id"] for row in con.execute(
+                "SELECT id FROM chat_search WHERE chat_search MATCH ? ORDER BY rank LIMIT 100", (expression,)
+            )]
+            items = [store.get(con, "conversation", record_id) for record_id in ids]
+        else:
+            items = store.all_records(con, "conversation")
+        return [{"id": c["id"], "title": c["title"], "preview": c["preview"],
+                 "archived": c.get("archived", False), "projectId": c.get("projectId")}
+                for c in items if c and (archived or not c.get("archived"))]
+
+
+@app.post("/presets")
+def create_preset(body: PresetInput):
+    with store.db() as con:
+        return store.put(con, "preset", {**body.model_dump(), "id": store.uid()})
+
+
+@app.patch("/presets/{preset_id}")
+def update_preset(preset_id: str, body: PresetInput):
+    with store.db() as con:
+        required(con, "preset", preset_id)
+        return store.put(con, "preset", {**body.model_dump(), "id": preset_id})
+
+
+@app.delete("/presets/{preset_id}")
+def delete_preset(preset_id: str):
+    with store.db() as con:
+        store.delete(con, "preset", preset_id)
+    return {"ok": True}
+
+
+@app.post("/documents")
+async def upload_document(file: UploadFile = File(...), project_id: str = Form("")):
+    content = await file.read(documents.MAX_FILE_BYTES + 1)
+    await file.close()
+    if len(content) > documents.MAX_FILE_BYTES:
+        raise HTTPException(413, "File exceeds 10 MB.")
+    name = Path(file.filename or "document.txt").name
+    pages = await asyncio.to_thread(documents.extract, name, content)
+    with store.db() as con:
+        if project_id:
+            required(con, "project", project_id)
+        return documents.save_document(con, name, pages, project_id or None)
+
+
+@app.get("/documents/{document_id}")
+def get_document(document_id: str):
+    with store.db() as con:
+        item = required(con, "document", document_id)
+        chunks = [dict(row) for row in con.execute(
+            "SELECT id,page,text FROM chunks WHERE document_id=? ORDER BY rowid", (document_id,)
+        )]
+        return {**item, "chunks": chunks}
+
+
+@app.delete("/documents/{document_id}")
+def delete_document(document_id: str):
+    with store.db() as con:
+        required(con, "document", document_id)
+        store.delete(con, "document", document_id)
+        con.execute("DELETE FROM chunks WHERE document_id=?", (document_id,))
+        con.execute("DELETE FROM chunk_search WHERE document_id=?", (document_id,))
+    return {"ok": True}
+
+
+@app.patch("/settings")
+def update_settings(body: SettingsInput):
+    with store.db() as con:
+        return store.put(con, "settings", {**body.model_dump(), "id": "local"})
