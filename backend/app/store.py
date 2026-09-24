@@ -1,4 +1,5 @@
 """Small, transactional local store. All paths are controlled by the application."""
+
 from __future__ import annotations
 
 import json
@@ -75,25 +76,31 @@ def init_store():
 
 
 def get(con, kind, record_id):
-    row = con.execute("SELECT body FROM records WHERE kind=? AND id=?", (kind, record_id)).fetchone()
+    row = con.execute(
+        "SELECT body FROM records WHERE kind=? AND id=?", (kind, record_id)
+    ).fetchone()
     return json.loads(row["body"]) if row else None
 
 
 def all_records(con, kind):
-    return [json.loads(row["body"]) for row in con.execute(
-        "SELECT body FROM records WHERE kind=? ORDER BY rowid DESC", (kind,)
-    )]
+    return [
+        json.loads(row["body"])
+        for row in con.execute("SELECT body FROM records WHERE kind=? ORDER BY rowid DESC", (kind,))
+    ]
 
 
 def put(con, kind, item):
-    con.execute("INSERT INTO records(kind,id,body) VALUES(?,?,?) "
-                "ON CONFLICT(kind,id) DO UPDATE SET body=excluded.body",
-                (kind, item["id"], json.dumps(item)))
+    con.execute(
+        "INSERT INTO records(kind,id,body) VALUES(?,?,?) "
+        "ON CONFLICT(kind,id) DO UPDATE SET body=excluded.body",
+        (kind, item["id"], json.dumps(item)),
+    )
     if kind == "conversation":
         con.execute("DELETE FROM chat_search WHERE id=?", (item["id"],))
-        con.execute("INSERT INTO chat_search(id,title,text) VALUES(?,?,?)", (
-            item["id"], item["title"], "\n".join(m["text"] for m in item["messages"])
-        ))
+        con.execute(
+            "INSERT INTO chat_search(id,title,text) VALUES(?,?,?)",
+            (item["id"], item["title"], "\n".join(m["text"] for m in item["messages"])),
+        )
     return item
 
 
