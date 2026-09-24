@@ -102,6 +102,7 @@ svg {
 .sidebar-view {
   transition:
     opacity 240ms ease,
+    visibility 240ms ease,
     transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: opacity;
   overflow: visible;
@@ -135,12 +136,14 @@ svg {
 
 .sidebar:not(.collapsed) .sidebar-view-collapsed {
   opacity: 0;
+  visibility: hidden;
   transform: translateX(-0.08rem);
   pointer-events: none;
 }
 
 .sidebar.collapsed .sidebar-view-expanded {
   opacity: 0;
+  visibility: hidden;
   transform: none;
   pointer-events: none;
 }
