@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,14 +13,21 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import documents, providers, store
 from .contracts import (
-    BranchInput, ConversationInput, MessageUpdate, PresetInput,
-    ProjectInput, ProviderInput, SettingsInput,
+    BranchInput,
+    ConversationInput,
+    MessageUpdate,
+    PresetInput,
+    ProjectInput,
+    ProviderInput,
+    SettingsInput,
 )
 from .generation import ensure_idle, required, router, tasks
 from .secrets import encrypt, public_provider
 
-ORIGINS = [f"http://{host}:{port}" for host in ("localhost", "127.0.0.1")
-           for port in (5173, 8080, 4173)]
+ORIGINS = [
+    f"http://{host}:{port}" for host in ("localhost", "127.0.0.1") for port in (5173, 8080, 4173)
+]
+ORIGINS += [value for value in os.environ.get("CHAT_ALLOWED_ORIGINS", "").split(",") if value]
 
 
 @asynccontextmanager
@@ -32,10 +41,15 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Local LLM Workspace", version="0.2.0", lifespan=lifespan)
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"])
-app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
-                   allow_methods=["GET", "POST", "PATCH", "DELETE"],
-                   allow_headers=["Content-Type", "X-Workspace-Client"])
+app.add_middleware(
+    TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"]
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ORIGINS,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Content-Type", "X-Workspace-Client"],
+)
 app.include_router(router)
 
 
@@ -44,9 +58,11 @@ async def local_boundary(request: Request, call_next):
     origin = request.headers.get("origin")
     if origin and origin not in ORIGINS and origin != str(request.base_url).rstrip("/"):
         return JSONResponse({"detail": "This personal workspace only accepts local origins."}, 403)
-    if request.method not in ("GET", "HEAD", "OPTIONS"):
-        if request.headers.get("X-Workspace-Client") != "local-chat":
-            return JSONResponse({"detail": "Missing workspace request header."}, 403)
+    if (
+        request.method not in ("GET", "HEAD", "OPTIONS")
+        and request.headers.get("X-Workspace-Client") != "local-chat"
+    ):
+        return JSONResponse({"detail": "Missing workspace request header."}, 403)
     size = request.headers.get("content-length", "0")
     if not size.isdigit() or int(size) > documents.MAX_FILE_BYTES + 65536:
         return JSONResponse({"detail": "Request exceeds 10 MB."}, 413)
@@ -65,12 +81,14 @@ def health():
 def workspace():
     with store.db() as con:
         conversations = store.all_records(con, "conversation")
-        return {"projects": store.all_records(con, "project"),
-                "conversations": sorted(conversations, key=lambda c: c["updatedAt"], reverse=True),
-                "models": [public_provider(p) for p in store.all_records(con, "provider")],
-                "documents": store.all_records(con, "document"),
-                "presets": store.all_records(con, "preset"),
-                "settings": store.get(con, "settings", "local") or {"daily_request_limit": 200}}
+        return {
+            "projects": store.all_records(con, "project"),
+            "conversations": sorted(conversations, key=lambda c: c["updatedAt"], reverse=True),
+            "models": [public_provider(p) for p in store.all_records(con, "provider")],
+            "documents": store.all_records(con, "document"),
+            "presets": store.all_records(con, "preset"),
+            "settings": store.get(con, "settings", "local") or {"daily_request_limit": 200},
+        }
 
 
 @app.get("/models")
@@ -81,8 +99,11 @@ def models():
 
 @app.post("/models")
 def create_provider(body: ProviderInput):
-    item = {**body.model_dump(exclude={"api_key"}), "id": store.uid(),
-            "secret": encrypt(body.api_key)}
+    item = {
+        **body.model_dump(exclude={"api_key"}),
+        "id": store.uid(),
+        "secret": encrypt(body.api_key),
+    }
     with store.db() as con:
         store.put(con, "provider", item)
     return public_provider(item)
@@ -92,8 +113,17 @@ def create_provider(body: ProviderInput):
 def update_provider(model_id: str, body: ProviderInput):
     with store.db() as con:
         existing = required(con, "provider", model_id)
-        item = {**body.model_dump(exclude={"api_key"}), "id": model_id,
-                "secret": encrypt(body.api_key) if body.api_key else existing.get("secret", "")}
+        if (
+            existing.get("secret")
+            and not body.api_key
+            and (existing["base_url"] != body.base_url or existing["kind"] != body.kind)
+        ):
+            raise HTTPException(422, "Re-enter the API key when changing the endpoint or API type.")
+        item = {
+            **body.model_dump(exclude={"api_key"}),
+            "id": model_id,
+            "secret": encrypt(body.api_key) if body.api_key else existing.get("secret", ""),
+        }
         store.put(con, "provider", item)
     return public_provider(item)
 
@@ -113,7 +143,9 @@ async def test_provider(model_id: str):
     provider["max_output_tokens"] = 64
     try:
         async with asyncio.timeout(30):
-            async for event in providers.stream(provider, [{"role": "user", "content": "Reply OK."}]):
+            async for event in providers.stream(
+                provider, [{"role": "user", "content": "Reply OK."}]
+            ):
                 if event.get("text"):
                     return {"ok": True, "detail": "Provider returned text successfully."}
         raise providers.ProviderError("Provider returned no text.")
@@ -156,8 +188,17 @@ def create_conversation(body: ConversationInput):
     with store.db() as con:
         if body.projectId:
             required(con, "project", body.projectId)
-        return store.put(con, "conversation", {**body.model_dump(), "id": store.uid(),
-            "messages": [], "preview": "", "updatedAt": store.now()})
+        return store.put(
+            con,
+            "conversation",
+            {
+                **body.model_dump(),
+                "id": store.uid(),
+                "messages": [],
+                "preview": "",
+                "updatedAt": store.now(),
+            },
+        )
 
 
 @app.get("/conversations/{conversation_id}")
@@ -193,15 +234,24 @@ def branch(conversation_id: str, body: BranchInput):
         index = next((i for i, m in enumerate(item["messages"]) if m["id"] == body.message_id), -1)
         if index < 0:
             raise HTTPException(404, "Message not found")
-        messages = item["messages"][:index + int(body.include_message)]
+        messages = item["messages"][: index + int(body.include_message)]
         for message in messages:
             message["id"] = store.uid()
             message["saved"] = False
-        return store.put(con, "conversation", {
-            **item, "id": store.uid(), "title": item["title"][:130] + " (branch)",
-            "messages": messages, "parentId": conversation_id, "archived": False,
-            "updatedAt": store.now(), "preview": messages[-1]["text"][:120] if messages else "",
-        })
+        return store.put(
+            con,
+            "conversation",
+            {
+                **item,
+                "id": store.uid(),
+                "title": item["title"][:130] + " (branch)",
+                "messages": messages,
+                "parentId": conversation_id,
+                "archived": False,
+                "updatedAt": store.now(),
+                "preview": messages[-1]["text"][:120] if messages else "",
+            },
+        )
 
 
 @app.patch("/conversations/{conversation_id}/messages/{message_id}")
@@ -220,15 +270,27 @@ def search(q: str = "", archived: bool = False):
     with store.db() as con:
         expression = documents.search_expression(q)
         if expression:
-            ids = [row["id"] for row in con.execute(
-                "SELECT id FROM chat_search WHERE chat_search MATCH ? ORDER BY rank LIMIT 100", (expression,)
-            )]
+            ids = [
+                row["id"]
+                for row in con.execute(
+                    "SELECT id FROM chat_search WHERE chat_search MATCH ? ORDER BY rank LIMIT 100",
+                    (expression,),
+                )
+            ]
             items = [store.get(con, "conversation", record_id) for record_id in ids]
         else:
             items = store.all_records(con, "conversation")
-        return [{"id": c["id"], "title": c["title"], "preview": c["preview"],
-                 "archived": c.get("archived", False), "projectId": c.get("projectId")}
-                for c in items if c and (archived or not c.get("archived"))]
+        return [
+            {
+                "id": c["id"],
+                "title": c["title"],
+                "preview": c["preview"],
+                "archived": c.get("archived", False),
+                "projectId": c.get("projectId"),
+            }
+            for c in items
+            if c and (archived or not c.get("archived"))
+        ]
 
 
 @app.post("/presets")
@@ -252,7 +314,7 @@ def delete_preset(preset_id: str):
 
 
 @app.post("/documents")
-async def upload_document(file: UploadFile = File(...), project_id: str = Form("")):
+async def upload_document(file: Annotated[UploadFile, File()], project_id: str = Form("")):
     content = await file.read(documents.MAX_FILE_BYTES + 1)
     await file.close()
     if len(content) > documents.MAX_FILE_BYTES:
@@ -269,9 +331,12 @@ async def upload_document(file: UploadFile = File(...), project_id: str = Form("
 def get_document(document_id: str):
     with store.db() as con:
         item = required(con, "document", document_id)
-        chunks = [dict(row) for row in con.execute(
-            "SELECT id,page,text FROM chunks WHERE document_id=? ORDER BY rowid", (document_id,)
-        )]
+        chunks = [
+            dict(row)
+            for row in con.execute(
+                "SELECT id,page,text FROM chunks WHERE document_id=? ORDER BY rowid", (document_id,)
+            )
+        ]
         return {**item, "chunks": chunks}
 
 
