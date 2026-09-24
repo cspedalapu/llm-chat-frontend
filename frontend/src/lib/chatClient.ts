@@ -1,156 +1,60 @@
-import { buildMockResponse } from "@/data/mockData.ts";
-import { defaultModelOptions, getModelLabel } from "@/lib/models.ts";
-import { AssistantResult, Message, ModelId, ModelOption, ResolutionSource } from "@/types.ts";
-
-export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").trim();
-export const hasApiBaseUrl = apiBaseUrl.length > 0;
-
-interface RequestAssistantReplyArgs {
-  query: string;
-  model: ModelId;
-  history: Message[];
-}
-
-function normalizeModelOptions(input: unknown): ModelOption[] {
-  if (!Array.isArray(input)) {
-    return defaultModelOptions;
-  }
-
-  const options = input.flatMap((entry) => {
-    if (typeof entry !== "object" || entry === null) {
-      return [];
-    }
-
-    const record = entry as Record<string, unknown>;
-    const id = String(record.id ?? "").trim();
-    const label = String(record.label ?? id).trim();
-
-    return id ? [{ id, label }] : [];
-  });
-
-  return options.length > 0 ? options : defaultModelOptions;
-}
-
-function normalizeSources(input: unknown): ResolutionSource[] {
-  if (!Array.isArray(input)) {
-    return [];
-  }
-
-  return input.map((source, index) => {
-    const record = typeof source === "object" && source !== null ? source as Record<string, unknown> : {};
-    return {
-      title: String(record.title ?? record.error_message ?? `Retrieved source ${index + 1}`),
-      system: String(record.system ?? "Backend retrieval"),
-      origin: String(record.origin ?? "API response"),
-      summary: String(record.summary ?? record.openai_resolution ?? record.gemini_resolution ?? "Retrieved from backend."),
-      confidence: String(record.confidence ?? "Matched")
-    };
-  });
-}
-
-function normalizeApiResponse(payload: Record<string, unknown>, requestedModel: ModelId): AssistantResult {
-  const sectionsRecord =
-    typeof payload.sections === "object" && payload.sections !== null
-      ? payload.sections as Record<string, unknown>
-      : {};
-
-  const steps = Array.isArray(sectionsRecord.steps)
-    ? sectionsRecord.steps.map((step) => String(step))
-    : Array.isArray(payload.steps)
-      ? (payload.steps as unknown[]).map((step) => String(step))
-      : [];
-
-  const prevention = Array.isArray(sectionsRecord.prevention)
-    ? sectionsRecord.prevention.map((item) => String(item))
-    : Array.isArray(payload.prevention)
-      ? (payload.prevention as unknown[]).map((item) => String(item))
-      : [];
-
-  const responseModel = String(payload.model ?? requestedModel) as ModelId;
-  const generationLabel = String(
-    payload.generation_label ??
-    payload.generationLabel ??
-    getModelLabel(responseModel) ??
-    getModelLabel(requestedModel)
-  );
-
-  return {
-    answer: String(payload.answer ?? payload.response ?? "The backend responded without a final answer."),
-    diagnosticLabel: String(payload.diagnostic_label ?? payload.label ?? "Knowledge base match"),
-    sections: {
-      businessContext: String(
-        sectionsRecord.businessContext ??
-        payload.business_context ??
-        "Retrieved from the backend API."
-      ),
-      rootCause: String(
-        sectionsRecord.rootCause ??
-        payload.root_cause ??
-        "Review the backend answer and retrieved sources for the exact cause."
-      ),
-      steps,
-      prevention
-    },
-    sources: normalizeSources(payload.sources ?? payload.retrieved_results),
-    latencyMs: Number(payload.latency_ms ?? payload.latencyMs ?? 0),
-    mode: "api",
-    model: responseModel,
-    requestedModel: String(payload.requested_model ?? payload.requestedModel ?? requestedModel),
-    generationModel: String(payload.generation_model ?? payload.generationModel ?? responseModel),
-    generationLabel,
-    generationNote: String(payload.generation_note ?? payload.generationNote ?? "")
-  };
-}
-
-export async function fetchAvailableModels(): Promise<ModelOption[]> {
-  if (!hasApiBaseUrl) {
-    return defaultModelOptions;
-  }
-
+export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+export async function checkResponse(response: Response) {
+  if (response.ok) return;
+  let message = `Request failed (${response.status})`;
   try {
-    const response = await fetch(`${apiBaseUrl}/models`);
-
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status} from ${apiBaseUrl}/models`);
-    }
-
-    const payload = await response.json() as unknown;
-    return normalizeModelOptions(payload);
-  } catch {
-    return defaultModelOptions;
-  }
+    const body = await response.json();
+    if (typeof body.detail === "string") message = body.detail;
+    else if (Array.isArray(body.detail)) message = body.detail.map((e: { msg: string; loc: string[] }) => e.loc.slice(1).join(".") + ": " + e.msg).join("; ");
+  } catch { /* A proxy can return a non-JSON error. */ }
+  throw new Error(message);
 }
-
-export async function requestAssistantReply({
-  query,
-  model,
-  history
-}: RequestAssistantReplyArgs): Promise<AssistantResult> {
-  if (hasApiBaseUrl) {
-    const response = await fetch(`${apiBaseUrl}/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        query,
-        model,
-        top_k: 3,
-        history: history.map((message) => ({
-          role: message.role,
-          text: message.text
-        }))
-      })
+export async function api<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 45000);
+  try {
+    const form = body instanceof FormData;
+    const response = await fetch(apiBaseUrl + path, {
+      method, signal: controller.signal,
+      headers: { "X-Workspace-Client": "local-chat", ...(!form && body !== undefined ? { "Content-Type": "application/json" } : {}) },
+      body: body === undefined ? undefined : form ? body : JSON.stringify(body),
     });
-
-    if (!response.ok) {
-      throw new Error(`Backend returned ${response.status} from ${apiBaseUrl}/chat`);
+    await checkResponse(response);
+    return await response.json() as T;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw new Error("Request timed out. Reload to check whether the change was saved.");
+    if (error instanceof TypeError) throw new Error("Cannot reach the local backend. Check that it is running.");
+    throw error;
+  } finally { clearTimeout(timer); }
+}
+export async function streamReply(path: string, body: unknown, signal: AbortSignal, onEvent: (event: string, data: any) => void) {
+  const response = await fetch(apiBaseUrl + path, { method: "POST", signal,
+    headers: { "Content-Type": "application/json", "X-Workspace-Client": "local-chat" }, body: JSON.stringify(body) });
+  await checkResponse(response);
+  if (!response.body) throw new Error("Streaming is unavailable in this browser.");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let completed = false;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += decoder.decode(value, { stream: !done }).replace(/\r\n/g, "\n");
+      let boundary;
+      while ((boundary = buffer.indexOf("\n\n")) >= 0) {
+        const frame = buffer.slice(0, boundary); buffer = buffer.slice(boundary + 2);
+        const lines = frame.split("\n");
+        const event = lines.find(line => line.startsWith("event:"))?.slice(6).trim();
+        const data = lines.filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).join("\n");
+        if (event && data) { onEvent(event, JSON.parse(data)); if (event === "done") completed = true; }
+      }
+      if (done) break;
     }
-
-    const payload = await response.json() as Record<string, unknown>;
-    return normalizeApiResponse(payload, model);
-  }
-
-  await new Promise((resolve) => window.setTimeout(resolve, 700));
-  return buildMockResponse(query, model);
+    if (!completed) throw new Error("Connection interrupted. Partial output was saved; reload before retrying.");
+  } finally { reader.releaseLock(); }
+}
+export function download(name: string, content: string, mime = "text/markdown") {
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+  const link = document.createElement("a"); link.href = url; link.download = name; link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
