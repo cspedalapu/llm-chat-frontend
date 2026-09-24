@@ -10,8 +10,3 @@ ignore = ["EXE002"]
 
 [lint.isort]
 known-first-party = ["backend"]
-
-[lint.per-file-ignores]
-# mock_engine.py is a prose data file; rewrapping its strings would edit the
-# answer text the UI displays, so long lines are accepted there.
-"app/mock_engine.py" = ["E501"]
