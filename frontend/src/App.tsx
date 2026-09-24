@@ -11,7 +11,8 @@ import { WorkspaceTools } from "@/components/WorkspaceTools";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api, download } from "@/lib/chatClient";
 import { Conversation, DocumentRecord, Message, Preset, ProjectSummary, Provider } from "@/types";
-import { emptyStateTitle } from "@/lib/appConfig";
+import { emptyStatePrompts, emptyStateTitle } from "@/lib/appConfig";
+import { useTypewriterPrompt } from "@/hooks/useTypewriterPrompt";
 
 type View = "new_chat" | "project" | "search_chats" | "library" | "workspace" | "llms" | "images" | "apps" | "deep_research";
 type Editor = { type: "project"; project?: ProjectSummary; memory?: string } | { type: "provider"; provider?: Provider } | { type: "rename" | "move" | "summary"; conversation: Conversation } | null;
@@ -40,6 +41,7 @@ function ConversationEditor({ type, conversation, projects, onSave, onClose }: {
 export default function App() {
   const workspace = useWorkspace();
   const { data, ready, error, setError, running, refresh, mutate, send, stop, upsertConversation } = workspace;
+  const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
   const [view, setView] = useState<View>("new_chat");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -200,7 +202,9 @@ export default function App() {
             : <><div className="feature-card"><h2>Project memory</h2><p className="user-text">{project.memory || "No saved memory yet."}</p><button onClick={() => setEditor({ type: "project", project })}>Edit instructions & memory</button></div>
               <Library documents={data.documents.filter(d => d.projectId === project.id)} conversations={[]} onUpload={files => upload(files, project.id)} onOpen={openChat} onDelete={id => setConfirm({ text: "Delete this project document?", action: async () => { await mutate("/documents/" + id, "DELETE"); } })} /></>}
         </section>
-        : !conversation?.messages.length ? <section className="empty-state"><h2 className="empty-title">{emptyStateTitle}</h2><p className="empty-prompt">{data.models.length ? "Your conversations, context, and models. In one place." : "Connect a model to make this workspace yours."}</p>
+        : !conversation?.messages.length ? <section className="empty-state"><h2 className="empty-title">{emptyStateTitle}</h2>
+          <p className="empty-prompt" aria-label={`Ideas: ${emptyStatePrompts.join(", ")}`}><span>{rotatingPrompt || " "}</span><span className="empty-prompt-caret" aria-hidden="true" /></p>
+          {!data.models.length && <p className="muted">Connect a model to make this workspace yours.</p>}
           {!data.models.length && <button className="setup-model-button" onClick={() => setEditor({ type: "provider" })}>Add your first model</button>}{composer(true)}</section>
         : <><section className="thread-panel functional-thread" ref={thread} onScroll={() => { const e = thread.current; if (e) stickToBottom.current = e.scrollHeight - e.scrollTop - e.clientHeight < 100; }}>
           <div className="thread-panel-inner">
