@@ -24,7 +24,9 @@ export function ChatMessage({ message, busy, onBranch, onRetry, onSave, onMemory
         a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
         img: ({ alt }) => <span>[Image: {alt || "external image"}]</span>,
       }}>{message.text}</ReactMarkdown></div> : <p className="user-text">{message.text}</p>}
-      {message.state === "streaming" && <span role="status" className="stream-status">Generating…</span>}
+      {message.state === "streaming" && (message.text
+        ? <span role="status" className="stream-status">Generating…</span>
+        : <span role="status" aria-label="Generating response" className="loading"><span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" /></span>)}
       {result?.error && <p role="alert">{result.error}</p>}
       {(message.state === "cancelled" || message.state === "interrupted") && <p className="muted">{message.state === "cancelled" ? "Stopped. Partial response saved." : "Interrupted by a server restart. Partial response saved."}</p>}
       {result?.context_note && <p className="muted">{result.context_note}</p>}
