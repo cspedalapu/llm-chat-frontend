@@ -8,9 +8,9 @@ function PresetEditor({ preset, models, onSave, onClose }: { preset?: Preset; mo
   const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   return <Modal title={preset ? "Edit assistant" : "Create assistant"} onClose={onClose}><form className="workspace-modal-form" onSubmit={async e => { e.preventDefault(); setBusy(true); try { await onSave(form); onClose(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); } }}>
     <label className="workspace-modal-field"><span>Name</span><input required maxLength={150} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></label>
-    <label className="workspace-modal-field"><span>Instructions</span><textarea required rows={6} maxLength={12000} value={form.instructions} onChange={e => setForm({ ...form, instructions: e.target.value })} /></label>
+    <label className="workspace-modal-field"><span>Instructions</span><textarea aria-label="Instructions" required rows={6} maxLength={12000} value={form.instructions} onChange={e => setForm({ ...form, instructions: e.target.value })} /></label>
     <label className="workspace-modal-field"><span>Preferred model</span><select value={form.model} onChange={e => setForm({ ...form, model: e.target.value })}><option value="">Keep selected model</option>{models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</select></label>
-    <label className="workspace-modal-field"><span>Output format</span><textarea rows={3} maxLength={1000} value={form.output_format} onChange={e => setForm({ ...form, output_format: e.target.value })} placeholder="For example: findings, evidence, and next actions" /></label>
+    <label className="workspace-modal-field"><span>Output format</span><textarea aria-label="Output format" rows={3} maxLength={1000} value={form.output_format} onChange={e => setForm({ ...form, output_format: e.target.value })} placeholder="For example: findings, evidence, and next actions" /></label>
     {error && <p role="alert">{error}</p>}<button className="workspace-modal-primary" disabled={busy}>Save assistant</button>
   </form></Modal>;
 }
