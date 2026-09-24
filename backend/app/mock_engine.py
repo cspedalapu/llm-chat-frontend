@@ -243,7 +243,9 @@ def pick_template(query: str) -> MockResolutionTemplate:
     return FALLBACK_TEMPLATE
 
 
-def build_chat_response(query: str, model: ModelId, history: list[ChatHistoryMessage]) -> ChatResponse:
+def build_chat_response(
+    query: str, model: ModelId, history: list[ChatHistoryMessage]
+) -> ChatResponse:
     template = pick_template(query)
     history_hint = (
         f" This conversation already contains {len(history)} earlier message(s), which is useful once "
@@ -269,4 +271,3 @@ def build_chat_response(query: str, model: ModelId, history: list[ChatHistoryMes
         generation_label=MODEL_LABELS[model],
         generation_note="Seeded FastAPI starter backend response.",
     )
-
