@@ -193,6 +193,9 @@ async def generate(conversation_id: str, body: GenerateInput):
                 429, "Daily request limit reached. Adjust it in Workspace settings."
             )
         provider = required(con, "provider", body.model)
+        if body.reasoning:
+            # Overrides the connection default for this request only.
+            provider = {**provider, "reasoning": body.reasoning}
         project = required(con, "project", item["projectId"]) if item.get("projectId") else None
         preset = required(con, "preset", body.preset_id) if body.preset_id else None
         allowed = []
