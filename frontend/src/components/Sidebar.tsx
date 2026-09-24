@@ -244,6 +244,8 @@ interface SidebarProps {
   onSelectConversation: (conversationId: string) => void;
   onRenameProject: (projectId: string) => void;
   onToggleSidebar: () => void;
+  onChatAction?: (action: string, id: string) => void;
+  onAccount?: () => void;
 }
 
 interface NavItem {
@@ -289,8 +291,7 @@ const navItems: NavItem[] = [
 
 const chatMenuSections: SidebarMenuAction[][] = [
   [
-    { label: "Share", icon: ShareIcon },
-    { label: "Start a group chat", icon: GroupChatIcon },
+    { label: "Export chat", icon: ShareIcon },
     { label: "Rename", icon: EditIcon },
     { label: "Move to project", icon: FolderIcon, hasChevron: true }
   ],
@@ -303,7 +304,6 @@ const chatMenuSections: SidebarMenuAction[][] = [
 
 const projectMenuSections: SidebarMenuAction[][] = [
   [
-    { label: "Share", icon: ShareIcon },
     { label: "Rename project", icon: EditIcon }
   ],
   [{ label: "Delete project", icon: TrashIcon, tone: "danger" }]
@@ -327,11 +327,13 @@ export function Sidebar({
   onSelectProject,
   onSelectConversation,
   onRenameProject,
-  onToggleSidebar
+  onToggleSidebar,
+  onChatAction,
+  onAccount
 }: SidebarProps) {
   const visibleProjectLimit = 7;
   const accountPrimaryLabel = accountName?.trim() || "Sign in";
-  const accountSecondaryLabel = accountName ? "Plus" : "Account";
+  const accountSecondaryLabel = "Local workspace";
   const accountAvatarLabel =
     accountName
       ?.split(/\s+/)
@@ -513,7 +515,7 @@ export function Sidebar({
               className="sidebar-account-menu-item"
               type="button"
               role="menuitem"
-              onClick={() => setIsAccountMenuOpen(false)}
+              onClick={() => { setIsAccountMenuOpen(false); onAccount?.(); }}
             >
               <Icon className="sidebar-nav-icon" />
               <span>{item.label}</span>
@@ -555,12 +557,16 @@ export function Sidebar({
                         onRenameConversation(itemId);
                       } else if (item.label === "Delete") {
                         onDeleteConversation(itemId);
+                      } else {
+                        onChatAction?.(item.label, itemId);
                       }
                       return;
                     }
 
                     if (item.label === "Delete project") {
                       onDeleteProject(itemId);
+                    } else if (item.label === "Rename project") {
+                      onRenameProject(itemId);
                     }
                   }}
                 >
