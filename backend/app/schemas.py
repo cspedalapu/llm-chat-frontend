@@ -21,9 +21,7 @@ class ChatRequest(BaseModel):
     query: str = Field(min_length=1, max_length=MAX_MESSAGE_CHARS)
     model: ModelId
     top_k: int = Field(default=3, ge=1, le=20)
-    history: list[ChatHistoryMessage] = Field(
-        default_factory=list, max_length=MAX_HISTORY_MESSAGES
-    )
+    history: list[ChatHistoryMessage] = Field(default_factory=list, max_length=MAX_HISTORY_MESSAGES)
 
 
 class ResolutionSource(BaseModel):
@@ -62,4 +60,3 @@ class HealthResponse(BaseModel):
 class ModelDescriptor(BaseModel):
     id: ModelId
     label: str
-
