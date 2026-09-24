@@ -43,6 +43,9 @@ Thumbs.db
 
 # Docker / local overrides
 docker-data/
+data/
+.venv-dev/
+playwright-report/
+test-results/
 docker-compose.override.yml
 docker-compose.*.local.yml
-
