@@ -29,7 +29,7 @@ export function useWorkspace() {
     await refresh();
     return result;
   }
-  async function send(conversation: Conversation, query: string, model: string, documentIds: string[], presetId: string, onAccepted?: () => void) {
+  async function send(conversation: Conversation, query: string, model: string, documentIds: string[], presetId: string, reasoning: string, onAccepted?: () => void) {
     if (controllers.current.has(conversation.id)) return;
     const requestId = crypto.randomUUID();
     const controller = new AbortController();
@@ -41,7 +41,7 @@ export function useWorkspace() {
     try {
       await streamReply(`/conversations/${conversation.id}/generate`, {
         query, model, request_id: requestId, expected_message_count: conversation.messages.length,
-        document_ids: documentIds, preset_id: presetId || null,
+        document_ids: documentIds, preset_id: presetId || null, reasoning,
       }, controller.signal, (event, payload) => {
         if (event === "start") {
           onAccepted?.();
