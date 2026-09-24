@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 
 test.describe.configure({ mode: "serial" });
 
+// The backend port is fixed by playwright.config.ts; allow an override so the
+// suite can run against an alternate backend without editing the spec.
+const API_URL = process.env.TEST_API_URL || "http://127.0.0.1:8011";
+
 test("configure a provider, stream, persist, search, bookmark and branch", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
@@ -44,6 +48,9 @@ test("project documents, source citations, memory, errors and stop", async ({ pa
   await page.getByLabel("Instructions", { exact: true }).fill("Always give evidence.");
   await page.getByLabel("Project memory", { exact: true }).fill("Launch team: blue.");
   await page.getByRole("button", { name: "Save project", exact: true }).click();
+  // Wait for the editor to close: openProject() resets the attachment selection,
+  // so attaching while creation is still in flight loses the document.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.locator('input[type="file"]').first().setInputFiles({ name: "launch.txt", mimeType: "text/plain", buffer: Buffer.from("Cobalt launches Friday. The team is blue.") });
   await expect(page.locator(".attachment-chips")).toContainText("launch.txt");
   await page.getByLabel("Message", { exact: true }).fill("When does cobalt launch?");
@@ -55,6 +62,7 @@ test("project documents, source citations, memory, errors and stop", async ({ pa
   await page.getByRole("button", { name: "Save to project memory" }).click();
   await expect(page.getByLabel("Project memory", { exact: true })).toContainText("Cobalt launches Friday");
   await page.getByRole("button", { name: "Save project", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.getByLabel("Message", { exact: true }).fill("fail-provider");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("HTTP 401");
@@ -66,7 +74,7 @@ test("project documents, source citations, memory, errors and stop", async ({ pa
 });
 
 test("model switching is sent to the selected provider configuration", async ({ page, request }) => {
-  const response = await request.post("http://127.0.0.1:8011/models", { headers: { "X-Workspace-Client": "local-chat" }, data: {
+  const response = await request.post(API_URL + "/models", { headers: { "X-Workspace-Client": "local-chat" }, data: {
     label: "Second fixture", kind: "openai", base_url: "http://127.0.0.1:8012/v1", model: "fixture-two",
   } });
   const model = await response.json();
