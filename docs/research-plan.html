@@ -1,0 +1,458 @@
+<title>Research Tab Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --ground: #f4f6f8;
+  --surface: #ffffff;
+  --sunk: #eaeef2;
+  --ink: #14202c;
+  --muted: #566476;
+  --line: #d6dde5;
+  --accent: #1f5f8b;
+  --accent-soft: #e2eef7;
+  --ready: #17745f;
+  --ready-soft: #dff2ec;
+  --ask: #9a5b07;
+  --ask-soft: #fbeed9;
+  --risk: #a3372c;
+  --risk-soft: #f9e3e0;
+  --app: #212121;
+  --app-side: #171717;
+  --app-raised: #303030;
+  --app-text: #ececec;
+  --app-muted: #9a9a9a;
+  --display: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0f141a; --surface: #161d25; --sunk: #1c252f; --ink: #e5ebf1; --muted: #9aa8b8; --line: #2a3542;
+    --accent: #7fb6de; --accent-soft: #1b3042; --ready: #5fc8a9; --ready-soft: #143229;
+    --ask: #e9ad55; --ask-soft: #3a2a12; --risk: #f08b80; --risk-soft: #3c1d1a;
+    --app: #1b1b1b; --app-side: #121212; --app-raised: #2b2b2b;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0f141a; --surface: #161d25; --sunk: #1c252f; --ink: #e5ebf1; --muted: #9aa8b8; --line: #2a3542;
+  --accent: #7fb6de; --accent-soft: #1b3042; --ready: #5fc8a9; --ready-soft: #143229;
+  --ask: #e9ad55; --ask-soft: #3a2a12; --risk: #f08b80; --risk-soft: #3c1d1a;
+  --app: #1b1b1b; --app-side: #121212; --app-raised: #2b2b2b;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font: 400 15px/1.6 var(--body); padding-inline: 20px; padding-block: 0 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+h2 { font-size: 1.45rem; font-weight: 700; letter-spacing: -.01em; }
+h3 { font-size: 1.02rem; font-weight: 500; }
+p { margin: 0; }
+.mono { font-family: var(--mono); font-size: .82em; }
+.muted { color: var(--muted); }
+.label { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Header + nav */
+header { padding-block: 40px 20px; display: grid; gap: 14px; }
+.lede { max-width: 68ch; font-size: 1.05rem; color: var(--muted); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: .78rem; font-weight: 500; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.pill.ask { background: var(--ask-soft); color: var(--ask); }
+.pill.ready { background: var(--ready-soft); color: var(--ready); }
+.pill.risk { background: var(--risk-soft); color: var(--risk); }
+.pill.accent { background: var(--accent-soft); color: var(--accent); }
+nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--ground) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); margin-inline: -20px; padding: 10px 20px; overflow-x: auto; }
+nav .wrap { display: flex; gap: 4px; }
+nav a { color: var(--muted); text-decoration: none; font-size: .86rem; padding: 5px 10px; border-radius: 8px; white-space: nowrap; }
+nav a:hover, nav a:focus-visible { background: var(--sunk); color: var(--ink); outline: none; }
+
+section { padding-block: 44px 0; display: grid; gap: 18px; scroll-margin-top: 60px; }
+.section-head { display: grid; gap: 6px; max-width: 72ch; }
+
+/* Findings */
+.takeaways { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.takeaway { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 6px; align-content: start; }
+.takeaway strong { font-family: var(--display); font-weight: 500; font-size: 1rem; }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-weight: 600; background: var(--sunk); white-space: nowrap; }
+tbody th { background: transparent; color: var(--muted); font-weight: 500; }
+tr:last-child td, tr:last-child th { border-bottom: 0; }
+.hl { color: var(--accent); font-weight: 600; }
+.uv { color: var(--muted); font-style: italic; }
+
+/* App mock */
+.mock { border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--app); color: var(--app-text); font-size: 13px; }
+.mock-bar { display: flex; gap: 6px; padding: 9px 12px; background: var(--app-side); border-bottom: 1px solid #2c2c2c; }
+.mock-bar i { width: 10px; height: 10px; border-radius: 50%; background: #3a3a3a; }
+.mock-body { display: grid; grid-template-columns: 150px minmax(0, 1fr) 190px; min-height: 380px; }
+.m-side { background: var(--app-side); padding: 12px 10px; display: grid; gap: 4px; align-content: start; border-right: 1px solid #2a2a2a; }
+.m-side .brand { font-weight: 600; margin-bottom: 8px; }
+.m-nav { padding: 6px 8px; border-radius: 8px; color: var(--app-text); }
+.m-nav.on { background: #2f2f2f; }
+.m-nav.new { color: #f7e7aa; }
+.m-head { color: var(--app-muted); font-size: 11px; margin-top: 10px; padding: 0 8px; }
+.m-run { padding: 5px 8px; border-radius: 8px; display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: #7fcfb4; }
+.dot.run { background: #f2c14e; box-shadow: 0 0 0 3px rgba(242, 193, 78, .2); }
+.m-main { padding: 26px 26px 20px; display: grid; gap: 14px; align-content: start; }
+.m-title { font-size: 20px; font-weight: 600; }
+.m-box { background: var(--app-raised); border-radius: 18px; padding: 14px 16px; color: var(--app-muted); }
+.m-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.m-chip { border: 1px solid #454545; border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+.m-chip.on { background: #3a3a3a; border-color: #5a5a5a; }
+.m-seg { display: inline-flex; background: #2b2b2b; border-radius: 10px; padding: 2px; }
+.m-seg span { padding: 3px 10px; border-radius: 8px; font-size: 12px; color: var(--app-muted); }
+.m-seg span.on { background: #444; color: var(--app-text); }
+.m-k { color: var(--app-muted); font-size: 12px; min-width: 62px; }
+.m-btn { margin-left: auto; background: #f3f3f3; color: #111; border-radius: 999px; padding: 6px 14px; font-weight: 600; font-size: 12px; }
+.m-tools { background: var(--app-side); border-left: 1px solid #2a2a2a; padding: 12px; display: grid; gap: 8px; align-content: start; }
+.m-tool { display: flex; justify-content: space-between; gap: 6px; align-items: center; padding: 6px 8px; border-radius: 8px; background: #1d1d1d; }
+.m-tool small { color: var(--app-muted); font-size: 11px; }
+.ok { color: #7fcfb4; } .off { color: #b9b9b9; }
+.m-foot { color: var(--app-muted); font-size: 11px; border-top: 1px solid #2a2a2a; padding-top: 8px; }
+.callouts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.callout { display: grid; gap: 4px; }
+.callout .label { color: var(--accent); }
+
+/* Flow */
+.flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; counter-reset: step; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 6px; align-content: start; position: relative; }
+.step::before { counter-increment: step; content: "Step " counter(step); font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.step.you { border-color: var(--ask); }
+.step .who { justify-self: start; }
+.engine { background: var(--sunk); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+.engine-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .9rem; }
+.node { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.arrow { color: var(--muted); }
+.budgets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.budget { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: grid; gap: 8px; }
+.budget b { font-family: var(--display); font-size: 1.05rem; font-weight: 500; }
+.meter { height: 6px; border-radius: 999px; background: var(--sunk); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.bstats { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 2px 16px; font-size: .82rem; font-variant-numeric: tabular-nums; }
+.bstats span { color: var(--muted); font-size: .72rem; }
+
+/* Tools */
+.tool-groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.tgroup { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.tlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tlist li { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; font-size: .9rem; }
+.tlist li span:last-child { color: var(--muted); font-size: .78rem; text-align: right; }
+.perm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: .88rem; }
+
+/* Milestones */
+.miles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+.mile { padding: 0 14px 0 0; display: grid; gap: 8px; align-content: start; }
+.mile-mark { display: flex; align-items: center; gap: 8px; }
+.mile-mark b { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--surface); font-family: var(--display); font-size: .85rem; flex-shrink: 0; }
+.mile-mark hr { flex: 1; border: 0; border-top: 2px dashed var(--line); margin: 0; }
+.mile:last-child .mile-mark hr { visibility: hidden; }
+.mile p { font-size: .9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-family: var(--mono); font-size: .7rem; padding: 1px 6px; border-radius: 5px; background: var(--sunk); color: var(--muted); }
+
+/* Decisions */
+.decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+.decision { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--ask); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; }
+.decision.open { border-left-color: var(--risk); }
+.decision header { padding: 0; display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.decision .rec { font-size: .88rem; }
+.decision .rec b { color: var(--ready); font-weight: 600; }
+.needs { background: var(--ask-soft); color: var(--ink); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; }
+.needs ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 2px; }
+
+/* Tasks */
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+.phase { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; align-content: start; }
+.phase header { padding: 0; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.tasks li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; font-size: .88rem; align-items: baseline; }
+.tasks .id { font-family: var(--mono); font-size: .74rem; color: var(--accent); }
+.progress { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.progress .bar { flex: 1; min-width: 160px; height: 8px; border-radius: 999px; background: var(--sunk); overflow: hidden; }
+.progress .bar i { display: block; width: 0%; height: 100%; background: var(--ready); }
+
+/* Risks */
+.risks { display: grid; gap: 8px; }
+.risk-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font-size: .9rem; }
+.risk-row b { font-weight: 600; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .82rem; color: var(--muted); display: grid; gap: 4px; }
+
+@media (max-width: 900px) {
+  .mock-body { grid-template-columns: minmax(0, 1fr); }
+  .m-side { grid-template-columns: repeat(2, minmax(0, 1fr)); border-right: 0; border-bottom: 1px solid #2a2a2a; }
+  .m-side .brand, .m-head { grid-column: 1 / -1; }
+  .m-tools { border-left: 0; border-top: 1px solid #2a2a2a; }
+  .callouts, .tool-groups, .budgets { grid-template-columns: minmax(0, 1fr); }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .miles { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 20px; }
+  .mile-mark hr { visibility: hidden; }
+  .risk-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (max-width: 480px) { .flow { grid-template-columns: minmax(0, 1fr); } .miles { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="label">LLM Workspace · docs/RESEARCH-PLAN.md</span>
+    <h1>A Research tab that does one job well</h1>
+    <p class="lede">Ask a question, choose the models and sources, approve a plan, watch the research happen, and get a cited report. The same tab connects research tools (web, academic, Google, Microsoft, Excel, any MCP tool) and tracks every call they make.</p>
+    <div class="meta">
+      <span class="pill ask">Draft · waiting for your decisions</span>
+      <span class="pill">31 tasks · 4 milestones</span>
+      <span class="pill">Researched 25 Sep 2026</span>
+    </div>
+  </header>
+</div>
+
+<nav aria-label="Sections"><div class="wrap">
+  <a href="#industry">What others do</a><a href="#tab">The tab</a><a href="#flow">How a run works</a><a href="#tools">Tools</a>
+  <a href="#milestones">Milestones</a><a href="#decisions">Decisions</a><a href="#tasks">Tasks</a><a href="#risks">Risks</a>
+</div></nav>
+
+<main class="wrap">
+
+  <section id="industry">
+    <div class="section-head">
+      <span class="label">Research summary</span>
+      <h2>What ChatGPT, Claude, Gemini, Grok, DeepSeek and Perplexity do</h2>
+      <p class="muted">From official docs where reachable. Items in <span class="uv">italics</span> could only be confirmed from secondary sources.</p>
+    </div>
+    <div class="takeaways">
+      <div class="takeaway"><strong>Plan before you spend</strong><p class="muted">ChatGPT and Gemini show an editable research plan before a run starts. That's the step the others lack.</p></div>
+      <div class="takeaway"><strong>Runs are background jobs</strong><p class="muted">2–30 minutes, keep going if you leave, can be stopped. ChatGPT also lets you steer mid-run.</p></div>
+      <div class="takeaway"><strong>Tools arrive over MCP</strong><p class="muted">ChatGPT and Claude accept any remote MCP server. Research uses tools read-only, with per-tool permissions.</p></div>
+      <div class="takeaway"><strong>Our own loop wins</strong><p class="muted">OpenAI retired its deep-research models on 23 Jul 2026. A normal model plus our tools works for every model we support, DeepSeek included.</p></div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">ChatGPT</th><th scope="col">Claude</th><th scope="col">Gemini</th><th scope="col">Grok</th><th scope="col">DeepSeek</th><th scope="col">Perplexity</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Start</th><td>+ menu → Deep research</td><td>+ → Research</td><td>Deep Research button</td><td class="uv">Mode picker</td><td>Search + DeepThink</td><td>Research mode</td></tr>
+          <tr><th scope="row">Plan step</th><td class="hl">Clarify → editable plan</td><td>Internal only</td><td class="hl">Editable plan</td><td>None</td><td>None</td><td class="uv">None</td></tr>
+          <tr><th scope="row">While running</th><td class="hl">Live progress, steer, stop</td><td>Parallel searches, stop</td><td>Steps, sites</td><td>Thinking trace</td><td>Reasoning trace</td><td>Steps, sources</td></tr>
+          <tr><th scope="row">Run length</th><td>5–30 min</td><td>5–15 min (45 max)</td><td>5–10 min</td><td class="uv">~2 min</td><td>Seconds</td><td>2–4 min</td></tr>
+          <tr><th scope="row">Output</th><td>Report + TOC, PDF/DOCX</td><td>Report, citations</td><td>Report → Docs, audio</td><td>Cited answer</td><td>Cited answer</td><td>Report → PDF/MD</td></tr>
+          <tr><th scope="row">Sources</th><td>Web, sites, files, apps</td><td>Web, Workspace, M365</td><td>Web, Gmail, Drive</td><td>Web + X posts</td><td>Web</td><td>Web, Academic, Social, Finance</td></tr>
+          <tr><th scope="row">Custom tools</th><td class="hl">MCP</td><td class="hl">MCP + directory</td><td>–</td><td>API only</td><td>–</td><td>–</td></tr>
+          <tr><th scope="row">Permissions</th><td>All / read-only / custom</td><td class="hl">Always / Ask / Blocked</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab">
+    <div class="section-head">
+      <span class="label">The page</span>
+      <h2>The Research tab</h2>
+      <p class="muted">A new sidebar item that replaces the old "Deep Research" placeholder. It shows only when the backend supports research, and each user can hide it in Customize.</p>
+    </div>
+    <figure class="mock" aria-label="Mock-up of the Research tab" style="margin:0">
+      <div class="mock-bar"><i></i><i></i><i></i></div>
+      <div class="mock-body">
+        <div class="m-side">
+          <div class="brand">LLM Workspace</div>
+          <div class="m-nav">New chat</div>
+          <div class="m-nav">Library</div>
+          <div class="m-nav on new">Research</div>
+          <div class="m-nav">LLMs</div>
+          <div class="m-head">Research history</div>
+          <div class="m-run"><span class="dot run"></span>EV charger market</div>
+          <div class="m-run"><span class="dot"></span>Thesis literature</div>
+          <div class="m-run"><span class="dot"></span>Competitor scan</div>
+        </div>
+        <div class="m-main">
+          <div class="m-title">What should we research?</div>
+          <div class="m-box">Size the EV charging market in India for 2027–2030</div>
+          <div class="m-row"><span class="m-k">Depth</span><span class="m-seg"><span>Quick</span><span class="on">Standard</span><span>Deep</span></span></div>
+          <div class="m-row"><span class="m-k">Models</span><span class="m-chip on">Research: DeepSeek V4 ▾</span><span class="m-chip">Writer: Claude ▾</span></div>
+          <div class="m-row"><span class="m-k">Sources</span><span class="m-chip on">Web</span><span class="m-chip on">Academic</span><span class="m-chip on">Library</span><span class="m-chip">Google Drive</span><span class="m-chip">+</span></div>
+          <div class="m-row"><span class="m-k"></span><span>☑ Show me the plan first</span><span class="m-btn">Start research</span></div>
+        </div>
+        <div class="m-tools">
+          <b>Tools</b>
+          <div class="m-tool"><span>Web search</span><small class="ok">● ready</small></div>
+          <div class="m-tool"><span>arXiv · OpenAlex</span><small class="ok">● ready</small></div>
+          <div class="m-tool"><span>Your library</span><small class="ok">● ready</small></div>
+          <div class="m-tool"><span>Google Drive</span><small class="off">Connect</small></div>
+          <div class="m-tool"><span>OneDrive · Excel</span><small class="off">Connect</small></div>
+          <div class="m-foot">42 calls today · $0.21<br>Manage tools →</div>
+        </div>
+      </div>
+    </figure>
+    <div class="callouts">
+      <div class="callout"><span class="label">Left</span><p>Research history. A running job shows a live dot and keeps going if you leave.</p></div>
+      <div class="callout"><span class="label">Centre</span><p>Ask → plan → live run → report. Pick depth, a research model and, optionally, a separate writer model.</p></div>
+      <div class="callout"><span class="label">Right</span><p>Every connected tool with its status and call count. <em>Manage tools</em> opens the directory.</p></div>
+    </div>
+  </section>
+
+  <section id="flow">
+    <div class="section-head">
+      <span class="label">A research run</span>
+      <h2>How a run works</h2>
+      <p class="muted">Amber steps are where you're in control; the others run on their own.</p>
+    </div>
+    <div class="flow">
+      <div class="step you"><h3>Ask</h3><p class="muted">Question, depth, models, sources, "plan first".</p><span class="pill ask who">You</span></div>
+      <div class="step"><h3>Clarify</h3><p class="muted">0–3 questions, only if the question is ambiguous.</p><span class="pill who">Optional</span></div>
+      <div class="step you"><h3>Approve plan</h3><p class="muted">Edit the sub-questions and sources. See a cost and time estimate. Start or cancel.</p><span class="pill ask who">You</span></div>
+      <div class="step"><h3>Live run</h3><p class="muted">Timeline of searches, pages read and tool calls. <b>Stop</b> or <b>Add instruction</b> any time.</p><span class="pill accent who">Background</span></div>
+      <div class="step"><h3>Report</h3><p class="muted">Contents, [n] citations, sources panel, export MD / DOCX / PDF, continue in chat.</p><span class="pill ready who">Result</span></div>
+    </div>
+    <div class="engine">
+      <span class="label">Behind the scenes</span>
+      <div class="engine-row"><span class="node">Plan</span><span class="arrow">→</span><span class="node">Sub-researchers in parallel</span><span class="arrow">→</span><span class="node">search · fetch · read tools</span><span class="arrow">→</span><span class="node">Notes tied to sources</span><span class="arrow">→</span><span class="node">Writer model drafts report</span><span class="arrow">→</span><span class="node">Every [n] checked against fetched text</span></div>
+      <p class="muted" style="font-size:.88rem">Saved as it goes, so a reload never loses it. Web and connector content is treated as data, never as instructions. Only URLs from search results or supplied by you are fetched.</p>
+    </div>
+    <div class="budgets">
+      <div class="budget"><b>Quick</b><div class="meter"><i style="width:8%"></i></div><div class="bstats"><strong>1</strong><strong>≤10</strong><strong>~2 min</strong><span>sub-question</span><span>tool calls</span><span>time</span></div></div>
+      <div class="budget"><b>Standard</b><div class="meter"><i style="width:33%"></i></div><div class="bstats"><strong>3</strong><strong>≤40</strong><strong>~8 min</strong><span>sub-questions</span><span>tool calls</span><span>time</span></div></div>
+      <div class="budget"><b>Deep</b><div class="meter"><i style="width:100%"></i></div><div class="bstats"><strong>5+</strong><strong>≤120</strong><strong>~20 min</strong><span>sub-questions</span><span>tool calls</span><span>time</span></div></div>
+    </div>
+  </section>
+
+  <section id="tools">
+    <div class="section-head">
+      <span class="label">Connect</span>
+      <h2>Tools the Research tab can use</h2>
+      <p class="muted">One internal tool interface for all of them. Research only calls tools that read.</p>
+    </div>
+    <div class="tool-groups">
+      <div class="tgroup"><h3>Built in</h3><ul class="tlist">
+        <li><span>Web search</span><span>API key (DR-1)</span></li>
+        <li><span>Web page reader</span><span>HTML, PDF</span></li>
+        <li><span>Your library</span><span>existing search</span></li>
+        <li><span>arXiv, OpenAlex, Semantic Scholar, PubMed</span><span>free APIs</span></li>
+        <li><span>Excel / CSV</span><span>sheets → tables</span></li>
+      </ul></div>
+      <div class="tgroup"><h3>Sign in (OAuth)</h3><ul class="tlist">
+        <li><span>Google Drive, Docs, Sheets</span><span>read-only</span></li>
+        <li><span>Microsoft OneDrive, SharePoint, Excel</span><span>read-only, Graph</span></li>
+        <li><span>Google Cloud</span><span class="pill ask">clarify (DR-3)</span></li>
+      </ul></div>
+      <div class="tgroup"><h3>Anything else</h3><ul class="tlist">
+        <li><span>Custom MCP server</span><span>paste a URL, sign in</span></li>
+        <li><span>Its tools are listed</span><span>marked read / write</span></li>
+      </ul>
+      <p class="muted" style="font-size:.86rem">The same standard ChatGPT and Claude use, so most research tools already have a server.</p></div>
+    </div>
+    <div class="perm"><span class="label">Per tool</span><span class="pill ready">Always allow</span><span class="pill ask">Ask each time</span><span class="pill risk">Blocked</span><span class="muted">· write tools are blocked in research · every call is logged with tool, query, status, time and cost</span></div>
+  </section>
+
+  <section id="milestones">
+    <div class="section-head">
+      <span class="label">Delivery</span>
+      <h2>Four milestones</h2>
+      <p class="muted">M1 is the first usable version and doesn't depend on Google or Microsoft setup.</p>
+    </div>
+    <div class="miles">
+      <div class="mile"><div class="mile-mark"><b>M1</b><hr></div><h3>Research works end to end</h3><p class="muted">Web, academic, library and Excel research in the tab, with plan, live run and cited report.</p><div class="chips"><span class="chip">R-1…R-18</span><span class="chip">R-24</span><span class="chip">R-25</span></div></div>
+      <div class="mile"><div class="mile-mark"><b>M2</b><hr></div><h3>Connect any tool</h3><p class="muted">Tools directory, custom MCP, sign-in, permissions, and the tracking panel.</p><div class="chips"><span class="chip">R-19…R-23</span></div></div>
+      <div class="mile"><div class="mile-mark"><b>M3</b><hr></div><h3>Google and Microsoft</h3><p class="muted">Research across Drive, Docs, Sheets, OneDrive, SharePoint and Excel.</p><div class="chips"><span class="chip">R-26…R-28</span></div></div>
+      <div class="mile"><div class="mile-mark"><b>M4</b><hr></div><h3>Trustworthy</h3><p class="muted">Test set of your questions, prompt-injection hardening, docs.</p><div class="chips"><span class="chip">R-29…R-31</span></div></div>
+    </div>
+  </section>
+
+  <section id="decisions">
+    <div class="section-head">
+      <span class="label">Your call</span>
+      <h2>Decisions before we start</h2>
+      <p class="muted">Each has a recommendation. Red means only you can answer it.</p>
+    </div>
+    <div class="decisions">
+      <div class="decision open"><header><h3>Web search provider</h3><span class="mono">DR-1</span></header><p class="rec"><b>Recommended:</b> pluggable; one paid API (Tavily, Brave or Perplexity Search) plus free self-hosted SearXNG.</p><p class="muted" style="font-size:.84rem">Needs your API key.</p></div>
+      <div class="decision"><header><h3>Base or fork?</h3><span class="mono">DR-2</span></header><p class="rec"><b>Recommended:</b> in the base as an optional feature; any fork can switch it off.</p></div>
+      <div class="decision open"><header><h3>What "Google Cloud" means</h3><span class="mono">DR-3</span></header><p class="rec">Google Drive / Docs / Sheets, or GCP data such as BigQuery and Cloud Storage?</p></div>
+      <div class="decision"><header><h3>How Google and Microsoft connect</h3><span class="mono">DR-4</span></header><p class="rec"><b>Recommended:</b> direct read-only APIs first; MCP for everything else.</p></div>
+      <div class="decision"><header><h3>Excel depth</h3><span class="mono">DR-5</span></header><p class="rec"><b>Recommended:</b> read and summarise first; running code on data later, sandboxed.</p></div>
+      <div class="decision"><header><h3>Budgets and first scope</h3><span class="mono">DR-6 · DR-7</span></header><p class="rec"><b>Recommended:</b> Quick / Standard / Deep as above; M1 = web, academic, library, Excel.</p></div>
+    </div>
+    <div class="needs">
+      <b>What you'll provide</b>
+      <ul>
+        <li>A search API key (DR-1)</li>
+        <li>A Google OAuth client, before M3</li>
+        <li>An Azure app registration, before M3</li>
+        <li>5–10 real research questions, used as the quality test set</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="tasks">
+    <div class="section-head">
+      <span class="label">Tracking</span>
+      <h2>Every task</h2>
+    </div>
+    <div class="progress"><b>0 of 31 done</b><span class="bar" aria-hidden="true"><i></i></span><span class="pill">Not started · waiting for decisions</span></div>
+    <div class="phases">
+      <div class="phase"><header><h3>1 · Foundations</h3><span class="pill accent">M1</span></header><ul class="tasks">
+        <li><span class="id">R-1</span><span><b>Tool calling for all model types</b>: the piece everything depends on</span></li>
+        <li><span class="id">R-2</span><span>Tool interface and registry</span></li>
+        <li><span class="id">R-3</span><span>Web search adapter, page reader, domain lists</span></li>
+        <li><span class="id">R-4</span><span>Library as a research tool</span></li>
+        <li><span class="id">R-5</span><span>Tool-call log</span></li>
+      </ul></div>
+      <div class="phase"><header><h3>2 · Research engine</h3><span class="pill accent">M1</span></header><ul class="tasks">
+        <li><span class="id">R-6</span><span>Runs, steps and sources saved; background tasks</span></li>
+        <li><span class="id">R-7</span><span>Clarify and editable plan</span></li>
+        <li><span class="id">R-8</span><span>Parallel research loop with budgets</span></li>
+        <li><span class="id">R-9</span><span>Report writing and citation check</span></li>
+        <li><span class="id">R-10</span><span>Live events, steer, cancel</span></li>
+        <li><span class="id">R-11</span><span>Tests with fake model and fake search</span></li>
+      </ul></div>
+      <div class="phase"><header><h3>3 · The Research tab</h3><span class="pill accent">M1</span></header><ul class="tasks">
+        <li><span class="id">R-12</span><span>Page layout and history</span></li>
+        <li><span class="id">R-13</span><span>New research form</span></li>
+        <li><span class="id">R-14</span><span>Plan review</span></li>
+        <li><span class="id">R-15</span><span>Live timeline</span></li>
+        <li><span class="id">R-16</span><span>Report view and export</span></li>
+        <li><span class="id">R-17</span><span>Continue in chat; "Research this" from chat</span></li>
+        <li><span class="id">R-18</span><span>End-to-end tests</span></li>
+      </ul></div>
+      <div class="phase"><header><h3>4 · Tools and tracking</h3><span class="pill accent">M2</span></header><ul class="tasks">
+        <li><span class="id">R-19</span><span>Tools directory</span></li>
+        <li><span class="id">R-20</span><span>Custom remote MCP</span></li>
+        <li><span class="id">R-21</span><span>Secure sign-in (OAuth 2.1 + PKCE)</span></li>
+        <li><span class="id">R-22</span><span>Per-tool permissions</span></li>
+        <li><span class="id">R-23</span><span>Tracking panel and usage totals</span></li>
+      </ul></div>
+      <div class="phase"><header><h3>5 · Integrations</h3><span class="pill accent">M1 · M3</span></header><ul class="tasks">
+        <li><span class="id">R-24</span><span>Academic sources (M1)</span></li>
+        <li><span class="id">R-25</span><span>Excel / CSV (M1)</span></li>
+        <li><span class="id">R-26</span><span>Google Drive, Docs, Sheets</span></li>
+        <li><span class="id">R-27</span><span>Microsoft OneDrive, SharePoint, Excel</span></li>
+        <li><span class="id">R-28</span><span>Google Cloud (after DR-3)</span></li>
+      </ul></div>
+      <div class="phase"><header><h3>6 · Quality and safety</h3><span class="pill accent">M4</span></header><ul class="tasks">
+        <li><span class="id">R-29</span><span>Test set of your questions</span></li>
+        <li><span class="id">R-30</span><span>Prompt-injection hardening</span></li>
+        <li><span class="id">R-31</span><span>Docs for users and forks</span></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section id="risks">
+    <div class="section-head"><span class="label">Watch</span><h2>Risks</h2></div>
+    <div class="risks">
+      <div class="risk-row"><b>Models can't call tools yet</b><span class="muted">R-1 comes first; nothing else starts before it works.</span></div>
+      <div class="risk-row"><b>Deep runs get expensive</b><span class="muted">Hard budgets per depth, an estimate on the plan screen, a live budget bar.</span></div>
+      <div class="risk-row"><b>Wrong or invented citations</b><span class="muted">A check pass flags unsupported [n], measured with your test set.</span></div>
+      <div class="risk-row"><b>Malicious web pages or tools</b><span class="muted">Read-only tools, content marked as data, strict fetch rules, domain lists.</span></div>
+      <div class="risk-row"><b>Google and Microsoft setup friction</b><span class="muted">A setup guide; M1 doesn't depend on them.</span></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Source of truth: <span class="mono">docs/RESEARCH-PLAN.md</span> in the repository. This page is a visual copy of it.</span>
+    <span>Vendor details researched from official documentation on 25 Sep 2026; entries in italics came only from secondary sources.</span>
+  </footer>
+</main>
