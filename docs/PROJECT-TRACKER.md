@@ -7,22 +7,26 @@ the project sat dormant from **2026-03-30 to 2026-09-22** and context was lost.
 or is deliberately deferred. Every open item has an ID (`O-n`) — reference it in commit
 messages so the history stays searchable. Move finished items into §5 with a date.
 
-- **Last updated:** 2026-09-24
-- **Baseline commit:** `a576cc0` (uncommitted work on top)
-- **Health:** ruff clean · 31 backend tests · `tsc` clean · 3/3 e2e passing
+- **Last updated:** 2026-09-25
+- **Role of this repo:** the permanent base every new product forks. See
+  [BASE-ROADMAP.md](BASE-ROADMAP.md) and [FORKING.md](FORKING.md).
+- **Health:** ruff clean · 49 backend tests (33 behaviour + 16 contract) · `tsc` clean ·
+  3/3 full e2e · 1/1 core-tier e2e
 
 ---
 
 ## 1. Health checks
 
-Run these before committing. All four must be green.
+Run these before committing. All must be green. CI (`.github/workflows/ci.yml`)
+runs the same set, plus the contract test against `examples/minimal_backend`.
 
 | Check | Command | Expected |
 |---|---|---|
-| Lint | `./.venv-dev/Scripts/python.exe -m ruff check backend` | `All checks passed!` |
-| Backend tests | `./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable>` | 31 passed |
-| Types | `cd frontend && npx tsc --noEmit` | exit 0 |
-| End-to-end | `cd frontend && npx playwright test` | 3 passed |
+| Lint | `./.venv-dev/Scripts/python.exe -m ruff check backend examples` | `All checks passed!` |
+| Backend + contract tests | `./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable>` | 49 passed |
+| Types | `cd frontend && npm run typecheck` | exit 0 |
+| End-to-end, full | `cd frontend && npm run test:e2e` | 3 passed |
+| End-to-end, core tier | `cd frontend && npm run test:e2e:core` | 1 passed |
 
 ---
 
@@ -37,6 +41,7 @@ Run these before committing. All four must be green.
 | 2026-09-23 | **Codex rebuild.** Real backend + providers; UI largely replaced. |
 | 2026-09-23 | Restoration: effects returned, dead code removed, e2e suite green. |
 | 2026-09-24 | Composer partly restored, CSS unified, burst limit, sidebar split. |
+| 2026-09-25 | **Made the permanent base** (BASE-ROADMAP B-1 to B-16): capabilities + contract test, minimal backend, `app.config.ts`, `extensions/`, auth hook, CI, docs, dry-run fork. |
 
 ---
 
@@ -60,11 +65,23 @@ Run these before committing. All four must be green.
 | **Thinking effort** | Per-message Standard/Low/Medium/High, overrides the connection default. |
 | **Tools menu** | Attach documents live; unavailable tools shown disabled, not faked. |
 
-### Placeholder — visible in nav, no backend
+### Placeholder — hidden by default, no backend
 
-Images · Apps · Deep Research. Each renders an honest "not connected" notice.
+Images · Apps · Deep Research. Hidden unless `features.placeholderPages` is on in
+`app.config.ts`, and then they render an honest "not connected" notice. A fork that
+registers `extensions.pages[key]` gets its own page there instead. (O-8, resolved 09-25.)
 
-**Decision still open (O-8):** keep as roadmap signal, or remove from primary nav.
+### Base infrastructure (09-25)
+
+| Thing | Where |
+|---|---|
+| Capabilities: UI hides what the backend lacks | `GET /workspace` → `capabilities`; `lib/capabilities.ts` |
+| Executable API contract | `docs/API-CONTRACT.md`, `backend/tests/test_contract.py` |
+| Core-tier reference backend | `examples/minimal_backend/app.py` |
+| Brand, copy, nav, feature flags | `frontend/src/app.config.ts` |
+| Fork extension points | `frontend/src/extensions/` (pages, message add-ons, composer tools, auth headers) |
+| Auth hook | `backend/app/auth.py` + `frontend/src/extensions/auth.ts` |
+| CI | `.github/workflows/ci.yml` |
 
 ### Removed
 
@@ -81,10 +98,12 @@ Images · Apps · Deep Research. Each renders an honest "not connected" notice.
 | ID | Item | Impact | Why still open |
 |---|---|---|---|
 | **O-1** | Rich composer not fully restored | Medium | Thinking effort + tools menu done. Apps menu, mic and voice submit remain — all decoration with no backend. |
-| **O-3** | 91 of 210 CSS classes unused (43%) | Low | **Deliberately kept.** `project-*` (17) and `result-*` (9) are scaffolding for further restoration. Deleting now would block that. |
-| **O-6** | No auth on the API | Low (local) | Fine while loopback-only. Needs a deployment decision before it can be designed. |
-| **O-8** | Three placeholder nav tabs | Low | Product call: roadmap signal vs clutter. |
+| **O-3** | Reserved unused CSS remains | Low | 48 dead classes deleted 09-25. **Still deliberately kept:** `project-*`, `result-*` (restoration scaffolding) and `composer-apps-*`, `composer-mic-button`, `composer-voice-submit` (O-1). |
+| **O-6** | No real auth | Low (local) | Hook point exists (`backend/app/auth.py`, `extensions/auth.ts`). Implementing it is a per-fork deployment decision. |
 | **O-9** | Web search has no backend | Medium | The only unavailable tool that is realistically buildable. Needs a provider choice + API key. |
+| **O-10** | `styles.css` still one 1,939-line file | Low | No section boundaries to split on safely; splitting by guesswork risks cascade changes. Split when a restyle pass defines areas. |
+| **O-11** | CI e2e job not yet run on GitHub | Medium | Backend and frontend jobs dry-run clean in `python:3.12-slim` / `node:20-alpine`. The Linux Playwright job is confirmed only after the first push. |
+| **O-12** | Store is single-tenant | Low (local) | Any fork with multiple users must scope records per `request.state.user`. Documented in ARCHITECTURE.md. |
 
 ---
 
@@ -110,6 +129,12 @@ Images · Apps · Deep Research. Each renders an honest "not connected" notice.
 | **O-4** `Sidebar.tsx` 986 lines | 09-24 | 23 icons extracted to `icons.tsx`. Now 764 + 226. |
 | **O-5** Presets vs Projects unclear | 09-24 | Reciprocal guidance added to both editors. |
 | **O-7** No burst protection | 09-24 | Per-IP limiter on `/generate` + `/documents`; cheap routes exempt. Covered by a test. |
+| **O-8** Placeholder nav tabs | 09-25 | Hidden behind `features.placeholderPages` (off). Fork pages can take over the keys. |
+| Stale README | 09-25 | Rewritten; it described a placeholder backend and a `/chat` endpoint that no longer exist. |
+| Dead files | 09-25 | `schemas.py`, `lib/models.ts`, `data/mockData.ts`, `instructions.txt` deleted; `vite.config.d.ts` untracked. |
+| Backend `.dockerignore` ignored | 09-25 | Build context is the repo root, so it was never read; `node_modules`, `.venv` and `data/` (incl. `secret.key`) went to the daemon. Now `backend/Dockerfile.dockerignore`. |
+| Export crash on backends without `sources` | 09-25 | `result.sources` optional in the type; guarded. |
+| `Sidebar.tsx` 764 lines | 09-25 | Menus and rows moved to `components/sidebar/`; 565 remain. |
 
 ---
 
@@ -130,6 +155,14 @@ Things that cost time before. Check here first.
 - **Burst limiter state is module-level.** Tests must clear `main._burst` between cases;
   the `client` fixture does this.
 - **Don't assert `toContainText` on a `<textarea>`.** Use `toHaveValue`.
+- **Git Bash rewrites `/api`.** `VITE_API_BASE_URL=/api npx vite` in Git Bash becomes
+  `C:/Program Files/Git/api`. Prefix with `MSYS_NO_PATHCONV=1`, or use PowerShell.
+- **`frontend/.env.local` overrides the API base.** A local
+  `VITE_API_BASE_URL=http://127.0.0.1:8000` sends the browser straight to the backend
+  (CORS applies) instead of through the `/api` proxy.
+- **`ruff.toml` lives at the repo root** so `backend/` and `examples/` share it.
+- **Run pytest as `python -m pytest`.** A bare `pytest` doesn't put the repo root on
+  `sys.path`, so `import backend` fails.
 
 ---
 
@@ -140,12 +173,15 @@ Things that cost time before. Check here first.
 docker compose --profile dev up -d --build
 
 # Backend
-./.venv-dev/Scripts/python.exe -m ruff check backend
+./.venv-dev/Scripts/python.exe -m ruff check backend examples
 ./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable-dir>
 
-# Frontend
-cd frontend && npx tsc --noEmit && npm run build
+# Contract test against any running backend
+CONTRACT_BASE_URL=http://127.0.0.1:8000 ./.venv-dev/Scripts/python.exe -m pytest backend/tests/test_contract.py -q
 
-# End-to-end (starts its own servers)
-cd frontend && npx playwright test
+# Frontend
+cd frontend && npm run typecheck && npm run build
+
+# End-to-end (each starts its own servers)
+cd frontend && npm run test:e2e && npm run test:e2e:core
 ```
