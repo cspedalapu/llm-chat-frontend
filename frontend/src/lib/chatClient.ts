@@ -1,6 +1,14 @@
+import { authHeaders, onUnauthorized } from "@/extensions/auth";
+
 export const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
+// Must match backend/app/auth.py; the backend rejects writes without it (CSRF guard).
+const clientHeader = { "X-Workspace-Client": "local-chat" };
+function headers(json: boolean): Record<string, string> {
+  return { ...clientHeader, ...authHeaders(), ...(json ? { "Content-Type": "application/json" } : {}) };
+}
 export async function checkResponse(response: Response) {
   if (response.ok) return;
+  if (response.status === 401) onUnauthorized();
   let message = `Request failed (${response.status})`;
   try {
     const body = await response.json();
@@ -16,7 +24,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
     const form = body instanceof FormData;
     const response = await fetch(apiBaseUrl + path, {
       method, signal: controller.signal,
-      headers: { "X-Workspace-Client": "local-chat", ...(!form && body !== undefined ? { "Content-Type": "application/json" } : {}) },
+      headers: headers(!form && body !== undefined),
       body: body === undefined ? undefined : form ? body : JSON.stringify(body),
     });
     await checkResponse(response);
@@ -29,7 +37,7 @@ export async function api<T>(path: string, method = "GET", body?: unknown): Prom
 }
 export async function streamReply(path: string, body: unknown, signal: AbortSignal, onEvent: (event: string, data: any) => void) {
   const response = await fetch(apiBaseUrl + path, { method: "POST", signal,
-    headers: { "Content-Type": "application/json", "X-Workspace-Client": "local-chat" }, body: JSON.stringify(body) });
+    headers: headers(true), body: JSON.stringify(body) });
   await checkResponse(response);
   if (!response.body) throw new Error("Streaming is unavailable in this browser.");
   const reader = response.body.getReader();

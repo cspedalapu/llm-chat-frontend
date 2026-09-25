@@ -224,3 +224,21 @@ export function ChevronIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+// Lets app.config.ts refer to icons by name while staying plain data. A fork adds
+// its own icon above and one entry here.
+export const navIcons = {
+  edit: EditIcon,
+  search: SearchIcon,
+  images: ImagesIcon,
+  library: LibraryIcon,
+  apps: AppsIcon,
+  research: DeepResearchIcon,
+  workspace: CodexIcon,
+  models: GptsIcon,
+  settings: SettingsIcon,
+  folder: FolderIcon,
+  monitor: MonitorIcon,
+  chat: GroupChatIcon,
+} as const;
+export type NavIconName = keyof typeof navIcons;

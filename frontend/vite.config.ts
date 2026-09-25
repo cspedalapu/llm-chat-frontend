@@ -1,9 +1,18 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+import { appConfig } from "./src/app.config";
+
+const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // index.html takes its title and description from src/app.config.ts.
+    { name: "app-config-html", transformIndexHtml: html => html
+      .replace("__APP_NAME__", escape(appConfig.brand.name))
+      .replace("__APP_DESCRIPTION__", escape(appConfig.brand.description)) },
+  ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url))

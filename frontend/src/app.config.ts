@@ -1,0 +1,62 @@
+/**
+ * The one file a fork edits to rebrand and reshape the shell.
+ *
+ * Plain data only (type imports are fine): vite.config.ts reads it at build time to
+ * fill in index.html, so it must not import components, CSS or `import.meta.env`.
+ * Behaviour that needs code — new pages, message add-ons, composer tools, auth
+ * headers — is registered in src/extensions/ instead.
+ */
+import type { NavIconName } from "./components/icons";
+import type { Capability } from "./lib/capabilities";
+
+export interface NavItemConfig {
+  /** View key. Built-in keys are listed in App.tsx; any other key renders extensions.pages[key]. */
+  key: string;
+  label: string;
+  icon: NavIconName;
+  shortcut?: string;
+  /** Hide the item unless the backend advertises this capability (an array means any of them). */
+  requires?: Capability | Capability[];
+  /** Roadmap signal with nothing behind it. Shown only when features.placeholderPages is on. */
+  placeholder?: boolean;
+  /** Set false to remove an item without deleting its entry. */
+  enabled?: boolean;
+}
+
+export const appConfig = {
+  brand: {
+    name: "LLM Workspace",
+    description: "Reusable AI chat workspace with a React frontend and a swappable backend.",
+    /** Small badge in the top bar and the account button subtitle. Empty string hides the badge. */
+    workspaceLabel: "Local workspace",
+    /** Account button label until a fork wires real sign-in (see extensions/auth.ts). */
+    accountName: "Personal",
+  },
+  copy: {
+    emptyStateTitle: "What's on your mind?",
+    /** Typed out one after another under the empty-state title. */
+    emptyStatePrompts: ["New Project", "Research Planning", "New Case Study", "Building Prototype"],
+    composerPlaceholder: "Ask anything",
+    noModelPlaceholder: "Add a model connection to start chatting",
+    /** Shown instead when the backend does not let users add models themselves. */
+    noModelManagedPlaceholder: "No model is available from the backend yet",
+  },
+  features: {
+    /** Nav items marked `placeholder` (Images, Apps, Deep Research). Off in the base: nothing is behind them. */
+    placeholderPages: false,
+    /** Composer "+" menu entries registered with `available: false`, shown disabled. */
+    placeholderTools: true,
+  },
+  nav: [
+    { key: "new_chat", label: "New chat", icon: "edit", shortcut: "Ctrl + Shift + O" },
+    { key: "search_chats", label: "Search chats", icon: "search", requires: "search" },
+    { key: "images", label: "Images", icon: "images", placeholder: true },
+    { key: "library", label: "Library", icon: "library", requires: ["documents", "bookmarks"] },
+    { key: "apps", label: "Apps", icon: "apps", placeholder: true },
+    { key: "deep_research", label: "Deep Research", icon: "research", placeholder: true },
+    { key: "workspace", label: "Workspace", icon: "workspace", requires: ["presets", "usage", "settings"] },
+    { key: "llms", label: "LLMs", icon: "models", requires: "models.manage" },
+  ] satisfies NavItemConfig[] as NavItemConfig[],
+};
+
+export type AppConfig = typeof appConfig;

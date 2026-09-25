@@ -1,6 +1,7 @@
-import { ReactNode, useState } from "react";
+import { Fragment, ReactNode, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { messageAddons } from "@/extensions";
 import { Message } from "@/types";
 
 function CodeBlock({ children }: { children: ReactNode }) {
@@ -35,6 +36,7 @@ export function ChatMessage({ message, busy, onBranch, onRetry, onSave, onMemory
         <p className="muted">Passages supplied to the model. Check that each cited passage supports its claim.</p>
         {result.sources.map(source => <details key={source.id}><summary>[{source.number}] {source.title} · page {source.page}</summary><blockquote>{source.excerpt}</blockquote></details>)}
       </details> : null}
+      {messageAddons.map(addon => <Fragment key={addon.id}>{addon.render(message)}</Fragment>)}
       {assistant && result && message.state !== "streaming" && <details className="generation-details"><summary>Response details</summary>
         <p>Model: {result.generationModel}</p><p>Input: {result.usage?.input ?? "unreported"} tokens · Output: {result.usage?.output ?? "unreported"} tokens</p>
         <p>{((result.latencyMs || 0) / 1000).toFixed(1)}s total{result.first_token_ms !== undefined ? " · " + (result.first_token_ms / 1000).toFixed(1) + "s to first text" : ""}</p>

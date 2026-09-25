@@ -1,8 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, streamReply } from "@/lib/chatClient";
+import { capabilityCheck } from "@/lib/capabilities";
 import { Conversation, WorkspaceData } from "@/types";
 
-const empty: WorkspaceData = { conversations: [], projects: [], models: [], documents: [], presets: [], settings: { daily_request_limit: 200 } };
+const empty: WorkspaceData = { capabilities: [], conversations: [], projects: [], models: [], documents: [], presets: [], settings: { daily_request_limit: 200 } };
+// A core-tier backend may omit everything but models and conversations.
+function normalize(next: Partial<WorkspaceData>): WorkspaceData {
+  return { ...empty, ...next, settings: { ...empty.settings, ...next.settings } };
+}
 export function useWorkspace() {
   const [data, setData] = useState<WorkspaceData>(empty);
   const [ready, setReady] = useState(false);
@@ -15,7 +20,7 @@ export function useWorkspace() {
   }, []);
   const refresh = useCallback(async () => {
     const sequence = ++loading.current;
-    const next = await api<WorkspaceData>("/workspace");
+    const next = normalize(await api<Partial<WorkspaceData>>("/workspace"));
     if (sequence === loading.current) {
       setData(current => ({ ...next, conversations: next.conversations.map(c =>
         controllers.current.has(c.id) ? current.conversations.find(item => item.id === c.id) ?? c : c) }));
@@ -66,11 +71,13 @@ export function useWorkspace() {
       try { upsertConversation(await api<Conversation>(`/conversations/${conversation.id}`)); } catch (e) { setError((e as Error).message); }
     }
   }
+  const has = useMemo(() => capabilityCheck(data.capabilities), [data.capabilities]);
   async function stop(conversationId: string, requestId?: string) {
     const id = requestId || running[conversationId];
-    if (id) await api(`/generations/${id}/cancel`, "POST");
+    // Without server-side cancel, dropping the stream is the stop signal.
+    if (id && has("cancel")) await api(`/generations/${id}/cancel`, "POST");
     controllers.current.get(conversationId)?.abort();
     upsertConversation(await api<Conversation>(`/conversations/${conversationId}`));
   }
-  return { data, ready, error, setError, running, refresh, mutate, send, stop, upsertConversation };
+  return { data, has, ready, error, setError, running, refresh, mutate, send, stop, upsertConversation };
 }

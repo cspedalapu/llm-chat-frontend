@@ -13,6 +13,8 @@ export interface AssistantResult {
   latencyMs?: number; first_token_ms?: number; usage: { input?: number; output?: number };
   estimated_cost?: number; context_trimmed?: boolean; context_note?: string;
   source_note?: string; error?: string; request_id: string; finish_reason?: string;
+  /** Fork-specific data, keyed by add-on name. Rendered by extensions.messageAddons. */
+  extensions?: Record<string, unknown>;
 }
 export interface Message {
   id: string; role: "assistant" | "user"; text: string; timestamp: string;
@@ -31,6 +33,8 @@ export interface ProjectSummary {
 export interface DocumentRecord { id: string; name: string; projectId: string | null; pages: number; createdAt: string }
 export interface Preset { id: string; title: string; instructions: string; model: string; output_format: string }
 export interface WorkspaceData {
+  /** Optional contract features the backend implements; see lib/capabilities.ts. */
+  capabilities: string[];
   conversations: Conversation[]; projects: ProjectSummary[]; models: Provider[];
   documents: DocumentRecord[]; presets: Preset[]; settings: { daily_request_limit: number };
 }

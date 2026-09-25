@@ -11,10 +11,14 @@ import { WorkspaceTools } from "@/components/WorkspaceTools";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api, download } from "@/lib/chatClient";
 import { Conversation, DocumentRecord, Message, Preset, ProjectSummary, Provider } from "@/types";
-import { emptyStatePrompts, emptyStateTitle } from "@/lib/appConfig";
+import { appConfig } from "@/app.config";
+import { pages } from "@/extensions";
 import { useTypewriterPrompt } from "@/hooks/useTypewriterPrompt";
 
-type View = "new_chat" | "project" | "search_chats" | "library" | "workspace" | "llms" | "images" | "apps" | "deep_research";
+const { brand, copy, features } = appConfig;
+// Built-in views: new_chat, project, search_chats, library, workspace, llms. Any other
+// key comes from app.config.ts nav and renders extensions.pages[key] or a placeholder.
+type View = string;
 type Editor = { type: "project"; project?: ProjectSummary; memory?: string } | { type: "provider"; provider?: Provider } | { type: "rename" | "move" | "summary"; conversation: Conversation } | null;
 
 function ConversationEditor({ type, conversation, projects, onSave, onClose }: {
@@ -40,8 +44,8 @@ function ConversationEditor({ type, conversation, projects, onSave, onClose }: {
 
 export default function App() {
   const workspace = useWorkspace();
-  const { data, ready, error, setError, running, refresh, mutate, send, stop, upsertConversation } = workspace;
-  const rotatingPrompt = useTypewriterPrompt(emptyStatePrompts);
+  const { data, has, ready, error, setError, running, refresh, mutate, send, stop, upsertConversation } = workspace;
+  const rotatingPrompt = useTypewriterPrompt(copy.emptyStatePrompts);
   const [view, setView] = useState<View>("new_chat");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -64,6 +68,12 @@ export default function App() {
   const model = data.models.find(m => m.id === modelId);
   const availableDocuments = data.documents.filter(d => !d.projectId || d.projectId === project?.id);
   const lastMessage = conversation?.messages[conversation.messages.length - 1];
+  const navItems = appConfig.nav.filter(item => item.enabled !== false
+    && (!item.placeholder || features.placeholderPages || Boolean(pages[item.key]))
+    && (!item.requires || has(item.requires)));
+  const ExtensionPage = view !== "new_chat" && view !== "project" ? pages[view] : undefined;
+  const placeholder = !ExtensionPage ? appConfig.nav.find(item => item.key === view && item.placeholder) : undefined;
+  const canManageModels = has("models.manage");
 
   useEffect(() => {
     if (data.models.length && !data.models.some(m => m.id === modelId)) setModelId(data.models[0].id);
@@ -153,16 +163,17 @@ export default function App() {
   const composer = (empty: boolean) => <Composer key={(conversation?.id || "new:" + (project?.id || "root")) + ":" + initialDraft}
     draftKey={conversation?.id || "new:" + (project?.id || "root")} initialText={initialDraft}
     busy={busy} disabled={!ready || !model || Boolean(conversation?.archived)}
+    features={{ documents: has("documents"), presets: has("presets"), reasoning: has("reasoning") }}
     documents={availableDocuments} presets={data.presets} selectedDocuments={selectedDocuments} onDocuments={setSelectedDocuments}
     reasoning={reasoning} onReasoning={setReasoning}
     presetId={presetId} onPreset={id => { setPresetId(id); const preset = data.presets.find(p => p.id === id); if (preset) usePreset(preset); }}
     onSend={sendMessage} onStop={() => conversation && run(() => stop(conversation.id, lastMessage?.result?.request_id))}
-    onUpload={files => upload(files)} placeholder={!model ? "Add a model connection to start chatting" : project ? "Ask in " + project.title : "Ask anything"} empty={empty} />;
+    onUpload={files => upload(files)} placeholder={!model ? (canManageModels ? copy.noModelPlaceholder : copy.noModelManagedPlaceholder) : project ? "Ask in " + project.title : copy.composerPlaceholder} empty={empty} />;
 
   return <div className={"app-shell" + (collapsed ? " sidebar-collapsed" : "")}>
-    <Sidebar activeNavKey={view} projects={data.projects}
+    <Sidebar activeNavKey={view} navItems={navItems} showProjects={has("projects")} projects={data.projects}
       conversations={data.conversations.filter(c => !c.projectId && !c.archived).sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)))}
-      activeConversationId={conversationId} activeProjectId={project?.id} accountName="Personal" isCollapsed={collapsed}
+      activeConversationId={conversationId} activeProjectId={project?.id} accountName={brand.accountName} isCollapsed={collapsed}
       onCreateProject={() => setEditor({ type: "project" })} onNewConversation={() => newChat()}
       onDeleteProject={id => setConfirm({ text: "Delete this project? Its chats and documents will be kept in your library without a project.", action: async () => { await mutate("/projects/" + id, "DELETE"); if (projectId === id) newChat(); } })}
       onDeleteConversation={id => setConfirm({ text: "Permanently delete this conversation?", action: async () => { await mutate("/conversations/" + id, "DELETE"); if (conversationId === id) newChat(); } })}
@@ -170,30 +181,31 @@ export default function App() {
       onRenameConversation={id => { const c = data.conversations.find(c => c.id === id); if (c) setEditor({ type: "rename", conversation: c }); }}
       onRenameProject={id => setEditor({ type: "project", project: data.projects.find(p => p.id === id) })}
       onSelectProject={openProject} onSelectConversation={openChat} onSelectNav={key => navigate(key as View)} onToggleSidebar={() => setCollapsed(v => !v)}
-      onChatAction={chatAction} onAccount={() => navigate("workspace")} />
+      onChatAction={chatAction} onAccount={() => navigate(navItems.some(item => item.key === "workspace") ? "workspace" : "new_chat")} />
     <main className="workspace">
       <header className="workspace-topbar">
         <div className="workspace-title-row"><label className="model-control llm-model-control"><select aria-label="Model" value={modelId} onChange={e => e.target.value === "__add" ? setEditor({ type: "provider" }) : setModelId(e.target.value)}>
-          {!data.models.length && <option value="">Choose a model</option>}{data.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}<option value="__add">+ Add your model</option>
+          {!data.models.length && <option value="">Choose a model</option>}{data.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}{canManageModels && <option value="__add">+ Add your model</option>}
         </select></label>{project && <button className="subtle-button" onClick={() => openProject(project.id)}>{project.title}</button>}</div>
-        <div className="workspace-actions"><span className="local-badge">Local workspace</span><button className="subtle-button" onClick={() => run(async () => { await refresh(); setError(""); })}>Reload</button>
+        <div className="workspace-actions">{brand.workspaceLabel && <span className="local-badge">{brand.workspaceLabel}</span>}<button className="subtle-button" onClick={() => run(async () => { await refresh(); setError(""); })}>Reload</button>
           {conversation && <details className="chat-options"><summary aria-label="Chat options">•••</summary><div className="chat-options-menu">
             <button onClick={() => exportChat(conversation)}>Export Markdown</button><button disabled={busy} onClick={() => setEditor({ type: "summary", conversation })}>Conversation context</button>
             <button disabled={busy} onClick={() => chatAction("Pin chat", conversation.id)}>{conversation.pinned ? "Unpin" : "Pin"} chat</button>
             <button disabled={busy} onClick={() => run(() => updateChat(conversation.id, { archived: !conversation.archived }))}>{conversation.archived ? "Restore" : "Archive"} chat</button>
-            <button disabled={busy} onClick={() => setEditor({ type: "move", conversation })}>Move to project</button>
+            {has("projects") && <button disabled={busy} onClick={() => setEditor({ type: "move", conversation })}>Move to project</button>}
           </div></details>}
         </div>
       </header>
       {error && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError("")} aria-label="Dismiss error">×</button></div>}
       {!ready ? <section className="empty-state"><h2>Opening your workspace…</h2><button onClick={() => run(refresh)}>Retry connection</button></section>
+        : ExtensionPage ? <ExtensionPage data={data} has={has} refresh={refresh} navigate={navigate} openChat={openChat} />
         : view === "llms" ? <ProviderSettings models={data.models} onAdd={() => setEditor({ type: "provider" })} onEdit={provider => setEditor({ type: "provider", provider })}
           onDelete={id => setConfirm({ text: "Remove this model connection and its saved key? Existing chats will be kept.", action: async () => { await mutate("/models/" + id, "DELETE"); } })} />
         : view === "search_chats" ? <SearchChats onOpen={openChat} onRestore={id => updateChat(id, { archived: false })} />
-        : view === "workspace" ? <WorkspaceTools data={data} onRefresh={refresh} onUse={preset => { newChat(); usePreset(preset); }} />
-        : view === "library" ? <Library documents={data.documents} conversations={data.conversations} onUpload={files => upload(files, "")} onOpen={openChat}
+        : view === "workspace" ? <WorkspaceTools data={data} has={has} onRefresh={refresh} onUse={preset => { newChat(); usePreset(preset); }} />
+        : view === "library" ? <Library showDocuments={has("documents")} showSaved={has("bookmarks")} documents={data.documents} conversations={data.conversations} onUpload={files => upload(files, "")} onOpen={openChat}
           onDelete={id => setConfirm({ text: "Delete this document's extracted text? Previously saved citation excerpts remain in chats.", action: async () => { await mutate("/documents/" + id, "DELETE"); setSelectedDocuments(ids => ids.filter(d => d !== id)); } })} />
-        : ["images", "apps", "deep_research"].includes(view) ? <section className="feature-page"><p className="eyebrow">Not connected</p><h1>{view === "images" ? "Images" : view === "apps" ? "Apps" : "Deep Research"}</h1><p className="muted">This capability is not available in the local chat release. No tools or external app connections are running behind this page.</p><button onClick={() => navigate("llms")}>Manage model connections</button></section>
+        : placeholder ? <section className="feature-page"><p className="eyebrow">Not connected</p><h1>{placeholder.label}</h1><p className="muted">This capability is not available in this release. No tools or external app connections are running behind this page.</p>{canManageModels && <button onClick={() => navigate("llms")}>Manage model connections</button>}</section>
         : view === "project" && project ? <section className="project-workspace feature-page">
           <div className="project-hero"><div className="project-title-row-main"><h1 className="project-title">{project.title}</h1><button onClick={() => setEditor({ type: "project", project })}>Project settings</button></div>
             <p className="project-subtitle">{project.instructions || "Keep related conversations, instructions and documents together."}</p>
@@ -204,16 +216,16 @@ export default function App() {
             : <><div className="feature-card"><h2>Project memory</h2><p className="user-text">{project.memory || "No saved memory yet."}</p><button onClick={() => setEditor({ type: "project", project })}>Edit instructions & memory</button></div>
               <Library documents={data.documents.filter(d => d.projectId === project.id)} conversations={[]} onUpload={files => upload(files, project.id)} onOpen={openChat} onDelete={id => setConfirm({ text: "Delete this project document?", action: async () => { await mutate("/documents/" + id, "DELETE"); } })} /></>}
         </section>
-        : !conversation?.messages.length ? <section className="empty-state"><h2 className="empty-title">{emptyStateTitle}</h2>
-          <p className="empty-prompt" aria-label={`Ideas: ${emptyStatePrompts.join(", ")}`}><span>{rotatingPrompt || " "}</span><span className="empty-prompt-caret" aria-hidden="true" /></p>
+        : !conversation?.messages.length ? <section className="empty-state"><h2 className="empty-title">{copy.emptyStateTitle}</h2>
+          <p className="empty-prompt" aria-label={`Ideas: ${copy.emptyStatePrompts.join(", ")}`}><span>{rotatingPrompt || " "}</span><span className="empty-prompt-caret" aria-hidden="true" /></p>
           {composer(true)}</section>
         : <><section className="thread-panel functional-thread" ref={thread} onScroll={() => { const e = thread.current; if (e) stickToBottom.current = e.scrollHeight - e.scrollTop - e.clientHeight < 100; }}>
           <div className="thread-panel-inner">
             {conversation.parentId && <p className="muted">Branched conversation · <button className="subtle-button" onClick={() => openChat(conversation.parentId!)}>Open original</button></p>}
             {conversation.archived && <p className="muted">This chat is archived. Restore it from the chat options to continue.</p>}
             {conversation.messages.map(message => <ChatMessage key={message.id} message={message} busy={busy}
-              onBranch={() => run(() => branchAt(message))} onRetry={message.role === "assistant" ? () => run(() => branchAt(message, true)) : undefined}
-              onSave={message.role === "assistant" ? () => run(async () => upsertConversation(await api<Conversation>("/conversations/" + conversation.id + "/messages/" + message.id, "PATCH", { saved: !message.saved }))) : undefined}
+              onBranch={has("branching") ? () => run(() => branchAt(message)) : undefined} onRetry={message.role === "assistant" && has("branching") ? () => run(() => branchAt(message, true)) : undefined}
+              onSave={message.role === "assistant" && has("bookmarks") ? () => run(async () => upsertConversation(await api<Conversation>("/conversations/" + conversation.id + "/messages/" + message.id, "PATCH", { saved: !message.saved }))) : undefined}
               onMemory={message.role === "assistant" && project ? () => setEditor({ type: "project", project, memory: message.text }) : undefined} />)}
           </div>
         </section>{composer(false)}</>}
