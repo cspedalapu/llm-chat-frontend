@@ -23,6 +23,8 @@ export interface NavItemConfig {
   enabled?: boolean;
   /** Always shown; users cannot hide it in the Customize window. */
   fixed?: boolean;
+  /** "header" renders the entry as an icon next to the brand name instead of in the list. */
+  placement?: "list" | "header";
   /** Shown under the toggle in the Customize window. */
   description?: string;
   /** Starting state in the Customize window for users who have not chosen (default true). */
@@ -54,6 +56,12 @@ export const appConfig = {
     noModelPlaceholder: "Add a model connection to start chatting",
     /** Shown instead when the backend does not let users add models themselves. */
     noModelManagedPlaceholder: "No model is available from the backend yet",
+    /** Clickable starters under the home composer; clicking one fills the message box. */
+    suggestions: [
+      { icon: "research", text: "Plan a research project and list the first three steps" },
+      { icon: "edit", text: "Draft a clear, friendly project update for my team" },
+      { icon: "library", text: "Summarize a document and pull out the key decisions" },
+    ] satisfies { icon: NavIconName; text: string }[] as { icon: NavIconName; text: string }[],
   },
   features: {
     /** Nav items marked `placeholder` (Images, Apps, Deep Research). Off in the base: nothing is behind them. */
@@ -67,7 +75,7 @@ export const appConfig = {
    */
   nav: [
     { key: "new_chat", label: "New chat", icon: "edit", shortcut: "Ctrl + Shift + O", fixed: true },
-    { key: "search_chats", label: "Search chats", icon: "search", requires: "search", fixed: true },
+    { key: "search_chats", label: "Search chats", icon: "search", requires: "search", fixed: true, placement: "header" },
     { key: "images", label: "Images", icon: "images", placeholder: true },
     { key: "library", label: "Library", icon: "library", requires: ["documents", "bookmarks"],
       description: "Uploaded documents and saved answers." },
@@ -83,9 +91,9 @@ export const appConfig = {
     alwaysOn: ["Projects", "Chat history", "Model selector"],
     composer: [
       { id: "tools", label: "Tools menu (+)", description: "Attach documents and other tools." },
-      { id: "sources", label: "Sources", description: "Pick library files for a chat. Project files are still searched when hidden." },
+      { id: "sources", label: "Sources", description: "Pick library files for a chat (in the + menu). Project files are still searched when hidden." },
       { id: "thinking", label: "Thinking effort", description: "Per-message reasoning level." },
-      { id: "assistant", label: "Assistant picker", description: "Apply a saved assistant to a chat." },
+      { id: "assistant", label: "Assistant picker", description: "Apply a saved assistant to a chat (in the + menu)." },
     ] satisfies CustomizeOption[] as CustomizeOption[],
   },
 };

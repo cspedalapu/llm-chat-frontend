@@ -9,6 +9,9 @@ import { SearchChats } from "@/components/SearchChats";
 import { Library } from "@/components/Library";
 import { WorkspaceTools } from "@/components/WorkspaceTools";
 import { CustomizePanel } from "@/components/CustomizePanel";
+import { ChatHeader } from "@/components/ChatHeader";
+import { ChatFiles } from "@/components/ChatFiles";
+import { navIcons } from "@/components/icons";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api, download } from "@/lib/chatClient";
 import { Conversation, DocumentRecord, Message, Preset, ProjectSummary, Provider } from "@/types";
@@ -18,6 +21,8 @@ import { useTypewriterPrompt } from "@/hooks/useTypewriterPrompt";
 import { usePreferences } from "@/hooks/usePreferences";
 
 const { brand, copy, features } = appConfig;
+// Matches the drawer breakpoint in chat.css.
+const isPhone = () => typeof window !== "undefined" && window.matchMedia("(max-width: 700px)").matches;
 // Built-in views: new_chat, project, search_chats, library, workspace, llms. Any other
 // key comes from app.config.ts nav and renders extensions.pages[key] or a placeholder.
 type View = string;
@@ -50,6 +55,7 @@ export default function App() {
   const rotatingPrompt = useTypewriterPrompt(copy.emptyStatePrompts);
   const preferences = usePreferences();
   const [customizing, setCustomizing] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
   const [view, setView] = useState<View>("new_chat");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -57,7 +63,7 @@ export default function App() {
   const [presetId, setPresetId] = useState("");
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [reasoning, setReasoning] = useState("");
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(isPhone);
   const [editor, setEditor] = useState<Editor>(null);
   const [projectTab, setProjectTab] = useState<"chats" | "sources">("chats");
   const [initialDraft, setInitialDraft] = useState("");
@@ -100,10 +106,13 @@ export default function App() {
     window.addEventListener("keydown", handler); return () => window.removeEventListener("keydown", handler);
   });
   function run(action: () => Promise<unknown>) { action().catch(e => setError(e instanceof Error ? e.message : "Action failed.")); }
+  function closeDrawer() { if (isPhone()) setCollapsed(true); }
   function newChat(nextProjectId: string | null = null) {
+    closeDrawer();
     setView("new_chat"); setConversationId(null); setProjectId(nextProjectId); setSelectedDocuments([]); setInitialDraft(""); stickToBottom.current = true;
   }
   function openChat(id: string) {
+    closeDrawer();
     const item = data.conversations.find(c => c.id === id);
     setConversationId(id); setProjectId(item?.projectId || null); setView("new_chat"); setSelectedDocuments([]); setInitialDraft("");
     if (item?.model && data.models.some(m => m.id === item.model)) setModelId(item.model);
@@ -111,9 +120,10 @@ export default function App() {
     run(async () => upsertConversation(await api<Conversation>("/conversations/" + id)));
   }
   function openProject(id: string) {
+    closeDrawer();
     setView("project"); setProjectId(id); setConversationId(null); setSelectedDocuments([]); setProjectTab("chats"); setInitialDraft("");
   }
-  function navigate(next: View) { if (next === "new_chat") newChat(); else { setView(next); setConversationId(null); setProjectId(null); } }
+  function navigate(next: View) { if (next === "new_chat") newChat(); else { closeDrawer(); setView(next); setConversationId(null); setProjectId(null); } }
   async function updateChat(id: string, body: Partial<Conversation>) {
     const item = await api<Conversation>("/conversations/" + id, "PATCH", body); upsertConversation(item);
   }
@@ -140,13 +150,19 @@ export default function App() {
       accepted(); setConversationId(targetId); setView("new_chat"); setInitialDraft(""); stickToBottom.current = true;
     });
   }
-  function exportChat(item: Conversation) {
-    const markdown = "# " + item.title + "\n\n" + item.messages.map(m => {
+  function chatMarkdown(item: Conversation) {
+    return "# " + item.title + "\n\n" + item.messages.map(m => {
       const citations = m.result?.sources?.map(s => "[" + s.number + "] " + s.title + ", page " + s.page + "\n> " + s.excerpt.replace(/\n/g, "\n> ")).join("\n\n");
       return "## " + (m.role === "user" ? "You" : m.result?.generationLabel || "Assistant") + "\n\n" + m.text + (citations ? "\n\n" + citations : "");
     }).join("\n\n");
-    download(item.title.replace(/[^\w -]/g, "").slice(0, 70) + ".md", markdown);
   }
+  function exportChat(item: Conversation) {
+    download(item.title.replace(/[^\w -]/g, "").slice(0, 70) + ".md", chatMarkdown(item));
+  }
+  function deleteChat(id: string) {
+    setConfirm({ text: "Permanently delete this conversation?", action: async () => { await mutate("/conversations/" + id, "DELETE"); if (conversationId === id) newChat(); } });
+  }
+  const chatDocumentIds = new Set(conversation?.messages.flatMap(m => m.documentIds || []) || []);
   async function branchAt(message: Message, regenerate = false) {
     if (!conversation || busy) return;
     let point = message;
@@ -170,7 +186,7 @@ export default function App() {
   function chatAction(action: string, id: string) {
     const item = data.conversations.find(c => c.id === id); if (!item) return;
     if (action === "Export chat") exportChat(item);
-    else if (action === "Pin chat") run(() => updateChat(id, { pinned: !item.pinned }));
+    else if (action === "Pin chat" || action === "Unpin chat") run(() => updateChat(id, { pinned: !item.pinned }));
     else if (action === "Archive") run(async () => { await updateChat(id, { archived: true }); if (id === conversationId) newChat(); });
     else if (action === "Move to project") setEditor({ type: "move", conversation: item });
   }
@@ -186,32 +202,35 @@ export default function App() {
 
   return <div className={"app-shell" + (collapsed ? " sidebar-collapsed" : "")}>
     <Sidebar activeNavKey={view} navItems={navItems} showProjects={has("projects")} projects={data.projects}
-      conversations={data.conversations.filter(c => !c.projectId && !c.archived).sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)))}
+      pinned={data.conversations.filter(c => c.pinned && !c.archived)}
+      conversations={data.conversations.filter(c => !c.projectId && !c.archived && !c.pinned)}
       activeConversationId={conversationId} activeProjectId={project?.id} accountName={brand.accountName} isCollapsed={collapsed}
       onCreateProject={() => setEditor({ type: "project" })} onNewConversation={() => newChat()}
       onDeleteProject={id => setConfirm({ text: "Delete this project? Its chats and documents will be kept in your library without a project.", action: async () => { await mutate("/projects/" + id, "DELETE"); if (projectId === id) newChat(); } })}
-      onDeleteConversation={id => setConfirm({ text: "Permanently delete this conversation?", action: async () => { await mutate("/conversations/" + id, "DELETE"); if (conversationId === id) newChat(); } })}
+      onDeleteConversation={deleteChat}
       onMoveConversationToProject={(id, projectId) => run(() => updateChat(id, { projectId }))}
       onRenameConversation={id => { const c = data.conversations.find(c => c.id === id); if (c) setEditor({ type: "rename", conversation: c }); }}
       onRenameProject={id => setEditor({ type: "project", project: data.projects.find(p => p.id === id) })}
       onSelectProject={openProject} onSelectConversation={openChat} onSelectNav={key => navigate(key as View)} onToggleSidebar={() => setCollapsed(v => !v)}
       onChatAction={chatAction} onAccount={() => navigate(availableNav.some(item => item.key === "workspace") ? "workspace" : "new_chat")}
       onCustomize={() => setCustomizing(true)} />
+    {!collapsed && <div className="sidebar-backdrop" aria-hidden="true" onClick={() => setCollapsed(true)} />}
     <main className="workspace">
-      <header className="workspace-topbar">
-        <div className="workspace-title-row"><label className="model-control llm-model-control"><select aria-label="Model" value={modelId} onChange={e => e.target.value === "__add" ? setEditor({ type: "provider" }) : setModelId(e.target.value)}>
-          {!data.models.length && <option value="">Choose a model</option>}{data.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}{canManageModels && <option value="__add">+ Add your model</option>}
-        </select></label>{project && <button className="subtle-button" onClick={() => openProject(project.id)}>{project.title}</button>}</div>
-        <div className="workspace-actions">{brand.workspaceLabel && <span className="local-badge">{brand.workspaceLabel}</span>}<button className="subtle-button" onClick={() => run(async () => { await refresh(); setError(""); })}>Reload</button>
-          {conversation && <details className="chat-options"><summary aria-label="Chat options">•••</summary><div className="chat-options-menu">
-            <button onClick={() => exportChat(conversation)}>Export Markdown</button><button disabled={busy} onClick={() => setEditor({ type: "summary", conversation })}>Conversation context</button>
-            <button disabled={busy} onClick={() => chatAction("Pin chat", conversation.id)}>{conversation.pinned ? "Unpin" : "Pin"} chat</button>
-            <button disabled={busy} onClick={() => run(() => updateChat(conversation.id, { archived: !conversation.archived }))}>{conversation.archived ? "Restore" : "Archive"} chat</button>
-            {has("projects") && <button disabled={busy} onClick={() => setEditor({ type: "move", conversation })}>Move to project</button>}
-          </div></details>}
-        </div>
-      </header>
-      {error && <div className="error-banner" role="alert"><span>{error}</span><button onClick={() => setError("")} aria-label="Dismiss error">×</button></div>}
+      <ChatHeader models={data.models} modelId={modelId} onModel={setModelId} canManageModels={canManageModels} onAddModel={() => setEditor({ type: "provider" })}
+        project={project} onOpenProject={openProject} conversation={conversation} projects={data.projects} busy={busy}
+        onOpenSidebar={() => setCollapsed(false)}
+        actions={conversation ? {
+          copyMarkdown: async () => { try { await navigator.clipboard.writeText(chatMarkdown(conversation)); } catch { setError("Clipboard is unavailable in this browser."); } },
+          downloadMarkdown: () => exportChat(conversation),
+          viewFiles: has("documents") ? () => setFilesOpen(true) : undefined,
+          rename: () => setEditor({ type: "rename", conversation }),
+          editContext: () => setEditor({ type: "summary", conversation }),
+          togglePin: () => chatAction("Pin chat", conversation.id),
+          toggleArchive: () => run(() => updateChat(conversation.id, { archived: !conversation.archived })),
+          remove: () => deleteChat(conversation.id),
+          moveTo: has("projects") ? projectId => run(() => updateChat(conversation.id, { projectId })) : undefined,
+        } : undefined} />
+      {error && <div className="error-banner" role="alert"><span>{error}</span><span className="error-banner-actions"><button onClick={() => run(async () => { await refresh(); setError(""); })}>Reload</button><button onClick={() => setError("")} aria-label="Dismiss error">×</button></span></div>}
       {!ready ? <section className="empty-state"><h2>Opening your workspace…</h2><button onClick={() => run(refresh)}>Retry connection</button></section>
         : ExtensionPage ? <ExtensionPage data={data} has={has} refresh={refresh} navigate={navigate} openChat={openChat} />
         : view === "llms" ? <ProviderSettings models={data.models} onAdd={() => setEditor({ type: "provider" })} onEdit={provider => setEditor({ type: "provider", provider })}
@@ -233,7 +252,11 @@ export default function App() {
         </section>
         : !conversation?.messages.length ? <section className="empty-state"><h2 className="empty-title">{copy.emptyStateTitle}</h2>
           <p className="empty-prompt" aria-label={`Ideas: ${copy.emptyStatePrompts.join(", ")}`}><span>{rotatingPrompt || " "}</span><span className="empty-prompt-caret" aria-hidden="true" /></p>
-          {composer(true)}</section>
+          {composer(true)}
+          {!project && copy.suggestions.length > 0 && <ul className="suggestions" aria-label="Suggestions">{copy.suggestions.map(item => {
+            const Icon = navIcons[item.icon];
+            return <li key={item.text}><button type="button" className="suggestion" onClick={() => setInitialDraft(item.text)}><Icon aria-hidden="true" />{item.text}</button></li>;
+          })}</ul>}</section>
         : <><section className="thread-panel functional-thread" ref={thread} onScroll={() => { const e = thread.current; if (e) stickToBottom.current = e.scrollHeight - e.scrollTop - e.clientHeight < 100; }}>
           <div className="thread-panel-inner">
             {conversation.parentId && <p className="muted">Branched conversation · <button className="subtle-button" onClick={() => openChat(conversation.parentId!)}>Open original</button></p>}
@@ -245,6 +268,9 @@ export default function App() {
           </div>
         </section>{composer(false)}</>}
     </main>
+    {filesOpen && conversation && <ChatFiles onClose={() => setFilesOpen(false)}
+      attached={data.documents.filter(d => chatDocumentIds.has(d.id))}
+      project={project ? data.documents.filter(d => d.projectId === project.id && !chatDocumentIds.has(d.id)) : []} />}
     {customizing && <CustomizePanel navItems={availableNav} composerOptions={composerOptions} preferences={preferences} onClose={() => setCustomizing(false)} />}
     {editor?.type === "provider" && <ProviderEditor provider={editor.provider} onClose={() => setEditor(null)} onSaved={refresh} />}
     {editor?.type === "project" && <ProjectEditor project={editor.project} appendedMemory={editor.memory} onClose={() => setEditor(null)} onSave={async body => {

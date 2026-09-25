@@ -1,12 +1,18 @@
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useLayoutEffect, useRef, useState } from "react";
 import { appConfig } from "@/app.config";
 import { composerTools } from "@/extensions";
 import { DocumentRecord, Preset } from "@/types";
+import { ArrowUpIcon, ChevronIcon, FileIcon, PaperclipIcon, PlusIcon, SparkIcon, StopIcon } from "./icons";
+import { Menu, MenuDivider, MenuItem, MenuNote, SubMenu } from "./Menu";
 
 // Sent per message and applied over the connection default. Providers that do not
 // expose a thinking-effort parameter ignore it.
 const EFFORTS = [{ id: "", label: "Standard" }, { id: "low", label: "Low" }, { id: "medium", label: "Medium" }, { id: "high", label: "High" }];
+const ACCEPT = ".pdf,.txt,.md,.csv,.json,.py,.js,.ts,.log";
+// Past this height the text gets the full width and the controls move below it.
+const MULTILINE_PX = 52;
 function readDraft(key: string) { try { return localStorage.getItem(key) || ""; } catch { return ""; } }
+
 /**
  * Which optional controls to show: backend capabilities combined with the user's
  * Customize choices. `documents` allows attaching; `sources` shows the picker.
@@ -25,11 +31,25 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [multiline, setMultiline] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [thinkingOpen, setThinkingOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
+  const textRef = useRef<HTMLTextAreaElement>(null);
   const tools = composerTools.filter(tool => tool.available !== false || appConfig.features.placeholderTools);
-  const hasToolsMenu = features.tools && (features.documents || tools.length > 0);
+  const hasToolsMenu = features.tools && (features.documents || features.sources || features.presets || tools.length > 0);
+  const preset = presets.find(p => p.id === presetId);
+  const effort = EFFORTS.find(e => e.id === reasoning) || EFFORTS[0];
+
+  useLayoutEffect(() => {
+    const element = textRef.current; if (!element) return;
+    // Empty needs no measuring (and a first measure can run before the grid has a width).
+    if (!draft) { element.style.height = ""; setMultiline(false); return; }
+    element.style.height = "auto";
+    element.style.height = Math.min(element.scrollHeight, 220) + "px";
+    // Empty is always one line. Once expanded, stay expanded until cleared: the wider
+    // textarea would otherwise shrink the text back under the threshold and flicker.
+    setMultiline(current => draft !== "" && (current || element.scrollHeight > MULTILINE_PX || draft.includes("\n")));
+  }, [draft]);
+
   function update(text: string) { setDraft(text); try { if (text) localStorage.setItem(storageKey, text); else localStorage.removeItem(storageKey); } catch { setError("Browser draft storage is unavailable."); } }
   async function submit(e: FormEvent) {
     e.preventDefault(); if (!draft.trim() || busy || submitting || disabled) return;
@@ -37,58 +57,51 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
     try { await onSend(draft.trim(), () => update("")); } catch (e) { setError((e as Error).message); }
     finally { setSubmitting(false); }
   }
-  return <form className={"composer-panel functional-composer" + (empty ? " empty composer-panel-hero" : "")} onSubmit={submit}>
-    <textarea aria-label="Message" value={draft} maxLength={32000} onChange={e => update(e.target.value)} placeholder={placeholder} rows={empty ? 2 : 2}
-      onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} />
-    <div className="composer-toolbar"><div className="composer-options">
-      {features.documents && <input ref={fileRef} className="visually-hidden" type="file" multiple accept=".pdf,.txt,.md,.csv,.json,.py,.js,.ts,.log" onChange={async e => {
-        const files = Array.from(e.target.files || []); e.target.value = ""; setUploading(true); setError("");
-        try { await onUpload(files); } catch (e) { setError((e as Error).message); } finally { setUploading(false); }
-      }} />}
-      {hasToolsMenu && <div className="composer-menu-root">
-        <button type="button" className="composer-icon-button" aria-label="Tools" aria-haspopup="menu" aria-expanded={toolsOpen}
-          disabled={uploading} onClick={() => setToolsOpen(open => !open)}>{uploading ? "…" : "+"}</button>
-        {toolsOpen && <div className="composer-tools-menu" role="menu" aria-label="Composer tools">
-          {features.documents && <div className="composer-tools-menu-section">
-            <button type="button" role="menuitem" className="composer-tools-menu-item"
-              onClick={() => { setToolsOpen(false); fileRef.current?.click(); }}>Attach text documents</button>
-          </div>}
-          {tools.length > 0 && <div className="composer-tools-menu-section">
-            {tools.map(tool => tool.available === false
-              ? <button key={tool.id} type="button" role="menuitem" aria-disabled="true"
-                className="composer-tools-menu-item disabled" title="Not connected in this release"
-                onClick={event => event.preventDefault()}>{tool.label}</button>
-              : <button key={tool.id} type="button" role="menuitem" className="composer-tools-menu-item"
-                onClick={() => { setToolsOpen(false); tool.run?.({ draft, setDraft: update }); }}>{tool.label}</button>)}
-          </div>}
-        </div>}
+  const toggleDocument = (id: string) => onDocuments(selectedDocuments.includes(id) ? selectedDocuments.filter(other => other !== id) : [...selectedDocuments, id]);
+
+  return <form className={"composer" + (empty ? " composer-hero" : "") + (multiline ? " composer-multiline" : "")} onSubmit={submit}>
+    {features.documents && <input ref={fileRef} className="visually-hidden" type="file" multiple accept={ACCEPT} onChange={async e => {
+      const files = Array.from(e.target.files || []); e.target.value = ""; setUploading(true); setError("");
+      try { await onUpload(files); } catch (e) { setError((e as Error).message); } finally { setUploading(false); }
+    }} />}
+    {(selectedDocuments.length > 0 || preset) && <div className="composer-chips attachment-chips">
+      {preset && <button type="button" className="chip chip-assistant" onClick={() => onPreset("")} aria-label={"Remove assistant " + preset.title}><SparkIcon />{preset.title}<span aria-hidden="true">×</span></button>}
+      {selectedDocuments.map(id => <button type="button" className="chip" key={id} onClick={() => onDocuments(selectedDocuments.filter(other => other !== id))}>
+        <FileIcon />{documents.find(d => d.id === id)?.name || "Document"}<span aria-hidden="true">×</span></button>)}
+    </div>}
+    <div className="composer-row">
+      {hasToolsMenu && <div className="composer-leading">
+        <Menu label="Tools" trigger={uploading ? "…" : <PlusIcon />} triggerClassName="composer-round" placement={empty ? "bottom" : "top"} disabled={uploading}>{close => <>
+          {features.documents && <MenuItem icon={PaperclipIcon} onSelect={() => { close(); fileRef.current?.click(); }}>Attach text documents</MenuItem>}
+          {features.sources && <SubMenu icon={FileIcon} label={"Sources" + (selectedDocuments.length ? ` (${selectedDocuments.length})` : "")}>
+            <MenuNote>Project files are searched automatically. Select other library files to include.</MenuNote>
+            {!documents.length && <MenuNote>No documents yet. Attach a file to begin.</MenuNote>}
+            {documents.map(d => <MenuItem key={d.id} checked={selectedDocuments.includes(d.id)} onSelect={() => toggleDocument(d.id)}
+              hint={"Uploaded " + new Date(d.createdAt).toLocaleString()}>{d.name}</MenuItem>)}
+          </SubMenu>}
+          {features.presets && <SubMenu icon={SparkIcon} label="Assistant">
+            <MenuItem checked={!presetId} onSelect={() => { onPreset(""); close(); }}>Default assistant</MenuItem>
+            {presets.map(p => <MenuItem key={p.id} checked={presetId === p.id} onSelect={() => { onPreset(p.id); close(); }}>{p.title}</MenuItem>)}
+            {!presets.length && <MenuNote>No saved assistants yet. Create one under Workspace.</MenuNote>}
+          </SubMenu>}
+          {tools.length > 0 && (features.documents || features.sources || features.presets) && <MenuDivider />}
+          {tools.map(tool => <MenuItem key={tool.id} disabled={tool.available === false} hint={tool.available === false ? "Not connected in this release" : undefined}
+            onSelect={() => { close(); tool.run?.({ draft, setDraft: update }); }}>{tool.label}</MenuItem>)}
+        </>}</Menu>
       </div>}
-      {features.sources && <details className="composer-source-picker"><summary>Sources {selectedDocuments.length ? `(${selectedDocuments.length})` : ""}</summary><div className="source-picker-panel">
-        <p className="muted">Project files are searched automatically. Select other library files to include.</p>
-        {!documents.length && <p>No documents yet. Attach a file to begin.</p>}
-        {documents.map(d => <label key={d.id}><input type="checkbox" checked={selectedDocuments.includes(d.id)} onChange={e => onDocuments(e.target.checked ? [...selectedDocuments, d.id] : selectedDocuments.filter(id => id !== d.id))} /> {d.name}</label>)}
-      </div></details>}
-      {features.reasoning && <div className="composer-menu-root">
-        <button type="button" className={"composer-mode-button" + (thinkingOpen ? " active" : "")} aria-haspopup="menu"
-          aria-expanded={thinkingOpen} aria-label={"Thinking effort: " + (EFFORTS.find(e => e.id === reasoning)?.label || "Standard")}
-          onClick={() => setThinkingOpen(open => !open)}>
-          <span>Thinking</span><span className="composer-mode-caret" aria-hidden="true">▾</span>
-        </button>
-        {thinkingOpen && <div className="composer-thinking-menu" role="menu" aria-label="Thinking effort">
-          <p className="composer-thinking-menu-label">Thinking effort</p>
-          {EFFORTS.map(effort => <button key={effort.id} type="button" role="menuitemradio" aria-checked={reasoning === effort.id}
-            className={"composer-thinking-menu-item" + (reasoning === effort.id ? " active" : "")}
-            onClick={() => { onReasoning(effort.id); setThinkingOpen(false); }}>
-            <span className="composer-thinking-menu-label-text">{effort.label}</span>
-            {reasoning === effort.id && <span className="composer-thinking-menu-check" aria-hidden="true">✓</span>}
-          </button>)}
-        </div>}
-      </div>}
-      {features.presets && <select aria-label="Assistant preset" value={presetId} onChange={e => onPreset(e.target.value)}><option value="">Default assistant</option>{presets.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}</select>}
+      <textarea ref={textRef} aria-label="Message" value={draft} maxLength={32000} rows={1} onChange={e => update(e.target.value)} placeholder={placeholder}
+        onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} />
+      <div className="composer-trailing">
+        {features.reasoning && <Menu label={"Thinking effort: " + effort.label} align="end" placement={empty ? "bottom" : "top"} triggerClassName="composer-effort"
+          trigger={<><span>{effort.label}</span><ChevronIcon className="composer-effort-caret" aria-hidden="true" /></>}>{close => <>
+          <MenuNote>Thinking effort</MenuNote>
+          {EFFORTS.map(e => <MenuItem key={e.id} checked={reasoning === e.id} onSelect={() => { onReasoning(e.id); close(); }}>{e.label}</MenuItem>)}
+        </>}</Menu>}
+        {busy
+          ? <button type="button" className="composer-send stop" aria-label="Stop" title="Stop" onClick={onStop}><StopIcon /></button>
+          : <button className="composer-send" aria-label="Send" title={submitting ? "Sending…" : "Send"} disabled={disabled || submitting || uploading || !draft.trim()}><ArrowUpIcon /></button>}
+      </div>
     </div>
-    {busy ? <button type="button" className="composer-submit" onClick={onStop}>Stop</button> : <button className="composer-submit" disabled={disabled || submitting || uploading || !draft.trim()}>{submitting ? "Sending…" : "Send"}</button>}
-    </div>
-    {selectedDocuments.length > 0 && <div className="attachment-chips">{selectedDocuments.map(id => <button type="button" key={id} onClick={() => onDocuments(selectedDocuments.filter(other => other !== id))}>{documents.find(d => d.id === id)?.name || "Document"} ×</button>)}</div>}
     {error && <p className="error-notice" role="alert">{error}</p>}
   </form>;
 }

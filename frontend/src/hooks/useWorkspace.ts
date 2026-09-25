@@ -73,7 +73,9 @@ export function useWorkspace() {
   }
   const has = useMemo(() => capabilityCheck(data.capabilities), [data.capabilities]);
   async function stop(conversationId: string, requestId?: string) {
-    const id = requestId || running[conversationId];
+    // Prefer the request this tab started: until its "start" event arrives, the last
+    // message (and so `requestId`) still belongs to the previous turn.
+    const id = running[conversationId] || requestId;
     // Without server-side cancel, dropping the stream is the stop signal.
     if (id && has("cancel")) await api(`/generations/${id}/cancel`, "POST");
     controllers.current.get(conversationId)?.abort();

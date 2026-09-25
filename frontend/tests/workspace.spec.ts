@@ -61,7 +61,9 @@ test("project documents, source citations, memory, errors and stop", async ({ pa
   await page.getByText("Reference passages (1)").click();
   await page.getByText("[1] launch.txt · page 1", { exact: true }).click();
   await expect(page.getByRole("blockquote")).toContainText("Cobalt launches Friday");
-  await page.getByRole("button", { name: "Save to project memory" }).click();
+  // Secondary answer actions live in the message's "More actions" menu.
+  await page.getByRole("button", { name: "More actions", exact: true }).last().click();
+  await page.getByRole("menuitem", { name: "Save to project memory" }).click();
   await expect(page.getByLabel("Project memory", { exact: true })).toContainText("Cobalt launches Friday");
   await page.getByRole("button", { name: "Save project", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -105,8 +107,11 @@ test("customize hides optional features without removing them", async ({ page })
   await dialog.getByRole("switch", { name: /Sources/ }).uncheck();
   await dialog.getByRole("button", { name: "Done" }).click();
   await expect(nav.getByRole("button", { name: "Library", exact: true })).toHaveCount(0);
-  await expect(page.locator(".composer-source-picker")).toHaveCount(0);
-  await expect(nav.getByRole("button", { name: "Search chats", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: /^Sources/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+  // Fixed items stay; Search lives beside the brand name in the sidebar header.
+  await expect(page.locator(".sidebar-header").getByRole("button", { name: "Search chats", exact: true })).toBeVisible();
 
   await page.reload();
   await expect(page.getByLabel("Message", { exact: true })).toBeVisible();
@@ -120,5 +125,35 @@ test("customize hides optional features without removing them", async ({ page })
   await page.getByRole("dialog").getByRole("button", { name: "Reset to defaults" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Done" }).click();
   await expect(nav.getByRole("button", { name: "Library", exact: true })).toBeVisible();
-  await expect(page.locator(".composer-source-picker")).toHaveCount(1);
+  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: /^Sources/ })).toHaveCount(1);
+});
+
+test("chat header menu: pin, move to project, view files, response details", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Explain cobalt", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Local test answer" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Chat options" }).click();
+  await page.getByRole("menuitem", { name: "Pin chat" }).click();
+  const pinned = page.locator(".sidebar-section").filter({ has: page.getByRole("heading", { name: "Pinned" }) });
+  await expect(pinned.getByRole("button", { name: "Explain cobalt", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Chat options" }).click();
+  await page.getByRole("menuitem", { name: "Move to project" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Cobalt project" }).click();
+  await expect(page.locator(".chat-header").getByRole("button", { name: "Cobalt project" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Chat options" }).click();
+  await page.getByRole("menuitem", { name: "View files in chat" }).click();
+  await expect(page.getByRole("dialog", { name: "Files in this chat" })).toContainText("launch.txt");
+  await page.getByRole("button", { name: "Close dialog" }).click();
+
+  await page.getByRole("button", { name: "More actions", exact: true }).last().click();
+  await page.getByRole("menuitem", { name: "Response details" }).click();
+  await expect(page.getByRole("region", { name: "Response details" })).toContainText("Answered by");
+
+  await page.getByRole("button", { name: "Chat options" }).click();
+  await page.getByRole("menuitem", { name: "Unpin chat" }).click();
+  await expect(page.getByRole("heading", { name: "Pinned" })).toHaveCount(0);
 });

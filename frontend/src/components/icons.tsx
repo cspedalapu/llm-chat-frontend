@@ -225,6 +225,62 @@ export function ChevronIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+// Chat UI icons: message actions, composer, header menus.
+type IconProps = SVGProps<SVGSVGElement>;
+const line = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+
+export function CopyIcon(props: IconProps) {
+  return <svg {...line} {...props}><rect x="8.5" y="8.5" width="11" height="11" rx="2.4" /><path d="M15.5 8.5V6.9a2.4 2.4 0 0 0-2.4-2.4H6.9a2.4 2.4 0 0 0-2.4 2.4v6.2a2.4 2.4 0 0 0 2.4 2.4h1.6" /></svg>;
+}
+export function CheckIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="m5 12.5 4.3 4.3L19 7.2" /></svg>;
+}
+export function RefreshIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M19.5 12a7.5 7.5 0 0 1-13 5.1" /><path d="M4.5 12a7.5 7.5 0 0 1 13-5.1" /><path d="M17.8 3.8v3.4h-3.4" /><path d="M6.2 20.2v-3.4h3.4" /></svg>;
+}
+export function BookmarkIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M7 4.5h10a1 1 0 0 1 1 1v14l-6-3.8-6 3.8v-14a1 1 0 0 1 1-1Z" /></svg>;
+}
+export function ArrowUpIcon(props: IconProps) {
+  return <svg {...line} strokeWidth={2.2} {...props}><path d="M12 19V5.5" /><path d="m6 11.2 6-6 6 6" /></svg>;
+}
+export function StopIcon(props: IconProps) {
+  return <svg viewBox="0 0 24 24" fill="currentColor" {...props}><rect x="7" y="7" width="10" height="10" rx="2" /></svg>;
+}
+export function PlusIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M12 5v14" /><path d="M5 12h14" /></svg>;
+}
+export function PaperclipIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="m19 11.4-7.1 7.1a4.6 4.6 0 0 1-6.5-6.5l7.4-7.4a3.1 3.1 0 0 1 4.4 4.4l-7.3 7.3a1.5 1.5 0 0 1-2.2-2.2l6.6-6.6" /></svg>;
+}
+export function SparkIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M12 3.8 13.9 9l5.3 1.9-5.3 1.9L12 18l-1.9-5.2-5.3-1.9L10.1 9Z" /></svg>;
+}
+export function FileIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M13.5 3.8H7.3a1.8 1.8 0 0 0-1.8 1.8v12.8a1.8 1.8 0 0 0 1.8 1.8h9.4a1.8 1.8 0 0 0 1.8-1.8V8.8Z" /><path d="M13.5 3.8v5h5" /></svg>;
+}
+export function DotsIcon(props: IconProps) {
+  return <svg viewBox="0 0 24 24" fill="currentColor" {...props}><circle cx="5.5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="18.5" cy="12" r="1.6" /></svg>;
+}
+export function SlidersIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M4.5 7h9" /><path d="M17.5 7h2" /><circle cx="15.5" cy="7" r="2" /><path d="M4.5 17h3" /><path d="M11.5 17h8" /><circle cx="9.5" cy="17" r="2" /></svg>;
+}
+export function DownloadIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M12 4.5v10.2" /><path d="m7.8 10.8 4.2 4.2 4.2-4.2" /><path d="M5 19.5h14" /></svg>;
+}
+export function InfoIcon(props: IconProps) {
+  return <svg {...line} {...props}><circle cx="12" cy="12" r="8" /><path d="M12 11v5" /><path d="M12 8h.01" /></svg>;
+}
+export function BranchIcon(props: IconProps) {
+  return <svg {...line} {...props}><circle cx="7" cy="5.5" r="1.8" /><circle cx="7" cy="18.5" r="1.8" /><circle cx="17" cy="8.5" r="1.8" /><path d="M7 7.3v9.4" /><path d="M17 10.3c0 3.5-4 3.2-8.6 6.8" /></svg>;
+}
+export function MemoryIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M9 4.5h6a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3Z" /><path d="M9.5 9h5" /><path d="M9.5 12.5h5" /><path d="M9.5 16h3" /></svg>;
+}
+export function BrainIcon(props: IconProps) {
+  return <svg {...line} {...props}><path d="M9.2 5a2.7 2.7 0 0 0-2.7 2.7v.3A2.8 2.8 0 0 0 5 13a2.9 2.9 0 0 0 2.4 4.6A2.6 2.6 0 0 0 12 18.4V6.6A2.3 2.3 0 0 0 9.2 5Z" /><path d="M14.8 5a2.7 2.7 0 0 1 2.7 2.7v.3A2.8 2.8 0 0 1 19 13a2.9 2.9 0 0 1-2.4 4.6 2.6 2.6 0 0 1-4.6.8" /></svg>;
+}
+
 // Lets app.config.ts refer to icons by name while staying plain data. A fork adds
 // its own icon above and one entry here.
 export const navIcons = {

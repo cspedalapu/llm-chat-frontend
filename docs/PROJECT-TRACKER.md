@@ -11,7 +11,7 @@ messages so the history stays searchable. Move finished items into §5 with a da
 - **Role of this repo:** the permanent base every new product forks. See
   [BASE-ROADMAP.md](BASE-ROADMAP.md) and [FORKING.md](FORKING.md).
 - **Health:** ruff clean · 49 backend tests (33 behaviour + 16 contract) · `tsc` clean ·
-  4/4 full e2e · 1/1 core-tier e2e
+  5/5 full e2e · 1/1 core-tier e2e
 
 ---
 
@@ -25,7 +25,7 @@ runs the same set, plus the contract test against `examples/minimal_backend`.
 | Lint | `./.venv-dev/Scripts/python.exe -m ruff check backend examples` | `All checks passed!` |
 | Backend + contract tests | `./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable>` | 49 passed |
 | Types | `cd frontend && npm run typecheck` | exit 0 |
-| End-to-end, full | `cd frontend && npm run test:e2e` | 4 passed |
+| End-to-end, full | `cd frontend && npm run test:e2e` | 5 passed |
 | End-to-end, core tier | `cd frontend && npm run test:e2e:core` | 1 passed |
 
 ---
@@ -64,6 +64,7 @@ runs the same set, plus the contract test against `examples/minimal_backend`.
 | Typing indicator | Three pulsing dots while awaiting first token. |
 | **Thinking effort** | Per-message Standard/Low/Medium/High, overrides the connection default. |
 | **Tools menu** | Attach documents live; unavailable tools shown disabled, not faked. |
+| **Chat UI (09-25 redesign)** | ChatGPT-style: pill composer with + menu (attach, Sources ▸, Assistant ▸), compact thinking effort, round send/stop; user bubbles and icon actions (copy, regenerate, save, More); header Share + ••• menu (view files, rename, context, pin, archive, delete, Move to project ▸); home suggestions; Pinned section; Show more projects; phone drawer. |
 | **Customize** | Account menu → Customize: users hide Library, Workspace, LLMs, the tools menu, Sources, Thinking and the assistant picker. Fixed: New chat, Search chats, Projects, chat history, model selector. Hiding never deletes anything. Defined in `app.config.ts`. |
 
 ### Placeholder — hidden by default, no backend
@@ -137,6 +138,8 @@ registers `extensions.pages[key]` gets its own page there instead. (O-8, resolve
 | Backend `.dockerignore` ignored | 09-25 | Build context is the repo root, so it was never read; `node_modules`, `.venv` and `data/` (incl. `secret.key`) went to the daemon. Now `backend/Dockerfile.dockerignore`. |
 | Export crash on backends without `sources` | 09-25 | `result.sources` optional in the type; guarded. |
 | `Sidebar.tsx` 764 lines | 09-25 | Menus and rows moved to `components/sidebar/`; 565 remain. |
+| Stop cancelled the wrong request | 09-25 | Clicking Stop before the reply started cancelled the *previous* turn's request id, so the new reply kept streaming. `stop()` now prefers the request this tab started. |
+| Tablet layout stacked the sidebar on top | 09-25 | 700–960px now keeps the side-by-side layout; under 700px the sidebar is a drawer. |
 
 ---
 

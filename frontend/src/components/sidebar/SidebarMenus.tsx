@@ -1,7 +1,5 @@
-import { DragEvent as ReactDragEvent, SVGProps } from "react";
-import { ProjectSummary } from "@/types.ts";
+import { SVGProps } from "react";
 import { ArchiveIcon, ChevronIcon, EditIcon, FolderIcon, PinIcon, ShareIcon, TrashIcon } from "../icons";
-import { projectIcon } from "./SidebarRows";
 
 export type Icon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
 
@@ -17,11 +15,9 @@ export interface MenuPosition {
   left: number;
 }
 
-export interface OverflowPosition extends MenuPosition {
-  maxHeight: number;
-}
-
 export const MOVE_TO_PROJECT = "Move to project";
+export const PIN_CHAT = "Pin chat";
+export const UNPIN_CHAT = "Unpin chat";
 
 export const chatMenuSections: SidebarMenuAction[][] = [
   [
@@ -30,7 +26,7 @@ export const chatMenuSections: SidebarMenuAction[][] = [
     { label: MOVE_TO_PROJECT, icon: FolderIcon, hasChevron: true }
   ],
   [
-    { label: "Pin chat", icon: PinIcon },
+    { label: PIN_CHAT, icon: PinIcon },
     { label: "Archive", icon: ArchiveIcon }
   ],
   [{ label: "Delete", icon: TrashIcon, tone: "danger" }]
@@ -97,51 +93,6 @@ export function ItemMenu({ kind, sections, position, onAction }: {
           })}
         </div>
       ))}
-    </div>
-  );
-}
-
-export function ProjectOverflowPanel({ projects, position, activeProjectId, dropTargetProjectId, onDragOver, onDragLeave, onDrop, onSelect }: {
-  projects: ProjectSummary[];
-  position: OverflowPosition | null;
-  activeProjectId?: string | null;
-  dropTargetProjectId: string | null;
-  onDragOver: (projectId: string) => void;
-  onDragLeave: (projectId: string) => void;
-  onDrop: (projectId: string, event: ReactDragEvent<HTMLElement>) => void;
-  onSelect: (projectId: string) => void;
-}) {
-  return (
-    <div
-      className="sidebar-project-overflow-panel"
-      style={position ? { top: `${position.top}px`, left: `${position.left}px` } : undefined}
-      role="menu"
-      aria-label="More projects"
-    >
-      <div className="sidebar-project-overflow-list" style={position ? { maxHeight: `${position.maxHeight}px` } : undefined}>
-        {projects.map((project) => {
-          const Icon = projectIcon(project);
-
-          return (
-            <button
-              key={project.id}
-              className={`sidebar-project-overflow-item${project.kind === "monitor" ? " monitor" : ""}${project.kind === "more" ? " more" : ""}${activeProjectId === project.id ? " active" : ""}${dropTargetProjectId === project.id ? " drop-target" : ""}`}
-              type="button"
-              role="menuitem"
-              onDragOver={(event) => {
-                event.preventDefault();
-                onDragOver(project.id);
-              }}
-              onDragLeave={() => onDragLeave(project.id)}
-              onDrop={(event) => onDrop(project.id, event)}
-              onClick={() => onSelect(project.id)}
-            >
-              <Icon className="sidebar-project-overflow-icon" />
-              <span className="sidebar-project-overflow-copy">{project.title}</span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

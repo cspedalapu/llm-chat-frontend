@@ -1,8 +1,8 @@
 import { DragEvent as ReactDragEvent, MouseEvent as ReactMouseEvent, useEffect, useState } from "react";
 import { appConfig, NavItemConfig } from "@/app.config.ts";
 import { Conversation, ProjectSummary } from "@/types.ts";
-import { ChevronIcon, FolderPlusIcon, GptsIcon, HelpIcon, LogoIcon, MoreIcon, navIcons, PanelIcon, SettingsIcon, UserIcon } from "./icons";
-import { AccountMenu, chatMenuSections, ItemMenu, MenuPosition, MOVE_TO_PROJECT, OverflowPosition, ProjectOverflowPanel, projectMenuSections } from "./sidebar/SidebarMenus";
+import { ChevronIcon, FolderPlusIcon, GptsIcon, HelpIcon, navIcons, PanelIcon, SettingsIcon, SlidersIcon, UserIcon } from "./icons";
+import { AccountMenu, chatMenuSections, ItemMenu, MenuPosition, MOVE_TO_PROJECT, PIN_CHAT, projectMenuSections, UNPIN_CHAT } from "./sidebar/SidebarMenus";
 import { ChatRow, ProjectRow } from "./sidebar/SidebarRows";
 
 interface SidebarProps {
@@ -12,6 +12,9 @@ interface SidebarProps {
   /** False when the backend has no projects capability: hides the section and "Move to project". */
   showProjects: boolean;
   projects: ProjectSummary[];
+  /** Pinned chats, shown in their own section above Projects. */
+  pinned: Conversation[];
+  /** Unpinned chats that belong to no project. */
   conversations: Conversation[];
   activeConversationId: string | null;
   activeProjectId?: string | null;
@@ -43,6 +46,7 @@ export function Sidebar({
   navItems,
   showProjects,
   projects,
+  pinned,
   conversations,
   activeConversationId,
   activeProjectId,
@@ -63,7 +67,7 @@ export function Sidebar({
   onAccount,
   onCustomize
 }: SidebarProps) {
-  const visibleProjectLimit = 7;
+  const visibleProjectLimit = 5;
   const accountPrimaryLabel = accountName?.trim() || "Sign in";
   const accountSecondaryLabel = appConfig.brand.workspaceLabel;
   const accountAvatarLabel =
@@ -81,7 +85,7 @@ export function Sidebar({
     };
   }
   const accountMenuItems = [
-    ...(onCustomize ? [{ label: "Customize", icon: PanelIcon, onSelect: fromAccountMenu(onCustomize) }] : []),
+    ...(onCustomize ? [{ label: "Customize", icon: SlidersIcon, onSelect: fromAccountMenu(onCustomize) }] : []),
     { label: "Settings", icon: SettingsIcon, onSelect: fromAccountMenu(onAccount) },
     { label: "Help", icon: HelpIcon, onSelect: fromAccountMenu(onAccount) },
     { label: accountPrimaryLabel, icon: UserIcon, onSelect: fromAccountMenu(onAccount) }
@@ -95,12 +99,12 @@ export function Sidebar({
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [openItemMenu, setOpenItemMenu] = useState<SidebarItemMenuState | null>(null);
   const [itemMenuPosition, setItemMenuPosition] = useState<MenuPosition | null>(null);
-  const [isProjectOverflowOpen, setIsProjectOverflowOpen] = useState(false);
-  const [projectOverflowPosition, setProjectOverflowPosition] = useState<OverflowPosition | null>(null);
+  const [showAllProjects, setShowAllProjects] = useState(false);
   const [draggedConversationId, setDraggedConversationId] = useState<string | null>(null);
   const [dropTargetProjectId, setDropTargetProjectId] = useState<string | null>(null);
-  const visibleProjects = projects.slice(0, visibleProjectLimit);
-  const overflowProjects = projects.slice(visibleProjectLimit);
+  const visibleProjects = showAllProjects ? projects : projects.slice(0, visibleProjectLimit);
+  const headerItems = navItems.filter((item) => item.placement === "header");
+  const listItems = navItems.filter((item) => item.placement !== "header");
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -111,10 +115,9 @@ export function Sidebar({
 
       setIsAccountMenuOpen(false);
       closeItemMenu();
-      closeProjectOverflow();
     }
 
-    if (!isAccountMenuOpen && !openItemMenu && !isProjectOverflowOpen) {
+    if (!isAccountMenuOpen && !openItemMenu) {
       return;
     }
 
@@ -122,24 +125,7 @@ export function Sidebar({
     return () => {
       window.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [isAccountMenuOpen, isProjectOverflowOpen, openItemMenu]);
-
-  useEffect(() => {
-    if (overflowProjects.length === 0 && isProjectOverflowOpen) {
-      closeProjectOverflow();
-    }
-  }, [isProjectOverflowOpen, overflowProjects.length]);
-
-  useEffect(() => {
-    if (!isProjectOverflowOpen) {
-      return;
-    }
-
-    window.addEventListener("resize", closeProjectOverflow);
-    return () => {
-      window.removeEventListener("resize", closeProjectOverflow);
-    };
-  }, [isProjectOverflowOpen]);
+  }, [isAccountMenuOpen, openItemMenu]);
 
   useEffect(() => {
     if (!openItemMenu) {
@@ -157,26 +143,9 @@ export function Sidebar({
     setItemMenuPosition(null);
   }
 
-  function closeProjectOverflow() {
-    setIsProjectOverflowOpen(false);
-    setProjectOverflowPosition(null);
-    setDropTargetProjectId(null);
-  }
-
   function closeMenus() {
     closeItemMenu();
-    closeProjectOverflow();
-  }
-
-  function openProjectOverflow(event: ReactMouseEvent<HTMLButtonElement>) {
-    const buttonRect = event.currentTarget.getBoundingClientRect();
-    const panelWidth = 272;
-    const left = Math.max(12, Math.min(buttonRect.right + 10, window.innerWidth - panelWidth - 12));
-    const top = Math.max(12, Math.min(buttonRect.top - 8, window.innerHeight - 220));
-    const maxHeight = Math.max(180, window.innerHeight - top - 16);
-
-    setProjectOverflowPosition({ top, left, maxHeight });
-    setIsProjectOverflowOpen(true);
+    setDropTargetProjectId(null);
   }
 
   function handleNavClick(itemKey: string) {
@@ -199,7 +168,6 @@ export function Sidebar({
     const top = Math.max(12, Math.min(preferredTop, window.innerHeight - panelHeight - 12));
 
     setIsAccountMenuOpen(false);
-    closeProjectOverflow();
     setOpenItemMenu((current) => {
       const isSameMenu = current?.kind === kind && current.id === id;
       if (isSameMenu) {
@@ -252,15 +220,18 @@ export function Sidebar({
     }
   }
 
-  function itemMenu(kind: "project" | "chat", id: string) {
+  function itemMenu(kind: "project" | "chat", id: string, isPinned = false) {
     if (openItemMenu?.kind !== kind || openItemMenu.id !== id) {
       return null;
     }
+    const sections = kind === "project"
+      ? projectMenuSections
+      : chatSections.map((section) => section.map((item) => (item.label === PIN_CHAT && isPinned ? { ...item, label: UNPIN_CHAT } : item)));
 
     return (
       <ItemMenu
         kind={kind}
-        sections={kind === "chat" ? chatSections : projectMenuSections}
+        sections={sections}
         position={itemMenuPosition}
         onAction={(label) => handleItemAction(kind, id, label)}
       />
@@ -295,7 +266,7 @@ export function Sidebar({
         key={conversation.id}
         conversation={conversation}
         active={conversation.id === activeConversationId}
-        menu={itemMenu("chat", conversation.id)}
+        menu={itemMenu("chat", conversation.id, Boolean(conversation.pinned))}
         onSelect={() => {
           closeMenus();
           onSelectConversation(conversation.id);
@@ -384,29 +355,48 @@ export function Sidebar({
     return (
       <>
         <div className="sidebar-header">
-          <button className="icon-button brand-icon-button" type="button" aria-label={`${appConfig.brand.name} home`}>
-            <LogoIcon />
+          <button className="sidebar-brand" type="button" aria-label={`${appConfig.brand.name} home`} onClick={() => handleNavClick("new_chat")}>
+            {appConfig.brand.name}
           </button>
 
-          <button
-            className="icon-button sidebar-collapse-button"
-            type="button"
-            onClick={onToggleSidebar}
-            aria-label="Collapse sidebar"
-          >
-            <PanelIcon />
-          </button>
+          <div className="sidebar-header-actions">
+            {headerItems.map((item) => {
+              const Icon = navIcons[item.icon] ?? GptsIcon;
+
+              return (
+                <button
+                  key={item.key}
+                  className={`icon-button sidebar-header-icon${activeNavKey === item.key ? " active" : ""}`}
+                  type="button"
+                  aria-label={item.label}
+                  title={item.label}
+                  onClick={() => handleNavClick(item.key)}
+                >
+                  <Icon />
+                </button>
+              );
+            })}
+            <button
+              className="icon-button sidebar-header-icon sidebar-collapse-button"
+              type="button"
+              onClick={onToggleSidebar}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <PanelIcon />
+            </button>
+          </div>
         </div>
 
         <div className="sidebar-primary-actions">
-          {navItems.map((item) => {
+          {listItems.map((item) => {
             const Icon = navIcons[item.icon] ?? GptsIcon;
             const isActive = activeNavKey === item.key;
 
             return (
               <button
                 key={item.key}
-                className={`sidebar-nav-button${isActive ? " active" : ""}${item.key === "new_chat" ? " primary" : ""}`}
+                className={`sidebar-nav-button${isActive ? " active" : ""}`}
                 type="button"
                 onClick={() => handleNavClick(item.key)}
               >
@@ -423,14 +413,18 @@ export function Sidebar({
         <div
           className="sidebar-scroll-region sidebar-sections-region"
           onScroll={() => {
-            if (isProjectOverflowOpen) {
-              closeProjectOverflow();
-            }
             if (openItemMenu) {
               closeItemMenu();
             }
           }}
         >
+
+          {pinned.length > 0 ? (
+            <section className="sidebar-section">
+              <h2 className="sidebar-section-title">Pinned</h2>
+              <div className="sidebar-section-list sidebar-chat-list">{pinned.map(renderChatRow)}</div>
+            </section>
+          ) : null}
 
           {showProjects ? (
             <section className="sidebar-section">
@@ -463,44 +457,15 @@ export function Sidebar({
 
                   {visibleProjects.map(renderProjectRow)}
 
-                  {overflowProjects.length > 0 ? (
-                    <div className={`sidebar-item-shell sidebar-menu-root${isProjectOverflowOpen ? " menu-open" : ""}`}>
-                      <button
-                        className="sidebar-section-item sidebar-project-item more"
-                        type="button"
-                        aria-haspopup="menu"
-                        aria-expanded={isProjectOverflowOpen}
-                        onClick={(event) => {
-                          setIsAccountMenuOpen(false);
-                          closeItemMenu();
-                          if (isProjectOverflowOpen) {
-                            closeProjectOverflow();
-                            return;
-                          }
-
-                          openProjectOverflow(event);
-                        }}
-                      >
-                        <MoreIcon className="sidebar-section-icon" />
-                        <span className="sidebar-section-item-copy">More</span>
-                      </button>
-
-                      {isProjectOverflowOpen ? (
-                        <ProjectOverflowPanel
-                          projects={overflowProjects}
-                          position={projectOverflowPosition}
-                          activeProjectId={activeProjectId}
-                          dropTargetProjectId={dropTargetProjectId}
-                          onDragOver={setDropTargetProjectId}
-                          onDragLeave={clearDropTarget}
-                          onDrop={handleProjectDrop}
-                          onSelect={(projectId) => {
-                            closeProjectOverflow();
-                            onSelectProject(projectId);
-                          }}
-                        />
-                      ) : null}
-                    </div>
+                  {projects.length > visibleProjectLimit ? (
+                    <button
+                      className="sidebar-show-more"
+                      type="button"
+                      aria-expanded={showAllProjects}
+                      onClick={() => setShowAllProjects((current) => !current)}
+                    >
+                      {showAllProjects ? "Show less" : "Show more"}
+                    </button>
                   ) : null}
                 </div>
               ) : null}
@@ -517,7 +482,7 @@ export function Sidebar({
                 setAreChatsOpen((current) => !current);
               }}
             >
-              <span>Your Chats</span>
+              <span>Chats</span>
               <ChevronIcon className={`sidebar-section-chevron${areChatsOpen ? " open" : ""}`} />
             </button>
 
@@ -548,6 +513,12 @@ export function Sidebar({
               <span>{accountSecondaryLabel}</span>
             </span>
           </button>
+
+          {onCustomize ? (
+            <button className="icon-button sidebar-footer-icon" type="button" aria-label="Customize" title="Customize" onClick={onCustomize}>
+              <SlidersIcon />
+            </button>
+          ) : null}
         </div>
       </>
     );

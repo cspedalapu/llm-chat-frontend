@@ -34,12 +34,14 @@ state, and `useWorkspace` holds server data.
 | `lib/chatClient.ts` | `api()`, `streamReply()` (SSE parser), `download()`. All HTTP goes through here. | Shell |
 | `lib/capabilities.ts` | Known capability names and the `has()` helper. | Shell |
 | `components/Sidebar.tsx` + `components/sidebar/` | Nav, projects, chat list, account menu. | Shell |
-| `components/Composer.tsx` | Message input, tools menu, sources, thinking effort, presets. | Shell |
-| `components/ChatMessage.tsx` | Markdown rendering, sources, response details, actions, add-ons. | Shell |
+| `components/Composer.tsx` | Pill message box: + menu (attach, Sources ▸, Assistant ▸, tools), thinking effort, send/stop, chips. | Shell |
+| `components/ChatMessage.tsx` | User bubble; assistant markdown, sources, add-ons; icon actions and a More menu. | Shell |
+| `components/ChatHeader.tsx`, `ChatFiles.tsx` | Model picker, Share, the ••• chat menu (with Move to project ▸), files in this chat. | Shell |
+| `components/Menu.tsx` | The one dropdown/submenu component every menu uses (outside click, Escape, keyboard). | Shell |
 | `components/icons.tsx` | SVG icons plus `navIcons`, the name map used by the config. | Shell |
 | `components/ProviderSettings.tsx` | Model connection editor (`models.manage`). | Domain |
 | `components/Library.tsx`, `SearchChats.tsx`, `WorkspaceTools.tsx`, `ProjectEditor.tsx` | Optional feature pages. | Shell, capability-gated |
-| `styles.css`, `workspace.css` | All styling. Type scale uses `--text-*` tokens. | Shell |
+| `styles.css`, `workspace.css`, `chat.css` | All styling, loaded in that order. `chat.css` holds the chat surface (header, menus, messages, composer, responsive drawer). Type scale uses `--text-*` tokens. | Shell |
 | `types.ts` | Frontend view of the contract shapes. | Shell |
 
 **How a capability flows:** the backend lists `"documents"` in `/workspace` →
