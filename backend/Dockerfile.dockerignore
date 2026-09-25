@@ -1,0 +1,8 @@
+# Build context is the repo root (see docker-compose.yml); BuildKit reads this file
+# because it sits next to backend/Dockerfile. Allowlist only what the image needs.
+*
+!requirements.txt
+!backend/
+backend/tests/
+**/__pycache__
+**/*.py[cod]
