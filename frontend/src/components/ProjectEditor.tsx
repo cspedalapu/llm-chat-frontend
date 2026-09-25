@@ -17,7 +17,7 @@ export function ProjectEditor({ project, appendedMemory, onSave, onClose }: {
     <label className="workspace-modal-field"><span>Category</span><select value={template} onChange={e => setTemplate(e.target.value as typeof template)}><option value="writing">Writing</option><option value="homework">Learning</option><option value="investing">Research</option><option value="travel">Planning</option></select></label>
     <label className="workspace-modal-field"><span>Instructions</span><textarea aria-label="Instructions" rows={5} maxLength={12000} value={instructions} onChange={e => setInstructions(e.target.value)} placeholder="Goals, tone, constraints, and how the assistant should respond" /></label>
     <label className="workspace-modal-field"><span>Project memory</span><textarea aria-label="Project memory" rows={6} maxLength={12000} value={memory} onChange={e => setMemory(e.target.value)} placeholder="Facts and decisions to reuse in every project chat" /></label>
-    <p className="muted">These instructions and memories are sent to your selected provider in project chats. You control what is saved here.</p>
+    <p className="muted">These instructions and memories are sent to your selected provider in project chats. You control what is saved here. A project holds documents and memory for one body of work; for instructions you want in every chat, save an <strong>assistant</strong> under Workspace instead.</p>
     {error && <p role="alert" className="error-notice">{error}</p>}<button disabled={busy} className="workspace-modal-primary">{busy ? "Saving…" : "Save project"}</button>
   </form></Modal>;
 }
