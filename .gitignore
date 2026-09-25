@@ -49,3 +49,7 @@ playwright-report/
 test-results/
 docker-compose.override.yml
 docker-compose.*.local.yml
+
+# Playwright / local run artefacts
+frontend/test-results/
+frontend/playwright-report/
