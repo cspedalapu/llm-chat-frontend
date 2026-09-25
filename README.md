@@ -1,164 +1,114 @@
-# LLM Workspace Frontend Foundation
+# LLM Workspace: the base for chat-shaped products
 
-This repository is a reusable AI workspace foundation built for chat-first SaaS products. It combines a React frontend, a minimal FastAPI backend, and Docker-based local development so new products can start from a working shell instead of rebuilding the same app structure each time.
+A complete AI chat workspace, built to be **forked**. Every new product (a research
+tool, a support assistant, an internal copilot) starts from this repo. It keeps the
+same interface and swaps or extends the backend underneath.
 
-## Current Product Shape
+- **Works today:** multi-provider streaming chat, projects, cited document
+  retrieval, search, saved assistants, usage and cost tracking. See [Features](#features).
+- **Swappable backend:** the UI depends only on a documented
+  [API contract](docs/API-CONTRACT.md). A contract test proves any backend
+  compatible, and a 150-line [minimal backend](examples/minimal_backend/app.py)
+  shows the smallest one that works.
+- **Mouldable UI:** rebrand and reshape in [one config file](frontend/src/app.config.ts);
+  add pages, message add-ons and tools in [`extensions/`](frontend/src/extensions/)
+  without touching core components.
 
-The app already includes a substantial workspace shell:
+**Starting a new product?** Read **[docs/FORKING.md](docs/FORKING.md)**.
 
-- a left navigation rail with `New chat`, `Search chats`, `Images`, `Library`, `Apps`, `Deep Research`, `Workspace`, and `LLMs`
-- a chat workspace with a centered conversation thread and composer actions
-- a project system with create, rename, and project-specific workspace views
-- `Your Chats` and `Projects` sections in the sidebar
-- a model-management flow with `Add your Model`
-- placeholder product pages for non-chat workspaces
-- a backend API contract for `health`, `models`, and `chat`
+---
 
-The backend is intentionally still a starter implementation. It returns a placeholder response until a real provider such as OpenAI, Anthropic, Gemini, DeepSeek, Kimi, or a local model is connected.
+## Features
 
-## Tech Stack
+| Area | What it does |
+|---|---|
+| Models | OpenAI-compatible (OpenAI, DeepSeek, OpenRouter, …), Anthropic, Gemini, Ollama. Streaming, per-message thinking effort, connection test. |
+| Keys | Encrypted at rest (Fernet); never sent back to the browser. |
+| Conversations | Rename, pin, archive, move to project, branch, edit in branch, regenerate, save answers, export to Markdown. |
+| Projects | Instructions, memory and documents, injected into every project chat. |
+| Documents | Upload text, Markdown, CSV, JSON, code and text PDFs; full-text retrieval with numbered citations. |
+| Assistants | Reusable instructions and output formats. |
+| Search | Full-text search across titles and messages. |
+| Usage | Tokens, latency, estimated cost; daily request cap; burst limiter. |
+| Resilience | Idempotent sends, stop with partial output saved, restart recovery, context-window packing. |
 
-- Frontend: `React 18`, `TypeScript`, `Vite`
-- Backend: `FastAPI`, `Pydantic`, `Uvicorn`
-- Local Python tooling: `httpx`, `pytest`, `pytest-asyncio`, `ruff`
-- Containers: `Docker`, `Docker Compose`
+Nothing is mocked. With no model connection configured, the app asks you to add one.
 
-## Repository Layout
+## Quick start
+
+**Docker** (simplest):
+
+```bash
+docker compose --profile dev up -d --build
+```
+
+Open http://localhost:5173 and choose **Model → + Add your model**. The backend API
+docs are at http://localhost:8000/docs. For a production-style build behind nginx,
+use `docker compose --profile prod up -d --build` and open http://localhost:8080.
+
+**Without Docker:**
+
+```bash
+python -m venv .venv-dev
+./.venv-dev/Scripts/python.exe -m pip install -r requirements.txt   # Windows
+# .venv-dev/bin/python -m pip install -r requirements.txt           # macOS / Linux
+./.venv-dev/Scripts/python.exe -m uvicorn backend.app.main:app --port 8000
+
+cd frontend && npm install && npm run dev                           # http://localhost:5173
+```
+
+The Vite dev server proxies `/api` to `http://127.0.0.1:8000`. Override that with
+`API_PROXY_TARGET`.
+
+**Try the UI on the minimal backend** (no model provider needed):
+
+```bash
+./.venv-dev/Scripts/python.exe -m uvicorn app:app --app-dir examples/minimal_backend --port 8000
+```
+
+## Repository layout
 
 ```text
-.
-|-- backend/
-|   |-- app/
-|   |-- .dockerignore
-|   `-- Dockerfile
-|-- docs/
-|   `-- base-frontend-report.md
-|-- frontend/
-|   |-- src/
-|   |-- .dockerignore
-|   |-- .env.example
-|   |-- Dockerfile
-|   |-- nginx.conf
-|   `-- package.json
-|-- docker-compose.yml
-|-- README.md
-`-- requirements.txt
+backend/app/            FastAPI backend: routes, generation, providers, store, auth hook
+backend/tests/          behaviour tests, contract test, fake provider for e2e
+examples/minimal_backend/  core-tier reference backend (in memory, echo model)
+frontend/src/
+  app.config.ts         brand, copy, feature flags, nav      <- forks edit this
+  extensions/           fork pages, message add-ons, tools   <- fork code goes here
+  components/ hooks/ lib/   the shared shell
+frontend/tests/         Playwright suites (full features, core tier)
+docs/                   contract, architecture, forking guide, tracker, roadmap
 ```
 
-## Quick Start
+## Documentation
 
-### 1. Frontend local development
+| Doc | For |
+|---|---|
+| [docs/FORKING.md](docs/FORKING.md) | Starting a new product from this base |
+| [docs/API-CONTRACT.md](docs/API-CONTRACT.md) | What any backend must implement |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the pieces fit; shell and domain |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, health checks, where changes belong |
+| [docs/PROJECT-TRACKER.md](docs/PROJECT-TRACKER.md) | Status, open items, gotchas |
+| [docs/BASE-ROADMAP.md](docs/BASE-ROADMAP.md) | The plan that made this repo a base |
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## Configuration
 
-Frontend runs at `http://localhost:5173`.
+| Variable | Default | Purpose |
+|---|---|---|
+| `CHAT_DATA_DIR` | `./data` | SQLite database and `secret.key`. Back them up together. |
+| `CHAT_ALLOWED_ORIGINS` | – | Extra CORS origins, comma-separated |
+| `CHAT_ALLOWED_HOSTS` | – | Extra accepted `Host` values, for deploying beyond localhost |
+| `VITE_API_BASE_URL` | `/api` | Frontend API base |
+| `API_PROXY_TARGET` | `http://127.0.0.1:8000` | Vite dev/preview proxy target |
 
-### 2. Backend local development
+## Status and limits
 
-Windows PowerShell:
+- Single-user and local by design: local origins only, with a no-op auth hook. Before
+  exposing a fork to a network, read the security section of
+  [ARCHITECTURE.md](docs/ARCHITECTURE.md#security-model-base).
+- The Images, Apps and Deep Research tabs are hidden placeholders
+  (`features.placeholderPages`). Nothing is behind them yet.
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
+## License
 
-macOS / Linux:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Backend runs at `http://localhost:8000`.
-
-### 3. Full stack with Docker
-
-```bash
-docker compose up -d --build
-```
-
-Available URLs:
-
-- Frontend dev server: `http://localhost:5173`
-- Backend API: `http://localhost:8000`
-- Backend docs: `http://localhost:8000/docs`
-
-### 4. Production-style frontend preview
-
-```bash
-docker compose --profile prod up -d --build backend frontend-prod
-```
-
-Available URLs:
-
-- Frontend via Nginx: `http://localhost:8080`
-- Backend API: `http://localhost:8000`
-
-## Environment Variables
-
-Frontend environment variables live in `frontend/.env`.
-
-Start from:
-
-```bash
-cp frontend/.env.example frontend/.env
-```
-
-Current frontend variable:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-## Backend API Endpoints
-
-- `GET /health`
-- `GET /models`
-- `POST /chat`
-- `GET /docs`
-
-Current backend behavior:
-
-- `/models` returns the starter list of available models
-- `/chat` returns a placeholder assistant response until a real model provider is wired in
-
-## Docker Files
-
-This repo includes two Dockerfiles:
-
-- [`backend/Dockerfile`](./backend/Dockerfile): builds the FastAPI backend image
-- [`frontend/Dockerfile`](./frontend/Dockerfile): supports both Vite development and Nginx production builds
-
-The root [`docker-compose.yml`](./docker-compose.yml) ties them together for local development and production-style preview.
-
-## Python Requirements
-
-The root [`requirements.txt`](./requirements.txt) is for the backend and local Python tooling only. It does not manage frontend dependencies.
-
-It currently includes:
-
-- backend runtime dependencies
-- file-upload support
-- HTTP client utilities for future provider integrations
-- test tooling
-- lint tooling
-
-## Current Limitations
-
-- no real LLM provider is connected yet
-- authentication is not implemented yet
-- persistence is not implemented yet
-- several workspace pages are still placeholder pages with product copy
-
-## Notes
-
-- The project path currently contains `#`, and Vite warns that this can cause issues in some environments.
-- The frontend and backend are ready for UI iteration, API contract work, provider integration, and future SaaS features such as auth, storage, and organization-level workflows.
+[MIT](LICENSE)
