@@ -5,7 +5,7 @@ word. Start here when a fork replaces the backend, then swap `reply()` for your
 real pipeline and add optional capabilities one at a time.
 
     uvicorn app:app --app-dir examples/minimal_backend --port 8000
-    CONTRACT_BASE_URL=http://127.0.0.1:8000 pytest backend/tests/test_contract.py
+    CONTRACT_BASE_URL=http://127.0.0.1:8000 python -m pytest backend/tests/test_contract.py
 """
 
 from __future__ import annotations
@@ -114,7 +114,8 @@ async def generate(conversation_id: str, body: GenerateInput):
     item = found(conversation_id)
     if len(item["messages"]) != body.expected_message_count:
         raise HTTPException(409, "Conversation changed in another tab. Reload before sending.")
-    if body.model not in {m["id"] for m in MODELS}:
+    model = next((m for m in MODELS if m["id"] == body.model), None)
+    if model is None:
         raise HTTPException(404, "Model not found")
     answer = {
         "id": str(uuid4()),
@@ -123,8 +124,8 @@ async def generate(conversation_id: str, body: GenerateInput):
         "timestamp": now(),
         "state": "streaming",
         "result": {
-            "generationLabel": "Echo",
-            "generationModel": "echo",
+            "generationLabel": model["label"],
+            "generationModel": model["id"],
             "request_id": body.request_id,
         },
     }

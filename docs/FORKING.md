@@ -97,7 +97,7 @@ hides everything else. If your backend lives somewhere other than `backend/`, po
 ## 5. Add product UI through `frontend/src/extensions/`
 
 Put fork code in `extensions/` (in sub-folders if you like) and register it in
-`extensions/index.ts`. Core components read these registries, so you don't edit them.
+`extensions/index.tsx`. Core components read these registries, so you don't edit them.
 
 ### A new page
 
@@ -112,7 +112,7 @@ export function ResearchPage({ data, openChat }: ExtensionPageProps) {
 ```
 
 ```ts
-// extensions/index.ts
+// extensions/index.tsx
 import { ResearchPage } from "./research/ResearchPage";
 export const pages: Record<string, ExtensionPage> = { deep_research: ResearchPage };
 ```

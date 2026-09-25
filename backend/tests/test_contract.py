@@ -3,7 +3,7 @@
 By default this runs against this repo's backend, in-process, with a fake model.
 A fork that replaces the backend points it at the running server instead:
 
-    CONTRACT_BASE_URL=http://127.0.0.1:8000 pytest backend/tests/test_contract.py
+    CONTRACT_BASE_URL=http://127.0.0.1:8000 python -m pytest backend/tests/test_contract.py
 
 Core-tier checks always run. Optional checks run only for the capabilities the
 backend advertises in GET /workspace, so a partial backend passes cleanly.
@@ -27,7 +27,7 @@ MESSAGE_STATES = {"ready", "error", "streaming", "cancelled", "interrupted"}
 
 
 @pytest.fixture
-def api(tmp_path, monkeypatch):
+def api(request, monkeypatch):
     if BASE_URL:
         with httpx.Client(base_url=BASE_URL, headers=HEADERS, timeout=120) as client:
             yield client
@@ -41,7 +41,8 @@ def api(tmp_path, monkeypatch):
         yield {"text": "reply."}
         yield {"usage": {"input": 3, "output": 2}, "finish": "stop"}
 
-    monkeypatch.setenv("CHAT_DATA_DIR", str(tmp_path))
+    # Requested lazily: remote runs need no temp dir (and avoid Windows temp-dir issues).
+    monkeypatch.setenv("CHAT_DATA_DIR", str(request.getfixturevalue("tmp_path")))
     monkeypatch.setattr(providers, "stream", stream)
     main._burst.clear()
     with TestClient(app, headers=HEADERS) as client:
