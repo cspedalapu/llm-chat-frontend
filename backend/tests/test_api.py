@@ -6,7 +6,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app import providers, store
+from backend.app import main, providers, store
 from backend.app.context import assemble
 from backend.app.generation import run_generation
 from backend.app.main import app
@@ -19,6 +19,7 @@ HEADERS = {"X-Workspace-Client": "local-chat"}
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setenv("CHAT_DATA_DIR", str(tmp_path))
+    main._burst.clear()          # module-level burst counter is shared across tests
     with TestClient(app, headers=HEADERS) as client:
         yield client
 
@@ -413,3 +414,22 @@ def test_generate_rejects_an_unknown_reasoning_level(client):
 )
 def test_provider_stream_normalization(kind, payload):
     assert {"text": "ok"} in list(normalize_chunk(kind, payload))
+
+def test_burst_limit_guards_uploads_but_not_cheap_routes(client):
+    """The daily cap bounds spend; this bounds a retry loop in a few seconds."""
+    for _ in range(main.BURST_REQUESTS):
+        assert over_or_ok(client) in (200, 415, 422)
+
+    blocked = client.post("/documents", files={"file": ("a.txt", b"hello", "text/plain")})
+    assert blocked.status_code == 429
+    assert int(blocked.headers["Retry-After"]) >= 1
+
+    # Cheap routes stay usable while the expensive ones are throttled.
+    assert client.get("/workspace").status_code == 200
+    assert client.post("/projects", json={"title": "Still works"}).status_code == 200
+
+
+def over_or_ok(client):
+    return client.post(
+        "/documents", files={"file": ("a.txt", b"hello", "text/plain")}
+    ).status_code
