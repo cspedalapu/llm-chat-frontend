@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
+from threading import Lock
 from typing import Annotated
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -53,6 +56,33 @@ app.add_middleware(
 app.include_router(router)
 
 
+BURST_REQUESTS = 30
+BURST_WINDOW_SECONDS = 60.0
+BURST_PATH_SUFFIX = "/generate"
+BURST_PATH_PREFIX = "/documents"
+
+_burst: dict[str, deque[float]] = defaultdict(deque)
+_burst_lock = Lock()
+
+
+def over_burst_limit(client: str) -> int:
+    """Short-window ceiling on the expensive paths.
+
+    The daily cap in generation.py bounds spend; this bounds a runaway client or
+    a retry loop hammering generate/upload in a few seconds.
+    """
+    now = time.monotonic()
+    cutoff = now - BURST_WINDOW_SECONDS
+    with _burst_lock:
+        seen = _burst[client]
+        while seen and seen[0] < cutoff:
+            seen.popleft()
+        if len(seen) >= BURST_REQUESTS:
+            return max(1, int(seen[0] - cutoff) + 1)
+        seen.append(now)
+    return 0
+
+
 @app.middleware("http")
 async def local_boundary(request: Request, call_next):
     origin = request.headers.get("origin")
@@ -63,6 +93,16 @@ async def local_boundary(request: Request, call_next):
         and request.headers.get("X-Workspace-Client") != "local-chat"
     ):
         return JSONResponse({"detail": "Missing workspace request header."}, 403)
+    path = request.url.path
+    expensive = path.endswith(BURST_PATH_SUFFIX) or path.startswith(BURST_PATH_PREFIX)
+    if request.method == "POST" and expensive:
+        retry_after = over_burst_limit(request.client.host if request.client else "unknown")
+        if retry_after:
+            return JSONResponse(
+                {"detail": "Too many requests in a short window. Please slow down."},
+                429,
+                headers={"Retry-After": str(retry_after)},
+            )
     size = request.headers.get("content-length", "0")
     if not size.isdigit() or int(size) > documents.MAX_FILE_BYTES + 65536:
         return JSONResponse({"detail": "Request exceeds 10 MB."}, 413)
