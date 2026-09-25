@@ -45,6 +45,7 @@ docker compose --profile dev up -d --build
 Open http://localhost:5173 and choose **Model → + Add your model**. The backend API
 docs are at http://localhost:8000/docs. For a production-style build behind nginx,
 use `docker compose --profile prod up -d --build` and open http://localhost:8080.
+If a port is taken, override it: `BACKEND_PORT=8001 FRONTEND_PORT=5174 FRONTEND_PROD_PORT=8082`.
 
 **Without Docker:**
 

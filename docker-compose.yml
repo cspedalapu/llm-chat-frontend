@@ -1,3 +1,5 @@
+# Host ports can be changed without editing this file, e.g. when another project
+# already uses 8000:  BACKEND_PORT=8001 docker compose --profile dev up -d --build
 services:
   backend:
     build:
@@ -5,7 +7,7 @@ services:
       dockerfile: backend/Dockerfile
     container_name: llm-chat-backend
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     environment:
       CHAT_DATA_DIR: /app/data
     volumes:
@@ -21,7 +23,7 @@ services:
       context: ./frontend
       target: development
     ports:
-      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
     environment:
       CHOKIDAR_USEPOLLING: "true"
       VITE_API_BASE_URL: /api
@@ -32,6 +34,7 @@ services:
     command: npm run dev -- --host 0.0.0.0 --port 5173
 
   frontend-prod:
+    profiles: ["prod"]
     depends_on:
       - backend
     build:
@@ -40,7 +43,7 @@ services:
       args:
         VITE_API_BASE_URL: /api
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:${FRONTEND_PROD_PORT:-8080}:8080"
 
 volumes:
   workspace-data:

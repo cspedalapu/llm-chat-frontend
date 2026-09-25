@@ -147,7 +147,9 @@ Things that cost time before. Check here first.
 - **Backend source is baked into the image.** No bind mount, so backend edits need
   `docker compose build backend`. Lint/test on the host instead.
 - **pytest on Windows.** Default temp dir is permission-denied. Use `--basetemp=<writable>`.
-- **Port 8000 is usually taken** by an unrelated `voicebite-backend` container.
+- **Ports 8000 and 8080 are usually taken** by unrelated `voicebite-*` containers (8081 by
+  Keycloak). Use `BACKEND_PORT=8001 FRONTEND_PROD_PORT=8082 docker compose --profile dev --profile prod up -d --build`.
+- **`frontend-prod` only starts with `--profile prod`** (since 09-25; before, it started on every `up`).
 - **e2e tests are serial.** Test 2 depends on test 1 creating the provider. Running one
   alone fails legitimately.
 - **The app does nothing without a provider.** No mock fallback. A blank-looking app
