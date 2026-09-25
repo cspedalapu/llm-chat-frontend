@@ -9,7 +9,7 @@ export interface Provider {
 }
 export interface Source { id: string; documentId: string; title: string; page: number; excerpt: string; number: number }
 export interface AssistantResult {
-  model: string; generationModel: string; generationLabel: string; sources: Source[];
+  model: string; generationModel: string; generationLabel: string; sources?: Source[];
   latencyMs?: number; first_token_ms?: number; usage: { input?: number; output?: number };
   estimated_cost?: number; context_trimmed?: boolean; context_note?: string;
   source_note?: string; error?: string; request_id: string; finish_reason?: string;

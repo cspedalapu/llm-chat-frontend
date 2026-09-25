@@ -128,7 +128,7 @@ export default function App() {
   }
   function exportChat(item: Conversation) {
     const markdown = "# " + item.title + "\n\n" + item.messages.map(m => {
-      const citations = m.result?.sources.map(s => "[" + s.number + "] " + s.title + ", page " + s.page + "\n> " + s.excerpt.replace(/\n/g, "\n> ")).join("\n\n");
+      const citations = m.result?.sources?.map(s => "[" + s.number + "] " + s.title + ", page " + s.page + "\n> " + s.excerpt.replace(/\n/g, "\n> ")).join("\n\n");
       return "## " + (m.role === "user" ? "You" : m.result?.generationLabel || "Assistant") + "\n\n" + m.text + (citations ? "\n\n" + citations : "");
     }).join("\n\n");
     download(item.title.replace(/[^\w -]/g, "").slice(0, 70) + ".md", markdown);
