@@ -6,7 +6,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.app import main, providers, store
+from backend.app import auth, main, providers, store
 from backend.app.context import assemble
 from backend.app.generation import run_generation
 from backend.app.main import app
@@ -71,9 +71,27 @@ def fake(monkeypatch):
 
 
 def test_health_and_empty_workspace(client):
-    assert client.get("/health").json()["status"] == "ok"
-    assert client.get("/workspace").json()["conversations"] == []
+    health = client.get("/health").json()
+    assert health["status"] == "ok"
+    assert health["api_version"] == main.API_VERSION
+    workspace = client.get("/workspace").json()
+    assert workspace["conversations"] == []
+    assert workspace["capabilities"] == main.CAPABILITIES
     assert client.get("/models").json() == []
+
+
+def test_auth_hook_rejects_and_keeps_health_public(client, monkeypatch):
+    monkeypatch.setattr(auth, "authenticate", lambda request: None)
+    assert client.get("/workspace").status_code == 401
+    assert client.post("/projects", json={"title": "x"}).status_code == 401
+    assert client.get("/health").status_code == 200
+
+
+def test_auth_hook_identity_reaches_routes(client, monkeypatch):
+    seen = []
+    monkeypatch.setattr(auth, "authenticate", lambda request: seen.append(1) or {"id": "u1"})
+    assert client.get("/workspace").status_code == 200
+    assert seen
 
 
 def test_local_browser_boundary(client):

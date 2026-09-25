@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from . import documents, providers, store
+from . import auth, documents, providers, store
 from .contracts import (
     BranchInput,
     ConversationInput,
@@ -31,6 +31,26 @@ ORIGINS = [
     f"http://{host}:{port}" for host in ("localhost", "127.0.0.1") for port in (5173, 8080, 4173)
 ]
 ORIGINS += [value for value in os.environ.get("CHAT_ALLOWED_ORIGINS", "").split(",") if value]
+HOSTS = ["localhost", "127.0.0.1", "[::1]", "testserver"]
+HOSTS += [value for value in os.environ.get("CHAT_ALLOWED_HOSTS", "").split(",") if value]
+
+# Bumped only for breaking changes to docs/API-CONTRACT.md.
+API_VERSION = "1"
+# Optional contract features this backend implements. The frontend hides the UI for
+# anything missing, so a replacement backend can start with the core tier only.
+CAPABILITIES = [
+    "models.manage",
+    "projects",
+    "documents",
+    "presets",
+    "search",
+    "usage",
+    "settings",
+    "branching",
+    "bookmarks",
+    "cancel",
+    "reasoning",
+]
 
 
 @asynccontextmanager
@@ -44,14 +64,12 @@ async def lifespan(app):
 
 
 app = FastAPI(title="Local LLM Workspace", version="0.2.0", lifespan=lifespan)
-app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=["localhost", "127.0.0.1", "[::1]", "testserver"]
-)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=HOSTS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ORIGINS,
     allow_methods=["GET", "POST", "PATCH", "DELETE"],
-    allow_headers=["Content-Type", "X-Workspace-Client"],
+    allow_headers=["Content-Type", "Authorization", auth.CLIENT_HEADER],
 )
 app.include_router(router)
 
@@ -90,9 +108,14 @@ async def local_boundary(request: Request, call_next):
         return JSONResponse({"detail": "This personal workspace only accepts local origins."}, 403)
     if (
         request.method not in ("GET", "HEAD", "OPTIONS")
-        and request.headers.get("X-Workspace-Client") != "local-chat"
+        and request.headers.get(auth.CLIENT_HEADER) != auth.CLIENT_VALUE
     ):
         return JSONResponse({"detail": "Missing workspace request header."}, 403)
+    if request.method != "OPTIONS" and request.url.path not in auth.PUBLIC_PATHS:
+        user = auth.authenticate(request)
+        if user is None:
+            return JSONResponse({"detail": "Sign in to continue."}, 401)
+        request.state.user = user
     path = request.url.path
     expensive = path.endswith(BURST_PATH_SUFFIX) or path.startswith(BURST_PATH_PREFIX)
     if request.method == "POST" and expensive:
@@ -114,7 +137,7 @@ async def local_boundary(request: Request, call_next):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "local-llm-workspace"}
+    return {"status": "ok", "service": "local-llm-workspace", "api_version": API_VERSION}
 
 
 @app.get("/workspace")
@@ -122,6 +145,7 @@ def workspace():
     with store.db() as con:
         conversations = store.all_records(con, "conversation")
         return {
+            "capabilities": CAPABILITIES,
             "projects": store.all_records(con, "project"),
             "conversations": sorted(conversations, key=lambda c: c["updatedAt"], reverse=True),
             "models": [public_provider(p) for p in store.all_records(con, "provider")],
