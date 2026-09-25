@@ -160,8 +160,7 @@ svg {
 .sidebar-rail-button,
 .model-control select,
 .composer-icon-button,
-.composer-submit,
-.chat-title-button {
+.composer-submit {
   border: 1px solid transparent;
   border-radius: 0.95rem;
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease, opacity 140ms ease;
@@ -267,10 +266,8 @@ svg {
 }
 
 .icon-button:hover,
-.chat-title-button:hover,
 .sidebar-nav-button:hover,
 .sidebar-rail-button:hover,
-.model-control-button:hover,
 .model-control select:hover,
 .composer-icon-button:hover {
   background: rgba(255, 255, 255, 0.05);
@@ -823,22 +820,6 @@ svg {
   gap: 0.7rem;
 }
 
-.chat-title-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.25rem;
-  background: transparent;
-  color: var(--text);
-  font-size: var(--text-base);
-  font-weight: 600;
-}
-
-.title-caret {
-  color: var(--muted);
-  font-size: var(--text-xs);
-}
-
 .model-control select {
   min-width: 10.75rem;
   border-color: var(--border);
@@ -848,47 +829,8 @@ svg {
   appearance: none;
 }
 
-.model-control-button {
-  min-width: 10.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 0.95rem;
-  background: #2a2a2a;
-  color: var(--text);
-  padding: 0.72rem 0.95rem;
-}
-
-.model-control-caret {
-  width: 0.95rem;
-  height: 0.95rem;
-  color: var(--muted);
-}
-
-.sample-control-button {
-  min-width: 8rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 0.95rem;
-  background: #2a2a2a;
-  color: var(--text);
-  padding: 0.72rem 0.95rem;
-}
-
-.llm-workspace-topbar {
-  justify-content: space-between;
-}
-
 .llm-model-control select {
   min-width: 14rem;
-}
-
-.llm-workspace-actions-empty {
-  min-width: 10.75rem;
 }
 
 .project-workspace-topbar {
@@ -959,88 +901,6 @@ svg {
   animation: blink 1s step-end infinite;
 }
 
-.workspace-placeholder {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2.8rem 1.5rem;
-}
-
-.workspace-placeholder-card {
-  width: min(100%, 42rem);
-  padding: 2.2rem 2.3rem;
-  border: 1px solid var(--border);
-  border-radius: 1.6rem;
-  background: linear-gradient(180deg, rgba(44, 44, 44, 0.95), rgba(31, 31, 31, 0.96));
-  box-shadow: var(--shadow);
-}
-
-.workspace-placeholder-card.featured {
-  border-color: rgba(244, 196, 20, 0.2);
-}
-
-.workspace-placeholder-kicker {
-  margin: 0 0 0.7rem;
-  color: var(--muted);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.workspace-placeholder-title {
-  margin: 0;
-  color: var(--text);
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
-  font-weight: 500;
-  letter-spacing: -0.03em;
-}
-
-.workspace-placeholder-copy {
-  margin: 0.9rem 0 0;
-  color: var(--muted-strong);
-  font-size: var(--text-base);
-  line-height: 1.6;
-}
-
-.workspace-placeholder-highlight {
-  margin-top: 1.3rem;
-  padding: 1rem 1.05rem;
-  border: 1px solid rgba(244, 196, 20, 0.22);
-  border-radius: 1rem;
-  background: linear-gradient(180deg, rgba(244, 196, 20, 0.09), rgba(244, 196, 20, 0.03));
-}
-
-.workspace-placeholder-about-title {
-  margin: 0 0 0.42rem;
-  color: #f4d66d;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.workspace-placeholder-about-copy {
-  margin: 0;
-  color: var(--text);
-  font-size: var(--text-base);
-  line-height: 1.65;
-}
-
-.workspace-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: rgba(0, 0, 0, 0.44);
-  backdrop-filter: blur(4px);
-}
-
 .workspace-modal-card {
   width: min(100%, 38rem);
   max-height: min(100%, 42rem);
@@ -1080,59 +940,11 @@ svg {
   background: #676767;
 }
 
-.workspace-scroll-shell {
-  flex: 1 1 auto;
-  min-height: 0;
-  position: relative;
-  display: flex;
-}
-
-.workspace-scroll-viewport {
-  flex: 1 1 auto;
-  min-height: 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.workspace-scroll-viewport::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
-.workspace-custom-scrollbar {
-  position: absolute;
-  top: 0;
-  right: 0.08rem;
-  bottom: 0;
-  width: 0.1rem;
-  pointer-events: none;
-  z-index: 3;
-}
-
-.workspace-custom-scrollbar-thumb {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100%;
-  border-radius: 999px;
-  background: rgba(118, 118, 118, 0.8);
-}
-
 .workspace-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-}
-
-.workspace-modal-kicker {
-  margin: 0 0 0.38rem;
-  color: #d7bf69;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .workspace-modal-title {
@@ -1184,33 +996,11 @@ svg {
   min-height: 9.5rem;
 }
 
-.workspace-modal-upload-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-}
-
-.workspace-modal-file-input {
-  display: none;
-}
-
-.workspace-modal-upload-button,
 .workspace-modal-primary,
 .workspace-modal-secondary {
   border: 1px solid transparent;
   border-radius: 999px;
   padding: 0.72rem 1.15rem;
-}
-
-.workspace-modal-upload-button {
-  background: #303030;
-  color: var(--text);
-}
-
-.workspace-modal-file-name {
-  color: var(--muted);
-  font-size: var(--text-sm);
 }
 
 .workspace-modal-actions {
@@ -1661,33 +1451,6 @@ svg {
   gap: 0.75rem;
 }
 
-.source-item {
-  border-radius: 0.95rem;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
-  padding: 0.9rem;
-}
-
-.source-item strong,
-.source-item p,
-.source-item span {
-  display: block;
-}
-
-.source-item strong {
-  margin-bottom: 0.35rem;
-}
-
-.source-item p {
-  margin: 0 0 0.45rem;
-  line-height: 1.5;
-}
-
-.source-meta {
-  color: var(--muted);
-  font-size: var(--text-sm);
-}
-
 .composer-panel {
   flex: 0 0 auto;
   width: min(100% - 3rem, 54rem);
@@ -1719,48 +1482,14 @@ svg {
   box-shadow: 0 16px 38px rgba(0, 0, 0, 0.24);
 }
 
-.composer-hero-input {
-  min-height: 2.15rem;
-  padding: 0 0.1rem;
-  font-family: inherit;
-  font-size: var(--text-base);
-  line-height: 1.35;
-}
-
 .composer-panel-hero textarea::placeholder {
   color: #b7b7b7;
-}
-
-.composer-hero-toolbar,
-.composer-hero-actions {
-  display: flex;
-  align-items: center;
-}
-
-.composer-hero-toolbar {
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.composer-hero-actions {
-  gap: 0.32rem;
-  min-width: 0;
-  flex-wrap: wrap;
 }
 
 .composer-menu-root {
   position: relative;
 }
 
-.composer-file-input {
-  display: none;
-}
-
-.composer-hero-actions-right {
-  margin-left: auto;
-}
-
-.composer-icon-button.composer-icon-button-hero,
 .composer-icon-button.composer-mic-button {
   width: 2.65rem;
   min-width: 2.65rem;
@@ -1769,11 +1498,6 @@ svg {
   color: var(--muted-strong);
 }
 
-.composer-icon-button.composer-icon-button-hero.active {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.composer-icon-button.composer-icon-button-hero svg,
 .composer-icon-button.composer-mic-button svg {
   width: 1.52rem;
   height: 1.52rem;
@@ -1800,67 +1524,6 @@ svg {
 
 .composer-mode-button:hover {
   background: rgba(255, 255, 255, 0.05);
-}
-
-.composer-addon-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.38rem;
-  min-height: 2.35rem;
-  padding: 0.38rem 0.72rem;
-  border: 1px solid rgba(127, 181, 255, 0.2);
-  border-radius: 999px;
-  background: rgba(74, 132, 210, 0.16);
-  color: #f4f8ff;
-  font-family: inherit;
-  font-size: var(--text-sm);
-  line-height: 1;
-  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
-}
-
-.composer-addon-chip:hover {
-  background: rgba(74, 132, 210, 0.22);
-  border-color: rgba(127, 181, 255, 0.28);
-}
-
-.composer-addon-pair {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.32rem;
-}
-
-.composer-addon-chip-dropdown {
-  border-color: rgba(255, 255, 255, 0.24);
-  background: rgba(255, 255, 255, 0.04);
-  color: #f4f4f4;
-}
-
-.composer-addon-chip-dropdown:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.34);
-}
-
-.composer-addon-chip-dropdown.active {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.42);
-}
-
-.composer-addon-chip-dropdown .composer-addon-chip-icon,
-.composer-addon-chip-dropdown .composer-addon-chip-caret {
-  color: #ececec;
-}
-
-.composer-addon-chip-icon {
-  flex: 0 0 auto;
-  width: 1.12rem;
-  height: 1.12rem;
-  color: #8fc0ff;
-}
-
-.composer-addon-chip-caret {
-  width: 0.95rem;
-  height: 0.95rem;
-  color: #cfe3ff;
 }
 
 .composer-apps-menu {
@@ -1928,7 +1591,6 @@ svg {
 }
 
 .composer-tools-menu,
-.composer-tools-submenu,
 .composer-thinking-menu {
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -1942,13 +1604,6 @@ svg {
   top: calc(100% + 0.45rem);
   left: 0;
   width: 15.6rem;
-  padding: 0.4rem;
-}
-
-.composer-tools-submenu {
-  left: calc(100% + 0.45rem);
-  bottom: 0;
-  width: 13.4rem;
   padding: 0.4rem;
 }
 
@@ -1988,34 +1643,20 @@ svg {
   border-color: rgba(127, 181, 255, 0.22);
 }
 
-.composer-tools-menu-item.has-chevron {
-  justify-content: flex-start;
-}
-
 .composer-tools-menu-item.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.composer-tools-menu-icon,
-.composer-tools-menu-chevron,
-.composer-thinking-menu-icon,
 .composer-thinking-menu-check {
   flex: 0 0 auto;
   width: 1.34rem;
   height: 1.34rem;
 }
 
-.composer-tools-menu-chevron,
 .composer-thinking-menu-check {
   margin-left: auto;
   color: var(--muted);
-}
-
-.composer-tools-empty-state {
-  padding: 0.8rem 0.7rem;
-  color: var(--muted);
-  font-size: var(--text-sm);
 }
 
 .composer-thinking-menu {
@@ -2055,7 +1696,6 @@ svg {
   color: #ffffff;
 }
 
-.composer-mode-icon,
 .composer-mode-caret,
 .composer-voice-submit svg {
   width: 1.35rem;
@@ -2236,10 +1876,6 @@ svg {
     right: auto;
   }
 
-  .conversation-list {
-    max-height: 14rem;
-  }
-
   .workspace {
     height: auto;
     overflow: visible;
@@ -2252,8 +1888,7 @@ svg {
 
 @media (max-width: 640px) {
   .workspace-topbar,
-  .empty-state,
-  .workspace-placeholder {
+  .empty-state {
     padding-left: 1rem;
     padding-right: 1rem;
   }
@@ -2295,15 +1930,6 @@ svg {
   .composer-panel-hero.empty {
     width: calc(100% - 2rem);
     padding: 0.72rem 0.95rem 0.62rem;
-  }
-
-  .composer-hero-toolbar {
-    flex-wrap: wrap;
-  }
-
-  .composer-hero-actions-right {
-    width: 100%;
-    justify-content: flex-end;
   }
 
   .composer-submit {

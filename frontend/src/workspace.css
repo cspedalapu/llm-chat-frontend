@@ -29,7 +29,6 @@ details[open] > summary { margin-bottom: .5rem; }
 .error-banner { display: flex; justify-content: space-between; gap: 1rem; color: #ffd0cc; background: #4c2525; padding: .7rem 1rem; font-size: var(--text-sm); }
 .error-banner button { background: none; color: inherit; border: 0; }
 .error-notice { color: #ffb4ad; font-size: var(--text-sm); }
-.setup-model-button { color: #171717; background: #eee; border: 0; padding: .8rem 1.2rem; border-radius: 24px; margin-bottom: 1.5rem; }
 .functional-composer { display: flex; flex-direction: column; gap: .6rem; flex-shrink: 0; width: min(820px, calc(100% - 2rem)); margin: .5rem auto 1.2rem; padding: 1rem; position: relative; }
 .functional-composer.empty { width: min(760px, 100%); margin-top: 1rem; }
 .functional-composer textarea { width: 100%; min-height: 3rem; max-height: 200px; resize: vertical; background: transparent; color: var(--text); border: 0; padding: .2rem; line-height: 1.5; }
