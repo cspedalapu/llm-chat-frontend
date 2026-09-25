@@ -9,8 +9,10 @@ const API_URL = process.env.TEST_API_URL || "http://127.0.0.1:8011";
 test("configure a provider, stream, persist, search, bookmark and branch", async ({ page }) => {
   const errors: string[] = []; page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
-  // The landing page no longer carries a setup button; add the first model
-  // through the model selector, which is the remaining primary entry point.
+  // Without a model, Send is disabled and the composer says why, with the fix inline.
+  await expect(page.getByRole("status").filter({ hasText: "No model is connected" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add a model" })).toBeVisible();
+  // Add the first model through the model selector, the other entry point.
   await page.getByLabel("Model", { exact: true }).selectOption("__add");
   await page.getByLabel("Connection name").fill("Local fixture");
   await page.getByLabel("API base URL").fill("http://127.0.0.1:8012/v1");
@@ -18,6 +20,7 @@ test("configure a provider, stream, persist, search, bookmark and branch", async
   await page.getByLabel(/^API key/).fill("not-a-real-key");
   await page.getByRole("button", { name: "Save connection" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Add a model" })).toHaveCount(0);
   await page.getByLabel("Message", { exact: true }).fill("Explain cobalt");
   await page.getByRole("button", { name: "Send", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Local test answer" })).toBeVisible();
@@ -85,7 +88,7 @@ test("model switching is sent to the selected provider configuration", async ({ 
   await page.goto("/");
   await page.getByLabel("Model", { exact: true }).selectOption(model.id);
   await page.getByLabel("Message", { exact: true }).fill("Use the second model");
-  await page.getByRole("button", { name: "Send", exact: true }).click();
+  await page.getByLabel("Message", { exact: true }).press("Enter");
   await expect(page.locator(".markdown")).toContainText("Model: fixture-two");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: /Close sidebar|Collapse sidebar/ }).first().click();

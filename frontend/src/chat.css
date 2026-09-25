@@ -228,3 +228,8 @@
   .msg-user-bubble { max-width: 85%; }
   .composer { width: calc(100% - 1rem); margin-bottom: .6rem; }
 }
+
+/* Why the composer can't send yet, with the fix one click away. */
+.composer-notice { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; margin: .15rem .35rem 0; padding: .55rem .75rem; border-radius: 1rem; background: rgba(244, 196, 20, .08); color: #f1dfa2; font-size: var(--text-sm); }
+.composer-notice button { flex-shrink: 0; padding: .35rem .8rem; border: 0; border-radius: 999px; background: #f3f3f3; color: #111; font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+.composer-notice button:hover { background: #fff; }

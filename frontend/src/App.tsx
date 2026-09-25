@@ -198,6 +198,11 @@ export default function App() {
     reasoning={reasoning} onReasoning={setReasoning}
     presetId={presetId} onPreset={id => { setPresetId(id); const preset = data.presets.find(p => p.id === id); if (preset) usePreset(preset); }}
     onSend={sendMessage} onStop={() => conversation && run(() => stop(conversation.id, lastMessage?.result?.request_id))}
+    notice={ready && !model ? <>
+      <span>{canManageModels ? "No model is connected yet, so messages can't be sent." : copy.noModelManagedPlaceholder}</span>
+      {canManageModels && <button type="button" onClick={() => setEditor({ type: "provider" })}>Add a model</button>}
+    </> : undefined}
+    disabledReason={!model ? "Connect a model to send messages" : conversation?.archived ? "Restore this chat to continue" : undefined}
     onUpload={files => upload(files)} placeholder={!model ? (canManageModels ? copy.noModelPlaceholder : copy.noModelManagedPlaceholder) : project ? "Ask in " + project.title : copy.composerPlaceholder} empty={empty} />;
 
   return <div className={"app-shell" + (collapsed ? " sidebar-collapsed" : "")}>

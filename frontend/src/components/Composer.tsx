@@ -1,4 +1,4 @@
-import { FormEvent, useLayoutEffect, useRef, useState } from "react";
+import { FormEvent, ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { appConfig } from "@/app.config";
 import { composerTools } from "@/extensions";
 import { DocumentRecord, Preset } from "@/types";
@@ -19,12 +19,16 @@ function readDraft(key: string) { try { return localStorage.getItem(key) || ""; 
  */
 export interface ComposerFeatures { documents: boolean; tools: boolean; sources: boolean; presets: boolean; reasoning: boolean }
 export function Composer({ draftKey, initialText = "", busy, disabled, features, documents, presets, selectedDocuments, onDocuments,
-  presetId, onPreset, reasoning, onReasoning, onSend, onStop, onUpload, placeholder = "Ask anything", empty = false,
+  presetId, onPreset, reasoning, onReasoning, onSend, onStop, onUpload, placeholder = "Ask anything", empty = false, notice, disabledReason,
 }: { draftKey: string; initialText?: string; busy: boolean; disabled: boolean; features: ComposerFeatures; documents: DocumentRecord[]; presets: Preset[];
   selectedDocuments: string[]; onDocuments: (ids: string[]) => void; presetId: string; onPreset: (id: string) => void;
   reasoning: string; onReasoning: (value: string) => void;
   onSend: (text: string, accepted: () => void) => Promise<void>; onStop: () => void;
   onUpload: (files: File[]) => Promise<void>; placeholder?: string; empty?: boolean;
+  /** Shown inside the box, e.g. why sending is unavailable and how to fix it. */
+  notice?: ReactNode;
+  /** Tooltip on the disabled Send button. */
+  disabledReason?: string;
 }) {
   const storageKey = "local-chat:draft:" + draftKey;
   const [draft, setDraft] = useState(() => initialText || readDraft(storageKey));
@@ -69,6 +73,7 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
       {selectedDocuments.map(id => <button type="button" className="chip" key={id} onClick={() => onDocuments(selectedDocuments.filter(other => other !== id))}>
         <FileIcon />{documents.find(d => d.id === id)?.name || "Document"}<span aria-hidden="true">×</span></button>)}
     </div>}
+    {notice && <div className="composer-notice" role="status">{notice}</div>}
     <div className="composer-row">
       {hasToolsMenu && <div className="composer-leading">
         <Menu label="Tools" trigger={uploading ? "…" : <PlusIcon />} triggerClassName="composer-round" placement={empty ? "bottom" : "top"} disabled={uploading}>{close => <>
@@ -99,7 +104,7 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
         </>}</Menu>}
         {busy
           ? <button type="button" className="composer-send stop" aria-label="Stop" title="Stop" onClick={onStop}><StopIcon /></button>
-          : <button className="composer-send" aria-label="Send" title={submitting ? "Sending…" : "Send"} disabled={disabled || submitting || uploading || !draft.trim()}><ArrowUpIcon /></button>}
+          : <button className="composer-send" aria-label="Send" title={submitting ? "Sending…" : disabled && disabledReason ? disabledReason : "Send"} disabled={disabled || submitting || uploading || !draft.trim()}><ArrowUpIcon /></button>}
       </div>
     </div>
     {error && <p className="error-notice" role="alert">{error}</p>}
