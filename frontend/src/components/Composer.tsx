@@ -3,6 +3,9 @@ import { DocumentRecord, Preset } from "@/types";
 
 // Sent per message and applied over the connection default. Providers that do not
 // expose a thinking-effort parameter ignore it.
+// Shown so the toolbar reads as it did before, but marked unavailable rather than
+// faked: nothing behind these exists in the local release.
+const UNAVAILABLE = ["Create image", "Deep research", "Web search"];
 const EFFORTS = [{ id: "", label: "Standard" }, { id: "low", label: "Low" }, { id: "medium", label: "Medium" }, { id: "high", label: "High" }];
 function readDraft(key: string) { try { return localStorage.getItem(key) || ""; } catch { return ""; } }
 export function Composer({ draftKey, initialText = "", busy, disabled, documents, presets, selectedDocuments, onDocuments,
@@ -20,6 +23,7 @@ export function Composer({ draftKey, initialText = "", busy, disabled, documents
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [thinkingOpen, setThinkingOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   function update(text: string) { setDraft(text); try { if (text) localStorage.setItem(storageKey, text); else localStorage.removeItem(storageKey); } catch { setError("Browser draft storage is unavailable."); } }
   async function submit(e: FormEvent) {
     e.preventDefault(); if (!draft.trim() || busy || submitting || disabled) return;
@@ -35,7 +39,21 @@ export function Composer({ draftKey, initialText = "", busy, disabled, documents
         const files = Array.from(e.target.files || []); e.target.value = ""; setUploading(true); setError("");
         try { await onUpload(files); } catch (e) { setError((e as Error).message); } finally { setUploading(false); }
       }} />
-      <button type="button" className="composer-icon-button" aria-label="Attach files" title="Attach text documents" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? "…" : "+"}</button>
+      <div className="composer-menu-root">
+        <button type="button" className="composer-icon-button" aria-label="Tools" aria-haspopup="menu" aria-expanded={toolsOpen}
+          disabled={uploading} onClick={() => setToolsOpen(open => !open)}>{uploading ? "…" : "+"}</button>
+        {toolsOpen && <div className="composer-tools-menu" role="menu" aria-label="Composer tools">
+          <div className="composer-tools-menu-section">
+            <button type="button" role="menuitem" className="composer-tools-menu-item"
+              onClick={() => { setToolsOpen(false); fileRef.current?.click(); }}>Attach text documents</button>
+          </div>
+          <div className="composer-tools-menu-section">
+            {UNAVAILABLE.map(tool => <button key={tool} type="button" role="menuitem" aria-disabled="true"
+              className="composer-tools-menu-item disabled" title="Not connected in the local chat release"
+              onClick={event => event.preventDefault()}>{tool}</button>)}
+          </div>
+        </div>}
+      </div>
       <details className="composer-source-picker"><summary>Sources {selectedDocuments.length ? `(${selectedDocuments.length})` : ""}</summary><div className="source-picker-panel">
         <p className="muted">Project files are searched automatically. Select other library files to include.</p>
         {!documents.length && <p>No documents yet. Attach a file to begin.</p>}
