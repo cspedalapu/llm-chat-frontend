@@ -21,6 +21,20 @@ export interface NavItemConfig {
   placeholder?: boolean;
   /** Set false to remove an item without deleting its entry. */
   enabled?: boolean;
+  /** Always shown; users cannot hide it in the Customize window. */
+  fixed?: boolean;
+  /** Shown under the toggle in the Customize window. */
+  description?: string;
+  /** Starting state in the Customize window for users who have not chosen (default true). */
+  defaultOn?: boolean;
+}
+
+/** A composer control users can show or hide in the Customize window. */
+export interface CustomizeOption {
+  id: "tools" | "sources" | "thinking" | "assistant";
+  label: string;
+  description: string;
+  defaultOn?: boolean;
 }
 
 export const appConfig = {
@@ -47,16 +61,33 @@ export const appConfig = {
     /** Composer "+" menu entries registered with `available: false`, shown disabled. */
     placeholderTools: true,
   },
+  /**
+   * Nav entries. Anything not `fixed` gets a toggle in the Customize window (account
+   * menu). Hiding only removes it from the sidebar: the feature and its data stay.
+   */
   nav: [
-    { key: "new_chat", label: "New chat", icon: "edit", shortcut: "Ctrl + Shift + O" },
-    { key: "search_chats", label: "Search chats", icon: "search", requires: "search" },
+    { key: "new_chat", label: "New chat", icon: "edit", shortcut: "Ctrl + Shift + O", fixed: true },
+    { key: "search_chats", label: "Search chats", icon: "search", requires: "search", fixed: true },
     { key: "images", label: "Images", icon: "images", placeholder: true },
-    { key: "library", label: "Library", icon: "library", requires: ["documents", "bookmarks"] },
+    { key: "library", label: "Library", icon: "library", requires: ["documents", "bookmarks"],
+      description: "Uploaded documents and saved answers." },
     { key: "apps", label: "Apps", icon: "apps", placeholder: true },
     { key: "deep_research", label: "Deep Research", icon: "research", placeholder: true },
-    { key: "workspace", label: "Workspace", icon: "workspace", requires: ["presets", "usage", "settings"] },
-    { key: "llms", label: "LLMs", icon: "models", requires: "models.manage" },
+    { key: "workspace", label: "Workspace", icon: "workspace", requires: ["presets", "usage", "settings"],
+      description: "Saved assistants, usage and limits. Still reachable from the account menu." },
+    { key: "llms", label: "LLMs", icon: "models", requires: "models.manage",
+      description: "Model connections. You can still add a model from the model selector." },
   ] satisfies NavItemConfig[] as NavItemConfig[],
+  customize: {
+    /** Listed as "Always on" alongside the fixed nav entries. Informational only. */
+    alwaysOn: ["Projects", "Chat history", "Model selector"],
+    composer: [
+      { id: "tools", label: "Tools menu (+)", description: "Attach documents and other tools." },
+      { id: "sources", label: "Sources", description: "Pick library files for a chat. Project files are still searched when hidden." },
+      { id: "thinking", label: "Thinking effort", description: "Per-message reasoning level." },
+      { id: "assistant", label: "Assistant picker", description: "Apply a saved assistant to a chat." },
+    ] satisfies CustomizeOption[] as CustomizeOption[],
+  },
 };
 
 export type AppConfig = typeof appConfig;

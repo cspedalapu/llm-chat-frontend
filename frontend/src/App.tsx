@@ -8,12 +8,14 @@ import { ProviderEditor, ProviderSettings } from "@/components/ProviderSettings"
 import { SearchChats } from "@/components/SearchChats";
 import { Library } from "@/components/Library";
 import { WorkspaceTools } from "@/components/WorkspaceTools";
+import { CustomizePanel } from "@/components/CustomizePanel";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api, download } from "@/lib/chatClient";
 import { Conversation, DocumentRecord, Message, Preset, ProjectSummary, Provider } from "@/types";
 import { appConfig } from "@/app.config";
-import { pages } from "@/extensions";
+import { composerTools, pages } from "@/extensions";
 import { useTypewriterPrompt } from "@/hooks/useTypewriterPrompt";
+import { usePreferences } from "@/hooks/usePreferences";
 
 const { brand, copy, features } = appConfig;
 // Built-in views: new_chat, project, search_chats, library, workspace, llms. Any other
@@ -46,6 +48,8 @@ export default function App() {
   const workspace = useWorkspace();
   const { data, has, ready, error, setError, running, refresh, mutate, send, stop, upsertConversation } = workspace;
   const rotatingPrompt = useTypewriterPrompt(copy.emptyStatePrompts);
+  const preferences = usePreferences();
+  const [customizing, setCustomizing] = useState(false);
   const [view, setView] = useState<View>("new_chat");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -68,9 +72,19 @@ export default function App() {
   const model = data.models.find(m => m.id === modelId);
   const availableDocuments = data.documents.filter(d => !d.projectId || d.projectId === project?.id);
   const lastMessage = conversation?.messages[conversation.messages.length - 1];
-  const navItems = appConfig.nav.filter(item => item.enabled !== false
+  // Available = enabled in config and supported by the backend. Shown = available and
+  // not hidden by the user in the Customize window (fixed items cannot be hidden).
+  const availableNav = appConfig.nav.filter(item => item.enabled !== false
     && (!item.placeholder || features.placeholderPages || Boolean(pages[item.key]))
     && (!item.requires || has(item.requires)));
+  const navItems = availableNav.filter(item => item.fixed || preferences.isVisible("nav." + item.key, item.defaultOn));
+  const composerAvailable = {
+    tools: has("documents") || composerTools.some(tool => tool.available !== false || features.placeholderTools),
+    sources: has("documents"), thinking: has("reasoning"), assistant: has("presets"),
+  };
+  const composerOptions = appConfig.customize.composer.filter(option => composerAvailable[option.id]);
+  const composerOn = (id: keyof typeof composerAvailable) => composerAvailable[id]
+    && preferences.isVisible("composer." + id, appConfig.customize.composer.find(option => option.id === id)?.defaultOn);
   const ExtensionPage = view !== "new_chat" && view !== "project" ? pages[view] : undefined;
   const placeholder = !ExtensionPage ? appConfig.nav.find(item => item.key === view && item.placeholder) : undefined;
   const canManageModels = has("models.manage");
@@ -163,7 +177,7 @@ export default function App() {
   const composer = (empty: boolean) => <Composer key={(conversation?.id || "new:" + (project?.id || "root")) + ":" + initialDraft}
     draftKey={conversation?.id || "new:" + (project?.id || "root")} initialText={initialDraft}
     busy={busy} disabled={!ready || !model || Boolean(conversation?.archived)}
-    features={{ documents: has("documents"), presets: has("presets"), reasoning: has("reasoning") }}
+    features={{ documents: has("documents"), tools: composerOn("tools"), sources: composerOn("sources"), presets: composerOn("assistant"), reasoning: composerOn("thinking") }}
     documents={availableDocuments} presets={data.presets} selectedDocuments={selectedDocuments} onDocuments={setSelectedDocuments}
     reasoning={reasoning} onReasoning={setReasoning}
     presetId={presetId} onPreset={id => { setPresetId(id); const preset = data.presets.find(p => p.id === id); if (preset) usePreset(preset); }}
@@ -181,7 +195,8 @@ export default function App() {
       onRenameConversation={id => { const c = data.conversations.find(c => c.id === id); if (c) setEditor({ type: "rename", conversation: c }); }}
       onRenameProject={id => setEditor({ type: "project", project: data.projects.find(p => p.id === id) })}
       onSelectProject={openProject} onSelectConversation={openChat} onSelectNav={key => navigate(key as View)} onToggleSidebar={() => setCollapsed(v => !v)}
-      onChatAction={chatAction} onAccount={() => navigate(navItems.some(item => item.key === "workspace") ? "workspace" : "new_chat")} />
+      onChatAction={chatAction} onAccount={() => navigate(availableNav.some(item => item.key === "workspace") ? "workspace" : "new_chat")}
+      onCustomize={() => setCustomizing(true)} />
     <main className="workspace">
       <header className="workspace-topbar">
         <div className="workspace-title-row"><label className="model-control llm-model-control"><select aria-label="Model" value={modelId} onChange={e => e.target.value === "__add" ? setEditor({ type: "provider" }) : setModelId(e.target.value)}>
@@ -230,6 +245,7 @@ export default function App() {
           </div>
         </section>{composer(false)}</>}
     </main>
+    {customizing && <CustomizePanel navItems={availableNav} composerOptions={composerOptions} preferences={preferences} onClose={() => setCustomizing(false)} />}
     {editor?.type === "provider" && <ProviderEditor provider={editor.provider} onClose={() => setEditor(null)} onSaved={refresh} />}
     {editor?.type === "project" && <ProjectEditor project={editor.project} appendedMemory={editor.memory} onClose={() => setEditor(null)} onSave={async body => {
       const saved = await mutate<ProjectSummary>(editor.project ? "/projects/" + editor.project.id : "/projects", editor.project ? "PATCH" : "POST", body);

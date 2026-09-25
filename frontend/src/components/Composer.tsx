@@ -7,8 +7,11 @@ import { DocumentRecord, Preset } from "@/types";
 // expose a thinking-effort parameter ignore it.
 const EFFORTS = [{ id: "", label: "Standard" }, { id: "low", label: "Low" }, { id: "medium", label: "Medium" }, { id: "high", label: "High" }];
 function readDraft(key: string) { try { return localStorage.getItem(key) || ""; } catch { return ""; } }
-/** Which optional controls to show; driven by backend capabilities. */
-export interface ComposerFeatures { documents: boolean; presets: boolean; reasoning: boolean }
+/**
+ * Which optional controls to show: backend capabilities combined with the user's
+ * Customize choices. `documents` allows attaching; `sources` shows the picker.
+ */
+export interface ComposerFeatures { documents: boolean; tools: boolean; sources: boolean; presets: boolean; reasoning: boolean }
 export function Composer({ draftKey, initialText = "", busy, disabled, features, documents, presets, selectedDocuments, onDocuments,
   presetId, onPreset, reasoning, onReasoning, onSend, onStop, onUpload, placeholder = "Ask anything", empty = false,
 }: { draftKey: string; initialText?: string; busy: boolean; disabled: boolean; features: ComposerFeatures; documents: DocumentRecord[]; presets: Preset[];
@@ -26,7 +29,7 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const tools = composerTools.filter(tool => tool.available !== false || appConfig.features.placeholderTools);
-  const hasToolsMenu = features.documents || tools.length > 0;
+  const hasToolsMenu = features.tools && (features.documents || tools.length > 0);
   function update(text: string) { setDraft(text); try { if (text) localStorage.setItem(storageKey, text); else localStorage.removeItem(storageKey); } catch { setError("Browser draft storage is unavailable."); } }
   async function submit(e: FormEvent) {
     e.preventDefault(); if (!draft.trim() || busy || submitting || disabled) return;
@@ -60,7 +63,7 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
           </div>}
         </div>}
       </div>}
-      {features.documents && <details className="composer-source-picker"><summary>Sources {selectedDocuments.length ? `(${selectedDocuments.length})` : ""}</summary><div className="source-picker-panel">
+      {features.sources && <details className="composer-source-picker"><summary>Sources {selectedDocuments.length ? `(${selectedDocuments.length})` : ""}</summary><div className="source-picker-panel">
         <p className="muted">Project files are searched automatically. Select other library files to include.</p>
         {!documents.length && <p>No documents yet. Attach a file to begin.</p>}
         {documents.map(d => <label key={d.id}><input type="checkbox" checked={selectedDocuments.includes(d.id)} onChange={e => onDocuments(e.target.checked ? [...selectedDocuments, d.id] : selectedDocuments.filter(id => id !== d.id))} /> {d.name}</label>)}

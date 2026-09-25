@@ -90,3 +90,35 @@ test("model switching is sent to the selected provider configuration", async ({ 
   await expect(page.getByLabel("Message", { exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/mobile.png", fullPage: true });
 });
+
+test("customize hides optional features without removing them", async ({ page }) => {
+  await page.goto("/");
+  const nav = page.locator(".sidebar-primary-actions");
+  await expect(nav.getByRole("button", { name: "Library", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Personal account/ }).click();
+  await page.getByRole("menuitem", { name: "Customize" }).click();
+  const dialog = page.getByRole("dialog");
+  // Fixed features are listed as always on and have no switch.
+  await expect(dialog.getByRole("switch", { name: /Search chats/ })).toHaveCount(0);
+  await expect(dialog).toContainText("Search chats");
+  await dialog.getByRole("switch", { name: /Library/ }).uncheck();
+  await dialog.getByRole("switch", { name: /Sources/ }).uncheck();
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(nav.getByRole("button", { name: "Library", exact: true })).toHaveCount(0);
+  await expect(page.locator(".composer-source-picker")).toHaveCount(0);
+  await expect(nav.getByRole("button", { name: "Search chats", exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByLabel("Message", { exact: true })).toBeVisible();
+  await expect(nav.getByRole("button", { name: "Library", exact: true })).toHaveCount(0);
+  // Hidden, not deleted: the documents uploaded earlier are still in the workspace.
+  const workspace = await (await page.request.get(API_URL + "/workspace")).json();
+  expect(workspace.documents.length).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: /Personal account/ }).click();
+  await page.getByRole("menuitem", { name: "Customize" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Reset to defaults" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Done" }).click();
+  await expect(nav.getByRole("button", { name: "Library", exact: true })).toBeVisible();
+  await expect(page.locator(".composer-source-picker")).toHaveCount(1);
+});

@@ -31,6 +31,7 @@ same interface and swaps or extends the backend underneath.
 | Search | Full-text search across titles and messages. |
 | Usage | Tokens, latency, estimated cost; daily request cap; burst limiter. |
 | Resilience | Idempotent sends, stop with partial output saved, restart recovery, context-window packing. |
+| Customize | Each user hides the optional features they don't need (account menu → Customize). Hidden features keep working and keep their data. |
 
 Nothing is mocked. With no model connection configured, the app asks you to add one.
 

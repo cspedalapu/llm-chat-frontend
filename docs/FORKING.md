@@ -70,6 +70,13 @@ In the same file:
   Leave it off in a real product.
 - **`features.placeholderTools`**: shows the disabled entries in the composer "+"
   menu.
+- **`fixed`** on a nav entry: always shown. Every other entry gets an on/off switch in
+  the **Customize** window (account menu), where each user hides what they don't
+  need. Hiding only removes it from view; the feature and its data keep working.
+  `defaultOn: false` ships an entry hidden until the user turns it on.
+- **`customize.composer`**: the message-box controls users can hide (tools menu,
+  Sources, Thinking, assistant picker). **`customize.alwaysOn`** lists the fixed
+  parts shown as "Always on".
 
 ## 4. Decide what to do with the backend
 

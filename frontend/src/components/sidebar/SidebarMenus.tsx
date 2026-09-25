@@ -43,10 +43,9 @@ export const projectMenuSections: SidebarMenuAction[][] = [
   [{ label: "Delete project", icon: TrashIcon, tone: "danger" }]
 ];
 
-export function AccountMenu({ items, className, onSelect }: {
-  items: { label: string; icon: Icon }[];
+export function AccountMenu({ items, className }: {
+  items: { label: string; icon: Icon; onSelect: () => void }[];
   className?: string;
-  onSelect: () => void;
 }) {
   return (
     <div className={`sidebar-account-menu${className ? ` ${className}` : ""}`} role="menu" aria-label="Account menu">
@@ -54,7 +53,7 @@ export function AccountMenu({ items, className, onSelect }: {
         const Icon = item.icon;
 
         return (
-          <button key={item.label} className="sidebar-account-menu-item" type="button" role="menuitem" onClick={onSelect}>
+          <button key={item.label} className="sidebar-account-menu-item" type="button" role="menuitem" onClick={item.onSelect}>
             <Icon className="sidebar-nav-icon" />
             <span>{item.label}</span>
           </button>

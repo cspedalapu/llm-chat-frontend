@@ -30,6 +30,7 @@ state, and `useWorkspace` holds server data.
 | `extensions/` | Registries for fork pages, message add-ons, composer tools, auth headers. **Fork code goes here.** | Fork space |
 | `App.tsx` | View switching, modals, wiring. Reads config, capabilities and extensions. | Shell |
 | `hooks/useWorkspace.ts` | Loads `/workspace`, runs streaming generation, exposes `has(capability)`. | Shell |
+| `hooks/usePreferences.ts` + `components/CustomizePanel.tsx` | The user's show/hide choices (browser storage) and the Customize window. | Shell |
 | `lib/chatClient.ts` | `api()`, `streamReply()` (SSE parser), `download()`. All HTTP goes through here. | Shell |
 | `lib/capabilities.ts` | Known capability names and the `has()` helper. | Shell |
 | `components/Sidebar.tsx` + `components/sidebar/` | Nav, projects, chat list, account menu. | Shell |
@@ -44,6 +45,10 @@ state, and `useWorkspace` holds server data.
 **How a capability flows:** the backend lists `"documents"` in `/workspace` →
 `useWorkspace` builds `has()` → `App.tsx` passes `has("documents")` into the
 Composer, Library, nav filter, and so on → the controls render or don't.
+
+**Three layers decide whether a control shows:** the config enables it
+(`app.config.ts`), the backend supports it (capabilities), and the user hasn't
+hidden it (Customize). The Customize window only lists what passes the first two.
 
 ## Backend (`backend/app`)
 

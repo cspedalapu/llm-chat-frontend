@@ -85,3 +85,14 @@ details[open] > summary { margin-bottom: .5rem; }
   .empty-state { padding: 1rem; }.empty-title { font-size: var(--text-3xl); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+/* Customize window: per-user show/hide switches. Accent matches .workspace-modal-primary. */
+.customize-group { display: flex; flex-direction: column; gap: .25rem; }
+.customize-group h3 { font-size: var(--text-sm); color: var(--muted-strong); text-transform: uppercase; letter-spacing: .08em; margin: .5rem 0 .25rem; }
+.customize-group > .muted { margin: 0; }
+.customize-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .7rem .1rem; border-bottom: 1px solid var(--border-soft); cursor: pointer; }
+.customize-copy { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.customize-copy strong { font-size: var(--text-base); font-weight: 500; }
+.customize-switch { appearance: none; flex-shrink: 0; position: relative; width: 2.5rem; height: 1.4rem; margin: 0; border-radius: 999px; background: var(--border); cursor: pointer; transition: background .15s; }
+.customize-switch::after { content: ""; position: absolute; top: .2rem; left: .2rem; width: 1rem; height: 1rem; border-radius: 50%; background: var(--muted-strong); transition: transform .15s, background .15s; }
+.customize-switch:checked { background: rgba(244, 196, 20, .45); }
+.customize-switch:checked::after { transform: translateX(1.1rem); background: #f7e7aa; }

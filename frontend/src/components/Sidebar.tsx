@@ -30,6 +30,7 @@ interface SidebarProps {
   onToggleSidebar: () => void;
   onChatAction?: (action: string, id: string) => void;
   onAccount?: () => void;
+  onCustomize?: () => void;
 }
 
 interface SidebarItemMenuState {
@@ -59,7 +60,8 @@ export function Sidebar({
   onRenameProject,
   onToggleSidebar,
   onChatAction,
-  onAccount
+  onAccount,
+  onCustomize
 }: SidebarProps) {
   const visibleProjectLimit = 7;
   const accountPrimaryLabel = accountName?.trim() || "Sign in";
@@ -72,10 +74,17 @@ export function Sidebar({
       .map((part) => part[0]?.toUpperCase())
       .join("") || "SI";
   const accountButtonLabel = accountName ? `${accountPrimaryLabel} account` : "Sign in to your account";
+  function fromAccountMenu(action?: () => void) {
+    return () => {
+      setIsAccountMenuOpen(false);
+      action?.();
+    };
+  }
   const accountMenuItems = [
-    { label: "Settings", icon: SettingsIcon },
-    { label: "Help", icon: HelpIcon },
-    { label: accountPrimaryLabel, icon: UserIcon }
+    ...(onCustomize ? [{ label: "Customize", icon: PanelIcon, onSelect: fromAccountMenu(onCustomize) }] : []),
+    { label: "Settings", icon: SettingsIcon, onSelect: fromAccountMenu(onAccount) },
+    { label: "Help", icon: HelpIcon, onSelect: fromAccountMenu(onAccount) },
+    { label: accountPrimaryLabel, icon: UserIcon, onSelect: fromAccountMenu(onAccount) }
   ];
   const chatSections = showProjects
     ? chatMenuSections
@@ -308,14 +317,7 @@ export function Sidebar({
 
   function renderAccountMenu(className?: string) {
     return (
-      <AccountMenu
-        items={accountMenuItems}
-        className={className}
-        onSelect={() => {
-          setIsAccountMenuOpen(false);
-          onAccount?.();
-        }}
-      />
+      <AccountMenu items={accountMenuItems} className={className} />
     );
   }
 

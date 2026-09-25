@@ -11,7 +11,7 @@ messages so the history stays searchable. Move finished items into §5 with a da
 - **Role of this repo:** the permanent base every new product forks. See
   [BASE-ROADMAP.md](BASE-ROADMAP.md) and [FORKING.md](FORKING.md).
 - **Health:** ruff clean · 49 backend tests (33 behaviour + 16 contract) · `tsc` clean ·
-  3/3 full e2e · 1/1 core-tier e2e
+  4/4 full e2e · 1/1 core-tier e2e
 
 ---
 
@@ -25,7 +25,7 @@ runs the same set, plus the contract test against `examples/minimal_backend`.
 | Lint | `./.venv-dev/Scripts/python.exe -m ruff check backend examples` | `All checks passed!` |
 | Backend + contract tests | `./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable>` | 49 passed |
 | Types | `cd frontend && npm run typecheck` | exit 0 |
-| End-to-end, full | `cd frontend && npm run test:e2e` | 3 passed |
+| End-to-end, full | `cd frontend && npm run test:e2e` | 4 passed |
 | End-to-end, core tier | `cd frontend && npm run test:e2e:core` | 1 passed |
 
 ---
@@ -64,6 +64,7 @@ runs the same set, plus the contract test against `examples/minimal_backend`.
 | Typing indicator | Three pulsing dots while awaiting first token. |
 | **Thinking effort** | Per-message Standard/Low/Medium/High, overrides the connection default. |
 | **Tools menu** | Attach documents live; unavailable tools shown disabled, not faked. |
+| **Customize** | Account menu → Customize: users hide Library, Workspace, LLMs, the tools menu, Sources, Thinking and the assistant picker. Fixed: New chat, Search chats, Projects, chat history, model selector. Hiding never deletes anything. Defined in `app.config.ts`. |
 
 ### Placeholder — hidden by default, no backend
 
@@ -104,6 +105,7 @@ registers `extensions.pages[key]` gets its own page there instead. (O-8, resolve
 | **O-10** | `styles.css` still one 1,939-line file | Low | No section boundaries to split on safely; splitting by guesswork risks cascade changes. Split when a restyle pass defines areas. |
 | **O-11** | CI e2e job not yet run on GitHub | Medium | Backend and frontend jobs dry-run clean in `python:3.12-slim` / `node:20-alpine`. The Linux Playwright job is confirmed only after the first push. |
 | **O-12** | Store is single-tenant | Low (local) | Any fork with multiple users must scope records per `request.state.user`. Documented in ARCHITECTURE.md. |
+| **O-13** | Customize choices are per browser | Low | Saved in `localStorage`, so they don't follow a user to another device. Move them into the backend once forks have real users (O-6, O-12). |
 
 ---
 
