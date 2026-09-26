@@ -7,11 +7,54 @@ the project sat dormant from **2026-03-30 to 2026-09-22** and context was lost.
 or is deliberately deferred. Every open item has an ID (`O-n`) — reference it in commit
 messages so the history stays searchable. Move finished items into §5 with a date.
 
-- **Last updated:** 2026-09-25
+- **Last updated:** 2026-09-26
+- **Status:** ⏸ **On hold since 2026-09-26.** Start with "Where we stopped" below.
 - **Role of this repo:** the permanent base every new product forks. See
   [BASE-ROADMAP.md](BASE-ROADMAP.md) and [FORKING.md](FORKING.md).
 - **Health:** ruff clean · 76 backend tests (33 behaviour + 25 research + 18 contract) ·
   `tsc` clean · 6/6 full e2e · 1/1 core-tier e2e
+
+---
+
+## Where we stopped (2026-09-26)
+
+**State:** paused by the owner. All work is committed and pushed (`main` = `origin/main`,
+last commit `133f480`). All health checks were green at pause (see Health above).
+
+**Done in the last sessions (2026-09-25 → 26):**
+- Base made forkable: capabilities, API contract + contract test, minimal backend,
+  `app.config.ts`, `extensions/`, auth hook, CI, docs (BASE-ROADMAP.md, all done).
+- ChatGPT-style UI: pill composer, icon message actions, header Share + ••• menu,
+  Pinned, phone drawer, Customize window.
+- **Research tab** (RESEARCH-PLAN.md, 29/31 done): plan approval, parallel tool-using
+  researchers, cited report with citation check, tools directory (web, papers, library,
+  Drive, OneDrive, MCP), permissions, tracking, exports. Guide: RESEARCH.md.
+
+**Pick up here, in this order:**
+1. **Push-triggered CI (O-11):** confirm the GitHub Actions run on `133f480` is green,
+   especially the Linux e2e job, which has never run on GitHub.
+2. **Choose a web search provider (O-14 / DR-1):** Tavily or Brave key, or a SearXNG
+   server. Then run one real research question end to end.
+3. **Real OAuth apps (O-15):** create the Google and Microsoft apps (`.env.example`,
+   RESEARCH.md §3) and test Drive / OneDrive sign-in against the real services.
+4. **Answer DR-3 (O-16):** does "Google Cloud" mean Drive/Docs/Sheets (done) or GCP data
+   such as BigQuery / Cloud Storage? That unblocks R-28.
+5. **Eval set (O-18):** add 5–10 real research questions and run
+   `evals/research/run_eval.py` against a real model.
+
+**Ideas raised but not started:**
+- One-click model presets in "Add your model" (GitHub Models, NVIDIA NIM, OpenRouter,
+  Groq…). All of them already work via the OpenAI-compatible type; presets would only
+  pre-fill the URL and settings.
+- Rename the sidebar "Workspace" item to "Assistants & usage", and the footer label
+  "Local workspace" (the word "workspace" meant three different things).
+
+**Environment notes:**
+- The Docker stack was left running on ports 8001 (backend), 5173 (dev UI) and 8082
+  (prod UI), because 8000/8080 belong to VoiceBite. Stop it with
+  `docker compose --profile dev --profile prod down`. Data lives in the `workspace-data`
+  volume and holds only test data; `down -v` wipes it.
+- The owner commits and pushes changes themselves. Leave work uncommitted for review.
 
 ---
 
