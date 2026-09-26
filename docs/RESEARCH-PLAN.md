@@ -8,7 +8,7 @@ every call to an external tool is tracked.
 
 **Status legend:** `[ ]` not started · `[~]` in progress · `[x]` done · `[-]` dropped
 **IDs:** `R-n` for tasks, `DR-n` for decisions. Use them in commit messages.
-**Created:** 2026-09-25 · **Status:** draft for review · **Owner:** Chandrasekhar
+**Created:** 2026-09-25 · **Status:** built (29 of 31 done, see §4) · **Owner:** Chandrasekhar
 
 ---
 
@@ -192,13 +192,13 @@ Each has a recommendation; confirm or change.
 
 | # | Question | Recommendation | Answer |
 |---|---|---|---|
-| DR-1 | Web search provider | **Pluggable, start with one paid API** (Tavily, Brave or Perplexity Search; prices to verify) **plus SearXNG** as a free self-hosted option. Our own search tool works for every model, including DeepSeek. | |
-| DR-2 | Build it in the base or in a fork? | **Base, as an optional capability.** Research is useful to most products; forks can switch it off. | |
-| DR-3 | "Google Cloud" means… | Google **Drive / Docs / Sheets** (Workspace)? Or **GCP** data (BigQuery, Cloud Storage)? | |
-| DR-4 | Google and Microsoft: official MCP servers or direct APIs? | **Direct read-only APIs first** (Drive API, Microsoft Graph). The reference Google Drive MCP server is archived. Use MCP for everything else. | |
-| DR-5 | Excel depth | **Read and summarise first** (sheets → tables, stats). Running code on data (charts, analysis) comes later, sandboxed. | |
-| DR-6 | Default depth budgets | As in §2 (Quick / Standard / Deep). | |
-| DR-7 | First milestone scope | **M1 = web + academic + library + Excel upload.** Google and Microsoft follow in M2. | |
+| DR-1 | Web search provider | **Pluggable, start with one paid API** (Tavily, Brave or Perplexity Search; prices to verify) **plus SearXNG** as a free self-hosted option. Our own search tool works for every model, including DeepSeek. | Built pluggable: SearXNG, Tavily, Brave. **Your pick + key still needed** (O-14). |
+| DR-2 | Build it in the base or in a fork? | **Base, as an optional capability.** Research is useful to most products; forks can switch it off. | Base, capabilities `research` + `research.connectors`. |
+| DR-3 | "Google Cloud" means… | Google **Drive / Docs / Sheets** (Workspace)? Or **GCP** data (BigQuery, Cloud Storage)? | **Open.** Drive/Docs/Sheets are built; GCP data waits for your answer (R-28). |
+| DR-4 | Google and Microsoft: official MCP servers or direct APIs? | **Direct read-only APIs first** (Drive API, Microsoft Graph). The reference Google Drive MCP server is archived. Use MCP for everything else. | As recommended. |
+| DR-5 | Excel depth | **Read and summarise first** (sheets → tables, stats). Running code on data (charts, analysis) comes later, sandboxed. | As recommended. |
+| DR-6 | Default depth budgets | As in §2 (Quick / Standard / Deep). | Quick 10 calls / 4 min, Standard 40 / 12, Deep 120 / 30 (`engine.DEPTHS`). |
+| DR-7 | First milestone scope | **M1 = web + academic + library + Excel upload.** Google and Microsoft follow in M2. | Built M1–M4 in one pass. |
 
 **Needed from you before the matching phase starts:**
 - a search API key (DR-1)
@@ -211,68 +211,68 @@ Each has a recommendation; confirm or change.
 ## 4. Tasks
 
 ### Phase 1: Foundations (the model can use tools)
-- [ ] **R-1 Tool calling in `providers.py`** for OpenAI-compatible, Anthropic, Gemini and
+- [x] **R-1 Tool calling in `providers.py`** for OpenAI-compatible, Anthropic, Gemini and
   Ollama. Normalise tool calls and results; stream text and tool events. Add a
   "supports tools" check to *Test connection*.
-- [ ] **R-2 Tool interface and registry** (`backend/app/tools/`): search/fetch/read kinds,
+- [x] **R-2 Tool interface and registry** (`backend/app/tools/`): search/fetch/read kinds,
   a read/write flag, the JSON schema given to the model, an execution timeout.
-- [ ] **R-3 Web search adapter** (DR-1) plus a **fetch-and-extract** tool (HTML → text,
+- [x] **R-3 Web search adapter** (DR-1) plus a **fetch-and-extract** tool (HTML → text,
   PDF), with domain allow/block lists.
-- [ ] **R-4 Library tool:** expose our existing document search to research.
-- [ ] **R-5 Tool-call log:** a `tool_calls` table (run, tool, query, status, latency, cost),
+- [x] **R-4 Library tool:** expose our existing document search to research.
+- [x] **R-5 Tool-call log:** a `tool_calls` table (run, tool, query, status, latency, cost),
   written for every call.
 
 ### Phase 2: Research engine
-- [ ] **R-6 Data model and lifecycle:** `research_runs`, `research_steps`,
+- [x] **R-6 Data model and lifecycle:** `research_runs`, `research_steps`,
   `research_sources`; background task; restart recovery.
-- [ ] **R-7 Clarify and plan:** optional clarifying questions; an editable plan; approve
+- [x] **R-7 Clarify and plan:** optional clarifying questions; an editable plan; approve
   or cancel.
-- [ ] **R-8 Research loop:** parallel sub-researchers with the depth budgets (calls,
+- [x] **R-8 Research loop:** parallel sub-researchers with the depth budgets (calls,
   time, cost); notes tied to source IDs.
-- [ ] **R-9 Report writing and citation check:** the writer model builds the report from
+- [x] **R-9 Report writing and citation check:** the writer model builds the report from
   the notes with `[n]` citations; each citation is verified against fetched text.
-- [ ] **R-10 Live events, steer, cancel:** resumable SSE stream; "Add instruction" is
+- [x] **R-10 Live events, steer, cancel:** resumable SSE stream; "Add instruction" is
   applied at the next step.
-- [ ] **R-11 Tests:** fake model plus fake search in pytest; contract routes; budget and
+- [x] **R-11 Tests:** fake model plus fake search in pytest; contract routes; budget and
   cancel cases.
 
 ### Phase 3: The Research tab (first usable version, M1)
-- [ ] **R-12 Page and history:** three-column layout; run list with status; phone layout.
-- [ ] **R-13 New research form:** question, depth, research and writer models
+- [x] **R-12 Page and history:** three-column layout; run list with status; phone layout.
+- [x] **R-13 New research form:** question, depth, research and writer models
   (tool-capable only), source chips, plan-first switch.
-- [ ] **R-14 Plan review:** edit, reorder, add or remove sub-questions; estimate; start.
-- [ ] **R-15 Live timeline:** steps, counters, budget bar, Stop, Add instruction.
-- [ ] **R-16 Report view:** table of contents, citations, sources panel with verification
+- [x] **R-14 Plan review:** edit, reorder, add or remove sub-questions; estimate; start.
+- [x] **R-15 Live timeline:** steps, counters, budget bar, Stop, Add instruction.
+- [x] **R-16 Report view:** table of contents, citations, sources panel with verification
   flags; export as MD, DOCX and PDF.
-- [ ] **R-17 Continue in chat:** open a normal chat seeded with the report; "Research
+- [x] **R-17 Continue in chat:** open a normal chat seeded with the report; "Research
   this" in the chat composer's + menu hands a question to the tab.
-- [ ] **R-18 e2e tests** for the full flow against the fake model and fake search.
+- [x] **R-18 e2e tests** for the full flow against the fake model and fake search.
 
 ### Phase 4: Tools and tracking
-- [ ] **R-19 Tools directory:** built-in tools plus connected ones, with status, what each
+- [x] **R-19 Tools directory:** built-in tools plus connected ones, with status, what each
   can read, and enable/disable.
-- [ ] **R-20 Custom remote MCP:** add by URL; list its tools; mark read vs write.
-- [ ] **R-21 OAuth 2.1 with PKCE** for MCP and OAuth connectors; tokens encrypted with
+- [x] **R-20 Custom remote MCP:** add by URL; list its tools; mark read vs write.
+- [x] **R-21 OAuth 2.1 with PKCE** for MCP and OAuth connectors; tokens encrypted with
   the existing key store.
-- [ ] **R-22 Permissions:** Always allow / Ask each time / Blocked per tool; writes
+- [x] **R-22 Permissions:** Always allow / Ask each time / Blocked per tool; writes
   blocked in research.
-- [ ] **R-23 Tracking panel:** per-tool calls, errors and cost; totals on the Usage page.
+- [x] **R-23 Tracking panel:** per-tool calls, errors and cost; totals on the Usage page.
 
 ### Phase 5: Integrations
-- [ ] **R-24 Academic:** arXiv, OpenAlex, Semantic Scholar, PubMed adapters; an
+- [x] **R-24 Academic:** arXiv, OpenAlex, Semantic Scholar, PubMed adapters; an
   "Academic" source chip.
-- [ ] **R-25 Excel/CSV:** upload or pick from the library; sheets become tables; summary
+- [x] **R-25 Excel/CSV:** upload or pick from the library; sheets become tables; summary
   stats for the model (DR-5).
-- [ ] **R-26 Google Drive / Docs / Sheets**, read-only (DR-3, DR-4).
-- [ ] **R-27 Microsoft OneDrive / SharePoint / Excel** via Graph, read-only (DR-4).
+- [x] **R-26 Google Drive / Docs / Sheets**, read-only (DR-3, DR-4).
+- [x] **R-27 Microsoft OneDrive / SharePoint / Excel** via Graph, read-only (DR-4).
 - [ ] **R-28 Google Cloud** as clarified in DR-3.
 
 ### Phase 6: Quality and safety
-- [ ] **R-29 Evaluation set:** your 5–10 questions, re-run after every change. Checks
+- [~] **R-29 Evaluation set:** your 5–10 questions, re-run after every change. Checks
   citation accuracy, sources used, cost and time.
-- [ ] **R-30 Prompt-injection hardening:** content marking, fetch rules, a test with a
+- [x] **R-30 Prompt-injection hardening:** content marking, fetch rules, a test with a
   malicious page.
-- [ ] **R-31 Docs:** API contract, FORKING (how a fork adds a research tool), user help.
+- [x] **R-31 Docs:** API contract, FORKING (how a fork adds a research tool), user help.
 
 ### Milestones
 
@@ -301,3 +301,4 @@ Each has a recommendation; confirm or change.
 | Date | Change |
 |---|---|
 | 2026-09-25 | Plan drafted from research into OpenAI, Anthropic, Google, xAI, DeepSeek, Perplexity. |
+| 2026-09-25 | Built in one pass: R-1 to R-27, R-30, R-31 done; R-29 harness ready (needs your questions); R-28 waits for DR-3. Open follow-ups are O-14 to O-18 in PROJECT-TRACKER.md. |
