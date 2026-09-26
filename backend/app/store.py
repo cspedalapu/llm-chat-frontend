@@ -62,6 +62,11 @@ def init_store():
             CREATE VIRTUAL TABLE IF NOT EXISTS chat_search USING fts5(
                 id UNINDEXED, title, text
             );
+            -- Full extracted text per page; tables are rebuilt from it (chunks overlap).
+            CREATE TABLE IF NOT EXISTS document_pages (
+                document_id TEXT NOT NULL, page INTEGER NOT NULL, text TEXT NOT NULL,
+                PRIMARY KEY(document_id, page)
+            );
         """)
         # A local server restart cannot resume an upstream stream.
         con.execute("UPDATE generations SET status='interrupted' WHERE status='streaming'")
