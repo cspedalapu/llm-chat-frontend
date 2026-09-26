@@ -4,7 +4,7 @@ import asyncio
 import json
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 app = FastAPI()
 
@@ -14,9 +14,81 @@ def health():
     return {"ok": True}
 
 
+PAGE_URL = "http://127.0.0.1:8012/pages/cobalt"
+
+
+@app.get("/search")
+def search(q: str = ""):
+    """SearXNG-compatible JSON search, for the research browser test."""
+    return {
+        "results": [
+            {
+                "title": "Cobalt launch report",
+                "url": PAGE_URL,
+                "content": "Cobalt launches on Friday, the report says.",
+            }
+        ]
+    }
+
+
+@app.get("/pages/cobalt")
+def page():
+    html = (
+        "<html><head><title>Cobalt launch report</title></head><body>"
+        "<p>Cobalt launches Friday. The launch team is blue.</p></body></html>"
+    )
+    return HTMLResponse(html)
+
+
+def _message(content="", tool_calls=None):
+    message = {"role": "assistant", "content": content}
+    if tool_calls:
+        message["tool_calls"] = [
+            {
+                "id": f"call_{i}",
+                "type": "function",
+                "function": {"name": name, "arguments": json.dumps(args)},
+            }
+            for i, (name, args) in enumerate(tool_calls)
+        ]
+    return JSONResponse(
+        {
+            "model": "fixture",
+            "choices": [{"message": message, "finish_reason": "stop"}],
+            "usage": {"prompt_tokens": 40, "completion_tokens": 12},
+        }
+    )
+
+
+def _complete(body):
+    """Non-streaming turns used by research: plan, tool calls, findings."""
+    messages = body["messages"]
+    tools = {t["function"]["name"] for t in body.get("tools", [])}
+    if "report_status" in tools:
+        return _message(tool_calls=[("report_status", {"status": "ok"})])
+    if messages[0]["content"].startswith("You plan research"):
+        return _message(
+            json.dumps(
+                {
+                    "title": "Cobalt launch timing",
+                    "clarifying_questions": [],
+                    "sub_questions": [{"question": "When does cobalt launch?"}],
+                }
+            )
+        )
+    done = [m for m in messages if m["role"] == "tool"]
+    if "web_search" in tools and not done:
+        return _message(tool_calls=[("web_search", {"query": "cobalt launch"})])
+    if "read_page" in tools and len(done) == 1:
+        return _message(tool_calls=[("read_page", {"url": PAGE_URL})])
+    return _message("- Cobalt launches Friday [1].\nGaps: none.")
+
+
 @app.post("/v1/chat/completions")
 async def chat(request: Request):
     body = await request.json()
+    if body.get("stream") is False:
+        return _complete(body)
     prompt = body["messages"][-1]["content"]
     if "fail-provider" in prompt:
         return JSONResponse({"error": "fixture failure"}, status_code=401)
