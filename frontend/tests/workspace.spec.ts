@@ -160,3 +160,55 @@ test("chat header menu: pin, move to project, view files, response details", asy
   await page.getByRole("menuitem", { name: "Unpin chat" }).click();
   await expect(page.getByRole("heading", { name: "Pinned" })).toHaveCount(0);
 });
+
+test("research: set up search, approve the plan, get a cited report, export and continue in chat", async ({ page }) => {
+  await page.goto("/");
+  await page.locator(".sidebar-primary-actions").getByRole("button", { name: "Research", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "What should we research?" })).toBeVisible();
+
+  // Web search needs a provider before it can be used: set up SearXNG (the fixture speaks its API).
+  await page.getByRole("button", { name: "Manage tools" }).click();
+  const tools = page.getByRole("dialog", { name: "Manage tools" });
+  await tools.getByLabel("Search provider").selectOption("searxng");
+  await tools.getByLabel("SearXNG URL").fill("http://127.0.0.1:8012");
+  await tools.getByRole("button", { name: "Save web search" }).click();
+  await expect(tools.getByText("Saved.")).toBeVisible();
+  await tools.getByRole("button", { name: "Close dialog" }).click();
+
+  await page.getByLabel("Research question").fill("When does cobalt launch?");
+  await page.getByRole("radio", { name: /Quick/ }).click();
+  await expect(page.getByRole("button", { name: "Web search", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Plan research" }).click();
+
+  await expect(page.getByRole("heading", { name: "Review the plan" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Cobalt launch timing" })).toBeVisible();
+  await expect(page.getByLabel("Part 1", { exact: true })).toHaveValue("When does cobalt launch?");
+  await page.getByRole("button", { name: "Start research" }).click();
+
+  const report = page.locator(".research-report");
+  await expect(report.getByRole("heading", { name: "Local test answer" })).toBeVisible({ timeout: 20000 });
+  await expect(page.locator(".run-status")).toHaveText("Completed");
+  await expect(report.getByRole("button", { name: /^Source 1/ }).first()).toBeVisible();
+  await expect(page.locator(".report-sources")).toContainText("Cobalt launch report");
+
+  await page.getByRole("tab", { name: "Activity" }).click();
+  await expect(page.locator(".tl-tool.ok").filter({ hasText: "Web search" })).toBeVisible();
+  await page.getByRole("tab", { name: "Report" }).click();
+
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export" }).click();
+  await page.getByRole("menuitem", { name: "Markdown (.md)" }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.md$/);
+
+  await page.getByRole("button", { name: "Run options" }).click();
+  await page.getByRole("menuitem", { name: "Continue in chat" }).click();
+  await expect(page.getByText("When does cobalt launch?").first()).toBeVisible();
+  await expect(page.locator(".msg-assistant .markdown").first()).toContainText("Local test answer");
+
+  // "Research this" in the chat composer hands the draft to the Research tab.
+  await page.getByRole("button", { name: /^New chat/ }).first().click();
+  await page.getByLabel("Message", { exact: true }).fill("Compare cobalt and nickel supply");
+  await page.getByRole("button", { name: "Tools", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Research this" }).click();
+  await expect(page.getByLabel("Research question")).toHaveValue("Compare cobalt and nickel supply");
+});
