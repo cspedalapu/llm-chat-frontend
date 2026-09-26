@@ -11,6 +11,7 @@ import { WorkspaceTools } from "@/components/WorkspaceTools";
 import { CustomizePanel } from "@/components/CustomizePanel";
 import { ChatHeader } from "@/components/ChatHeader";
 import { ChatFiles } from "@/components/ChatFiles";
+import { ResearchPage } from "@/components/research/ResearchPage";
 import { navIcons } from "@/components/icons";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { api, download } from "@/lib/chatClient";
@@ -56,6 +57,7 @@ export default function App() {
   const preferences = usePreferences();
   const [customizing, setCustomizing] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
+  const [researchQuestion, setResearchQuestion] = useState("");
   const [view, setView] = useState<View>("new_chat");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -94,6 +96,7 @@ export default function App() {
   const ExtensionPage = view !== "new_chat" && view !== "project" ? pages[view] : undefined;
   const placeholder = !ExtensionPage ? appConfig.nav.find(item => item.key === view && item.placeholder) : undefined;
   const canManageModels = has("models.manage");
+  const canResearch = has("research") && availableNav.some(item => item.key === "deep_research");
 
   useEffect(() => {
     if (data.models.length && !data.models.some(m => m.id === modelId)) setModelId(data.models[0].id);
@@ -193,7 +196,8 @@ export default function App() {
   const composer = (empty: boolean) => <Composer key={(conversation?.id || "new:" + (project?.id || "root")) + ":" + initialDraft}
     draftKey={conversation?.id || "new:" + (project?.id || "root")} initialText={initialDraft}
     busy={busy} disabled={!ready || !model || Boolean(conversation?.archived)}
-    features={{ documents: has("documents"), tools: composerOn("tools"), sources: composerOn("sources"), presets: composerOn("assistant"), reasoning: composerOn("thinking") }}
+    features={{ documents: has("documents"), tools: composerOn("tools"), sources: composerOn("sources"), presets: composerOn("assistant"), reasoning: composerOn("thinking"), research: canResearch }}
+    onResearch={question => { setResearchQuestion(question); navigate("deep_research"); }}
     documents={availableDocuments} presets={data.presets} selectedDocuments={selectedDocuments} onDocuments={setSelectedDocuments}
     reasoning={reasoning} onReasoning={setReasoning}
     presetId={presetId} onPreset={id => { setPresetId(id); const preset = data.presets.find(p => p.id === id); if (preset) usePreset(preset); }}
@@ -238,6 +242,9 @@ export default function App() {
       {error && <div className="error-banner" role="alert"><span>{error}</span><span className="error-banner-actions"><button onClick={() => run(async () => { await refresh(); setError(""); })}>Reload</button><button onClick={() => setError("")} aria-label="Dismiss error">×</button></span></div>}
       {!ready ? <section className="empty-state"><h2>Opening your workspace…</h2><button onClick={() => run(refresh)}>Retry connection</button></section>
         : ExtensionPage ? <ExtensionPage data={data} has={has} refresh={refresh} navigate={navigate} openChat={openChat} />
+        : view === "deep_research" && has("research") ? <ResearchPage initialQuestion={researchQuestion}
+          onQuestionUsed={() => setResearchQuestion("")} onOpenChat={id => { void refresh().then(() => openChat(id)); }}
+          onManageModels={() => navigate("llms")} canManageTools={has("research.connectors")} />
         : view === "llms" ? <ProviderSettings models={data.models} onAdd={() => setEditor({ type: "provider" })} onEdit={provider => setEditor({ type: "provider", provider })}
           onDelete={id => setConfirm({ text: "Remove this model connection and its saved key? Existing chats will be kept.", action: async () => { await mutate("/models/" + id, "DELETE"); } })} />
         : view === "search_chats" ? <SearchChats onOpen={openChat} onRestore={id => updateChat(id, { archived: false })} />
