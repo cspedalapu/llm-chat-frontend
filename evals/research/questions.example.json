@@ -1,0 +1,20 @@
+[
+  {
+    "question": "What is the current consensus on the health effects of intermittent fasting in adults?",
+    "depth": "quick",
+    "sources": ["web", "academic"],
+    "expect": ["weight", "insulin"]
+  },
+  {
+    "question": "How large is the global market for EV charging infrastructure, and who are the main suppliers?",
+    "depth": "standard",
+    "sources": ["web"],
+    "expect": ["billion"]
+  },
+  {
+    "question": "What are the main approaches to retrieval-augmented generation evaluation proposed since 2023?",
+    "depth": "quick",
+    "sources": ["academic"],
+    "expect": ["retrieval"]
+  }
+]
