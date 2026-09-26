@@ -57,7 +57,7 @@ export function ProviderSettings({ models, onAdd, onEdit, onDelete }: { models: 
   return <section className="feature-page"><div className="page-heading"><div><p className="eyebrow">Connections</p><h1>Your models</h1></div><button className="workspace-modal-primary" onClick={onAdd}>Add your model</button></div>
     <p className="muted">Connect multiple providers and switch models in any conversation. Connection tests send a small prompt and may incur a small provider charge.</p>
     {!models.length && <div className="empty-card">Add a connection to start chatting. No model is configured yet.</div>}
-    <div className="feature-grid">{models.map(p => <article className="feature-card" key={p.id}><h2>{p.label}</h2><p>{p.model}</p><p className="muted">{p.kind} · {p.base_url}</p><p className="muted">{p.has_key ? "API key saved" : "No API key"} · {p.context_tokens.toLocaleString()} context tokens</p>
+    <div className="feature-grid">{models.map(p => <article className="feature-card" key={p.id}><h2>{p.label}</h2><p>{p.model}</p><p className="muted">{p.kind} · {p.base_url}</p><p className="muted">{p.has_key ? "API key saved" : "No API key"} · {p.context_tokens.toLocaleString()} context tokens · {p.supports_tools === true ? "Tool use: yes (can research)" : p.supports_tools === false ? "Tool use: no" : "Tool use: not tested"}</p>
       <div className="action-row"><button onClick={() => onEdit(p)}>Edit</button><button disabled={status[p.id] === "Testing…"} onClick={() => test(p.id)}>Test connection</button><button onClick={() => onDelete(p.id)}>Remove</button></div><p role="status">{status[p.id]}</p>
     </article>)}</div>
   </section>;
