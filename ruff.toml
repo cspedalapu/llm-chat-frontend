@@ -10,3 +10,7 @@ ignore = ["EXE002"]
 
 [lint.isort]
 known-first-party = ["backend"]
+
+[lint.per-file-ignores]
+# OOXML templates for .docx export are long single-line XML by nature.
+"backend/app/research/export.py" = ["E501"]
