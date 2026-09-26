@@ -14,6 +14,22 @@ class ProviderError(Exception):
     pass
 
 
+HTTP_HINTS = {
+    401: "Check the API key.",
+    403: "Check model access and permissions.",
+    404: "Check the base URL and model ID.",
+    429: "Provider quota or rate limit reached. Retry later.",
+    400: "Check the model settings and supported request options.",
+}
+
+
+def http_error(status: int) -> ProviderError:
+    # Never reflect raw provider bodies: they may contain keys or prompt content.
+    return ProviderError(
+        f"Provider returned HTTP {status}. " + HTTP_HINTS.get(status, "Try again later.")
+    )
+
+
 def build_request(provider, messages):
     kind = provider["kind"]
     base = provider["base_url"]
@@ -174,18 +190,7 @@ async def stream(provider, messages):
             client.stream("POST", url, headers=headers, json=body) as response,
         ):
             if response.status_code >= 300:
-                # Never reflect raw provider bodies: they may contain keys or prompt content.
-                hints = {
-                    401: "Check the API key.",
-                    403: "Check model access and permissions.",
-                    404: "Check the base URL and model ID.",
-                    429: "Provider quota or rate limit reached. Retry later.",
-                    400: "Check the model settings and supported request options.",
-                }
-                raise ProviderError(
-                    f"Provider returned HTTP {response.status_code}. "
-                    + hints.get(response.status_code, "Try again later.")
-                )
+                raise http_error(response.status_code)
             async for line in response.aiter_lines():
                 if provider["kind"] == "ollama":
                     payload = line.strip()
