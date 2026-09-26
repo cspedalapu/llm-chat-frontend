@@ -10,6 +10,16 @@ services:
       - "127.0.0.1:${BACKEND_PORT:-8000}:8000"
     environment:
       CHAT_DATA_DIR: /app/data
+      # Research tab (see .env.example). Empty values leave the feature off.
+      CHAT_PUBLIC_URL: ${CHAT_PUBLIC_URL:-http://localhost:5173}
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      MICROSOFT_OAUTH_CLIENT_ID: ${MICROSOFT_OAUTH_CLIENT_ID:-}
+      MICROSOFT_OAUTH_CLIENT_SECRET: ${MICROSOFT_OAUTH_CLIENT_SECRET:-}
+      MICROSOFT_OAUTH_TENANT: ${MICROSOFT_OAUTH_TENANT:-common}
+      RESEARCH_CONTACT_EMAIL: ${RESEARCH_CONTACT_EMAIL:-}
+      SEMANTIC_SCHOLAR_API_KEY: ${SEMANTIC_SCHOLAR_API_KEY:-}
+      RESEARCH_ALLOW_PRIVATE_NETWORK: ${RESEARCH_ALLOW_PRIVATE_NETWORK:-}
     volumes:
       - workspace-data:/app/data
     extra_hosts:
