@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from . import auth, documents, providers, store
+from . import auth, documents, providers, store, tool_calling
 from .contracts import (
     BranchInput,
     ConversationInput,
@@ -25,6 +25,9 @@ from .contracts import (
     SettingsInput,
 )
 from .generation import ensure_idle, required, router, tasks
+from .research import engine as research_engine
+from .research import store as research_store
+from .research.routes import router as research_router
 from .secrets import encrypt, public_provider
 
 ORIGINS = [
@@ -50,17 +53,21 @@ CAPABILITIES = [
     "bookmarks",
     "cancel",
     "reasoning",
+    "research",
+    "research.connectors",
 ]
 
 
 @asynccontextmanager
 async def lifespan(app):
     store.init_store()
+    research_store.init()
     yield
     running = list(tasks.values())
     for task in running:
         task.cancel()
     await asyncio.gather(*running, return_exceptions=True)
+    await research_engine.shutdown()
 
 
 app = FastAPI(title="Local LLM Workspace", version="0.2.0", lifespan=lifespan)
@@ -72,12 +79,14 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", auth.CLIENT_HEADER],
 )
 app.include_router(router)
+app.include_router(research_router)
 
 
 BURST_REQUESTS = 30
 BURST_WINDOW_SECONDS = 60.0
 BURST_PATH_SUFFIX = "/generate"
 BURST_PATH_PREFIX = "/documents"
+BURST_PATHS = frozenset({"/research/runs"})
 
 _burst: dict[str, deque[float]] = defaultdict(deque)
 _burst_lock = Lock()
@@ -117,7 +126,11 @@ async def local_boundary(request: Request, call_next):
             return JSONResponse({"detail": "Sign in to continue."}, 401)
         request.state.user = user
     path = request.url.path
-    expensive = path.endswith(BURST_PATH_SUFFIX) or path.startswith(BURST_PATH_PREFIX)
+    expensive = (
+        path.endswith(BURST_PATH_SUFFIX)
+        or path.startswith(BURST_PATH_PREFIX)
+        or path in BURST_PATHS
+    )
     if request.method == "POST" and expensive:
         retry_after = over_burst_limit(request.client.host if request.client else "unknown")
         if retry_after:
@@ -188,6 +201,10 @@ def update_provider(model_id: str, body: ProviderInput):
             "id": model_id,
             "secret": encrypt(body.api_key) if body.api_key else existing.get("secret", ""),
         }
+        # The tool-use test result still holds unless the model itself changed.
+        same_model = all(existing.get(k) == item[k] for k in ("kind", "base_url", "model"))
+        if same_model and "supports_tools" in existing:
+            item["supports_tools"] = existing["supports_tools"]
         store.put(con, "provider", item)
     return public_provider(item)
 
@@ -204,17 +221,30 @@ def delete_provider(model_id: str):
 async def test_provider(model_id: str):
     with store.db() as con:
         provider = required(con, "provider", model_id)
-    provider["max_output_tokens"] = 64
+    probe = {**provider, "max_output_tokens": 64}
     try:
         async with asyncio.timeout(30):
-            async for event in providers.stream(
-                provider, [{"role": "user", "content": "Reply OK."}]
-            ):
+            async for event in providers.stream(probe, [{"role": "user", "content": "Reply OK."}]):
                 if event.get("text"):
-                    return {"ok": True, "detail": "Provider returned text successfully."}
-        raise providers.ProviderError("Provider returned no text.")
+                    break
+            else:
+                raise providers.ProviderError("Provider returned no text.")
     except (providers.ProviderError, TimeoutError) as exc:
         raise HTTPException(502, str(exc) or "Connection test timed out.") from exc
+    # Research needs tool calling; record whether this model can do it.
+    supports = await tool_calling.supports_tools(provider)
+    with store.db() as con:
+        current = store.get(con, "provider", model_id)
+        if current is not None:
+            store.put(con, "provider", {**current, "supports_tools": supports})
+    tools_note = "Tool use works (usable for Research)." if supports else (
+        "Tool use did not work, so this model can't run Research."
+    )
+    return {
+        "ok": True,
+        "detail": "Provider returned text successfully. " + tools_note,
+        "supports_tools": supports,
+    }
 
 
 @app.post("/projects")
@@ -411,6 +441,7 @@ def delete_document(document_id: str):
         store.delete(con, "document", document_id)
         con.execute("DELETE FROM chunks WHERE document_id=?", (document_id,))
         con.execute("DELETE FROM chunk_search WHERE document_id=?", (document_id,))
+        con.execute("DELETE FROM document_pages WHERE document_id=?", (document_id,))
     return {"ok": True}
 
 
