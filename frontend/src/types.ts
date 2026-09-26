@@ -6,6 +6,8 @@ export interface Provider {
   max_output_tokens: number; input_price: number | null; output_price: number | null;
   system_role: "system" | "developer"; token_parameter: "max_tokens" | "max_completion_tokens";
   include_usage: boolean; reasoning: "" | "low" | "medium" | "high";
+  /** Result of the tool-use check in Test connection; undefined until tested. */
+  supports_tools?: boolean;
 }
 export interface Source { id: string; documentId: string; title: string; page: number; excerpt: string; number: number }
 export interface AssistantResult {
