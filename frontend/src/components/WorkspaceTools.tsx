@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, download } from "@/lib/chatClient";
 import { Has } from "@/lib/capabilities";
+import { ConnectorDirectory, tools as researchTools } from "@/lib/research";
 import { Preset, Provider, Usage, WorkspaceData } from "@/types";
 import { Modal } from "./Modal";
 
@@ -21,6 +22,10 @@ export function WorkspaceTools({ data, has, onRefresh, onUse }: { data: Workspac
   const [limit, setLimit] = useState(data.settings.daily_request_limit); const [status, setStatus] = useState("");
   const presets = has("presets"), usageReport = has("usage");
   useEffect(() => { if (usageReport) api<Usage>("/usage").then(setUsage).catch(e => setStatus(e.message)); }, [usageReport]);
+  // Research tool calls (web search, papers, drives, MCP) are tracked separately from model usage.
+  const [toolUsage, setToolUsage] = useState<ConnectorDirectory | null>(null);
+  const trackTools = has("research.connectors");
+  useEffect(() => { if (trackTools) researchTools.directory().then(setToolUsage).catch(() => undefined); }, [trackTools]);
   return <section className="feature-page"><div className="page-heading"><div><p className="eyebrow">Personal workspace</p><h1>{presets && usageReport ? "Assistants & usage" : presets ? "Assistants" : "Workspace"}</h1></div>{presets && <button className="workspace-modal-primary" onClick={() => setEditor("new")}>Create assistant</button>}</div>
     {presets && <><p className="muted">Save repeatable instructions and output formats for writing, studying, coding, or research. An assistant follows you into any chat. Use a <strong>project</strong> instead when the work has its own documents and memory to keep together.</p>
     <div className="feature-grid">{data.presets.map(p => <article key={p.id} className="feature-card"><h2>{p.title}</h2><p>{p.instructions.slice(0, 180)}</p><div className="action-row"><button onClick={() => onUse(p)}>Use assistant</button><button onClick={() => setEditor(p)}>Edit</button><button onClick={async () => { try { await api(`/presets/${p.id}`, "DELETE"); await onRefresh(); } catch (e) { setStatus((e as Error).message); } }}>Delete</button></div></article>)}</div>
@@ -28,6 +33,11 @@ export function WorkspaceTools({ data, has, onRefresh, onUse }: { data: Workspac
     {usageReport && <h2>Usage</h2>}{usage && <><div className="stats-grid"><div><strong>{usage.today}</strong><span>requests today (UTC)</span></div><div><strong>{usage.input_tokens.toLocaleString()}</strong><span>reported input tokens</span></div><div><strong>{usage.output_tokens.toLocaleString()}</strong><span>reported output tokens</span></div><div><strong>${usage.estimated_cost.toFixed(4)}</strong><span>estimated total cost</span></div></div>
       <p className="muted">{usage.unpriced_requests} request(s) lack complete pricing or usage. Cancelled calls may still be billed by your provider. Connection tests are not included.</p>
       <details><summary>Recent generations</summary><div className="table-scroll"><table><thead><tr><th>Model</th><th>Status</th><th>Duration</th><th>Time</th></tr></thead><tbody>{usage.recent.map((item, i) => <tr key={item.id || i}><td>{item.generationModel}</td><td>{item.status}</td><td>{((item.latencyMs || 0) / 1000).toFixed(1)}s</td><td>{new Date(item.createdAt).toLocaleString()}</td></tr>)}</tbody></table></div></details></>}
+    {toolUsage && toolUsage.usage.length > 0 && <><h2>Research tools</h2>
+      <div className="table-scroll"><table><thead><tr><th>Tool</th><th>Calls</th><th>Today</th><th>Errors</th><th>Avg. time</th><th>Search cost</th></tr></thead>
+        <tbody>{toolUsage.usage.map(u => <tr key={u.connector}>
+          <td>{toolUsage.connectors.find(c => c.id === u.connector)?.name || u.connector}</td><td>{u.calls}</td><td>{u.today}</td><td>{u.errors}</td>
+          <td>{(u.avg_latency_ms / 1000).toFixed(1)}s</td><td>{u.cost ? `$${u.cost.toFixed(4)}` : "—"}</td></tr>)}</tbody></table></div></>}
     {has("settings") && <form className="settings-row" onSubmit={async e => { e.preventDefault(); try { await api("/settings", "PATCH", { daily_request_limit: limit }); await onRefresh(); setStatus("Daily request limit saved."); } catch (e) { setStatus((e as Error).message); } }}><label>Daily generation limit <input aria-label="Daily generation limit" type="number" min={1} max={100000} value={limit} onChange={e => setLimit(Number(e.target.value))} /></label><button>Save limit</button></form>}
     <h2>Your data</h2><p className="muted">Chats and extracted documents stay in this local workspace. Prompts, instructions, and matching excerpts are sent to the model provider you choose.</p>
     <button onClick={() => download("workspace-export.json", JSON.stringify({ conversations: data.conversations, projects: data.projects, presets: data.presets }, null, 2), "application/json")}>Export chats, projects & assistants</button>
