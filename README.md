@@ -31,6 +31,7 @@ same interface and swaps or extends the backend underneath.
 | Search | Full-text search across titles and messages. |
 | Usage | Tokens, latency, estimated cost; daily request cap; burst limiter. |
 | Resilience | Idempotent sends, stop with partial output saved, restart recovery, context-window packing. |
+| Research | A dedicated tab: editable plan, parallel tool-using researchers, live activity, cited report with an automated citation check, export (Markdown, Word, PDF). Sources: web (SearXNG, Tavily, Brave), OpenAlex, arXiv, Semantic Scholar, PubMed, your library (incl. Excel/Word), Google Drive, OneDrive/SharePoint and any MCP server. Per-tool permissions and call tracking. See [docs/RESEARCH.md](docs/RESEARCH.md). |
 | Customize | Each user hides the optional features they don't need (account menu → Customize). Hidden features keep working and keep their data. |
 
 Nothing is mocked. With no model connection configured, the app asks you to add one.
@@ -87,6 +88,7 @@ docs/                   contract, architecture, forking guide, tracker, roadmap
 | Doc | For |
 |---|---|
 | [docs/FORKING.md](docs/FORKING.md) | Starting a new product from this base |
+| [docs/RESEARCH.md](docs/RESEARCH.md) | Setting up and using the Research tab |
 | [docs/API-CONTRACT.md](docs/API-CONTRACT.md) | What any backend must implement |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the pieces fit; shell and domain |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, health checks, where changes belong |
@@ -102,14 +104,15 @@ docs/                   contract, architecture, forking guide, tracker, roadmap
 | `CHAT_ALLOWED_HOSTS` | – | Extra accepted `Host` values, for deploying beyond localhost |
 | `VITE_API_BASE_URL` | `/api` | Frontend API base |
 | `API_PROXY_TARGET` | `http://127.0.0.1:8000` | Vite dev/preview proxy target |
+| `CHAT_PUBLIC_URL` and Research variables | see `.env.example` | OAuth redirects, Drive/OneDrive sign-in, academic API keys |
 
 ## Status and limits
 
 - Single-user and local by design: local origins only, with a no-op auth hook. Before
   exposing a fork to a network, read the security section of
   [ARCHITECTURE.md](docs/ARCHITECTURE.md#security-model-base).
-- The Images, Apps and Deep Research tabs are hidden placeholders
-  (`features.placeholderPages`). Nothing is behind them yet.
+- The Images and Apps tabs are hidden placeholders (`features.placeholderPages`).
+  Nothing is behind them yet. (Deep Research became the working Research tab.)
 
 ## License
 
