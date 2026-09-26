@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import HTTPException
 from pypdf import PdfReader
 
-from . import store
+from . import store, tables
 
 MAX_FILE_BYTES = 10 * 1024 * 1024
 MAX_TEXT_CHARS = 500000
@@ -32,6 +32,18 @@ def extract(name: str, content: bytes):
             raise HTTPException(
                 422, "Cannot read PDF. Use a text PDF under 300 pages / 500k characters."
             ) from exc
+    elif suffix in (".xlsx", ".docx"):
+        try:
+            if suffix == ".xlsx":
+                # One "page" per sheet, so citations can name the sheet by number.
+                pages = [
+                    (i + 1, f"Sheet: {name}\n" + tables.rows_to_text(rows))
+                    for i, (name, rows) in enumerate(tables.read_xlsx(content))
+                ]
+            else:
+                pages = [(1, tables.read_docx(content))]
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
     elif suffix in (".txt", ".md", ".csv", ".json", ".py", ".js", ".ts", ".log"):
         try:
             pages = [(1, content.decode("utf-8-sig"))]
@@ -39,7 +51,9 @@ def extract(name: str, content: bytes):
             raise HTTPException(422, "Save text files as UTF-8 before uploading.") from exc
     else:
         raise HTTPException(
-            415, "Supported: text PDF, TXT, Markdown, CSV, JSON and text code files."
+            415,
+            "Supported: text PDF, Word (.docx), Excel (.xlsx), TXT, Markdown, CSV, JSON "
+            "and text code files.",
         )
     if sum(len(text) for _, text in pages) > MAX_TEXT_CHARS:
         raise HTTPException(413, "Document exceeds 500,000 extracted characters.")
@@ -57,6 +71,9 @@ def save_document(con, name, pages, project_id):
         "createdAt": store.now(),
     }
     for page, text in pages:
+        con.execute(
+            "INSERT OR REPLACE INTO document_pages VALUES(?,?,?)", (document["id"], page, text)
+        )
         for start in range(0, len(text), 1400):
             passage = text[start : start + 1700].strip()
             if not passage:
