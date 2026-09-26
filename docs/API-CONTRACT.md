@@ -53,6 +53,8 @@ listed. Unknown strings are allowed, so forks can add their own.
 | `bookmarks` | `PATCH /conversations/{id}/messages/{messageId}` | "Save answer", Library saved answers |
 | `cancel` | `POST /generations/{requestId}/cancel` | Server-side stop (without it, Stop just drops the stream) |
 | `reasoning` | `reasoning` field on generate | Thinking-effort menu |
+| `research` | `/research/*` (§5) | Research tab, "Research this" in the composer |
+| `research.connectors` | `/connectors*`, `/tool-calls` (§5) | Tools panel and Manage tools |
 
 The nav entries in `frontend/src/app.config.ts` declare which capability they need
 (`requires`).
@@ -222,7 +224,105 @@ Shapes as implemented by `backend/app/`. The contract test checks the parts list
 
 ---
 
-## 5. Changing the contract
+## 5. Research
+
+Research runs are long-running background jobs. The client starts one, follows its
+event stream, and reads the run for the current state.
+
+### Run lifecycle
+
+```text
+planning -> awaiting_approval -> researching -> writing -> completed
+    |              |  (plan_first)     |            |
+    +--------------+-------------------+------------+--> failed | cancelled | interrupted
+```
+
+- `awaiting_approval` only happens when `plan_first` is true. The run then waits
+  indefinitely for `POST .../plan`.
+- `interrupted` means the server restarted during the run. It is never resumed; the
+  client offers **Re-run**.
+
+### Routes
+
+| Route | Body / query | Returns |
+|---|---|---|
+| `GET /research/options` | – | `{depths, sources: [{id, name, type, status, ready}], models: [{id, label, supports_tools}]}` |
+| `GET /research/runs` | – | run summaries, newest first |
+| `POST /research/runs` | `{question, depth, model_id, writer_model_id?, sources[], plan_first, max_cost?}` | the run (`422` unknown or not-ready source, or a model that failed the tool test; `429` too many active runs or the daily limit) |
+| `GET /research/runs/{id}` | – | the full run, plus `sources_list` and `last_seq` |
+| `DELETE /research/runs/{id}` | – | `{ok}`; stops it first if running |
+| `POST /research/runs/{id}/plan` | `{action: "approve" \| "replan", sub_questions?: [{question, approach?}], answers?}` | the run (`409` if not awaiting approval) |
+| `POST /research/runs/{id}/steer` | `{text}` | the instruction; applied at the researchers' next step |
+| `POST /research/runs/{id}/cancel` | – | `{ok}` |
+| `POST /research/runs/{id}/approvals/{callId}` | `{decision: "allow" \| "deny" \| "always"}` | `{ok}` (`409` if no longer pending) |
+| `POST /research/runs/{id}/rerun` | – | a new run with the same settings |
+| `GET /research/runs/{id}/events?after=N` | – | SSE, see below |
+| `GET /research/runs/{id}/export?format=md\|docx` | – | file download |
+| `POST /research/runs/{id}/chat` | – | a new `Conversation` holding the question and the report |
+
+### Event stream
+
+`GET /research/runs/{id}/events?after=N` replays every event with `seq > N`, then streams
+new ones. Each frame is `event: <type>` with `data: {"seq", "at", "data"}`.
+
+- **Ending:** the stream ends with `event: end` (`{seq, status}`) when the run finishes
+  or waits for plan approval.
+- **Reconnecting:** reconnect with the last `seq` you saw. Nothing is lost.
+
+| Type | `data` |
+|---|---|
+| `status` | `{status, error?}` |
+| `plan` | the plan `{title, clarifying_questions, sub_questions}` |
+| `tools` | `{tools: [{name, label}]}` offered to the researchers |
+| `sub_started` / `sub_done` / `sub_failed` | `{index, question}` / `{index, preview}` / `{index, error}` |
+| `tool_started` / `tool_finished` | `{call_id, tool, summary}`, plus `{status: ok\|error\|blocked\|denied, detail, latency_ms, sources:[{n,title,url}]}` on finish |
+| `approval_needed` / `approval_resolved` | `{call_id, tool, summary}` / `{call_id, decision}` |
+| `steer_received` / `steer_applied` | the instruction / `{ids}` |
+| `budget` | `{reason}` when a call, time or cost budget stopped the searching |
+| `report_delta` | `{text, replace?}`; append to the report (replace it when `replace`) |
+| `citations` | totals from the citation check |
+
+### Citation check
+
+`run.citation_check = {citations: [{n, status, score, claim}], totals, checked}`.
+
+| `status` | Meaning |
+|---|---|
+| `supported` | The citing sentence's key words appear in the source text |
+| `weak` | Poor overlap with the source text |
+| `snippet_only` | Only a search snippet was read for that source |
+| `missing` | `n` is not one of the run's sources |
+
+The check is lexical; clients should label it as an automated check.
+
+### Tool connections
+
+| Route | Body | Returns |
+|---|---|---|
+| `GET /connectors` | – | `{connectors, usage, search_providers, academic_databases, redirect_uri}` |
+| `PATCH /connectors/{id}` | any of `enabled, name, provider, base_url, api_key, price_per_1k, allowed_domains, blocked_domains, databases, token, client_id, client_secret, permissions: {tool: allow\|ask\|block}` | the connector |
+| `POST /connectors` | `{name, url, auth: none\|bearer\|oauth, token?, client_id?, client_secret?}` | a new MCP connector (tools listed when reachable) |
+| `DELETE /connectors/{id}` | – | MCP: removed. OAuth: signed out. Built-in: `400` |
+| `POST /connectors/{id}/test` | – | `{ok, detail, connector}` |
+| `POST /connectors/{id}/auth/start` | – | `{url}` to open in a popup |
+| `GET /connectors/oauth/callback` | `state, code` | an HTML page that notifies the opener |
+| `GET /tool-calls?run_id=&limit=` | – | the call log `[{connector, tool, arguments, status, detail, latency_ms, cost, created_at}]` |
+
+A connector's `status` is one of:
+
+| Status | Meaning |
+|---|---|
+| `ready` | Can be used |
+| `needs_setup` | Configuration is missing |
+| `needs_auth` | The user must sign in |
+| `error` | The last check failed |
+| `unavailable` | The server isn't configured for it |
+
+Secrets are never returned; `has_secret` says whether one is stored.
+
+---
+
+## 6. Changing the contract
 
 - **Adding** an optional capability or an optional field is not breaking. Add it
   here, to `CAPABILITIES` in `backend/app/main.py` and `frontend/src/lib/capabilities.ts`,
