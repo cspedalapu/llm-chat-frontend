@@ -4,6 +4,7 @@ import App from "@/App.tsx";
 import "@/styles.css";
 import "@/workspace.css";
 import "@/chat.css";
+import "@/research.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
