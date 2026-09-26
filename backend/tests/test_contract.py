@@ -274,3 +274,23 @@ def test_branching_and_bookmarks(api, capabilities, model_id):
         assert branch["parentId"] == conversation["id"]
     for conversation_id in [conversation["id"], *created]:
         api.delete("/conversations/" + conversation_id)
+
+
+def test_research(api, capabilities):
+    requires(capabilities, "research")
+    options = api.get("/research/options").json()
+    assert {"quick", "standard", "deep"} <= set(options["depths"])
+    for source in options["sources"]:
+        assert {"id", "name", "ready"} <= set(source)
+    assert isinstance(api.get("/research/runs").json(), list)
+    assert api.get("/research/runs/does-not-exist").status_code == 404
+
+
+def test_research_connectors(api, capabilities):
+    requires(capabilities, "research.connectors")
+    body = api.get("/connectors").json()
+    assert isinstance(body["connectors"], list) and isinstance(body["usage"], list)
+    for item in body["connectors"]:
+        assert {"id", "type", "name", "status", "tools"} <= set(item)
+        assert "secret" not in item
+    assert isinstance(api.get("/tool-calls").json(), list)
