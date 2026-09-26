@@ -13,6 +13,8 @@ export const CAPABILITIES = [
   "bookmarks",     // "Save answer" on assistant messages
   "cancel",        // server-side stop of a running generation
   "reasoning",     // per-message thinking effort
+  "research",      // the Research tab: planned, tool-using research runs
+  "research.connectors", // tools directory: web search setup, OAuth drives, custom MCP
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
