@@ -157,6 +157,22 @@ export const composerTools: ComposerTool[] = [
 ];
 ```
 
+### A research tool of your own
+
+Research tools live in `backend/app/tools/`. Adding one takes three steps:
+1. **Write the tool.** A `Tool` with a name, a description the model reads, a JSON-schema
+   `parameters`, `access="read"`, and an async `run(args, ctx)` that returns
+   `ToolResult(sources=[Source(...)])`. Use `tools/net.py` for HTTP: `get()` for URLs
+   from the model (SSRF-guarded), `api_request()` for your fixed API host.
+2. **Register a connector.** Add an entry to `BUILTIN` in `connectors.py` (name,
+   description, config, tools) so it appears in Manage tools with permissions.
+3. **Map it to a source.** Add it to `SOURCE_CONNECTORS` and the `build()` branch in
+   `tools/registry.py`, so users can tick it in the Research form.
+
+If the tool already exists as an MCP server, skip all of that: add the server URL under
+**Research → Manage tools → Add an MCP server**. Mark its read-only tools with
+`readOnlyHint`; other tools are never run in research.
+
 ### Sending extra options with each message
 
 `useWorkspace.send()` builds the generate body. Add your field there, then read it in
