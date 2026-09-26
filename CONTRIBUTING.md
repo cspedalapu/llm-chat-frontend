@@ -23,7 +23,7 @@ All of these must pass before you commit. CI runs the same set on every push.
 
 | Check | Command | Expected |
 |---|---|---|
-| Lint | `python -m ruff check backend examples` | `All checks passed!` |
+| Lint | `python -m ruff check backend examples evals` | `All checks passed!` |
 | Backend + contract tests | `python -m pytest backend -q` | all pass |
 | Types | `cd frontend && npm run typecheck` | exit 0 |
 | Build | `cd frontend && npm run build` | builds |
@@ -50,7 +50,7 @@ Rules for the base:
 - **UI for an optional feature must be gated** with `has("<capability>")`, so
   core-tier backends keep working. The core-tier e2e suite checks this.
 - **Core-tier contract changes are breaking.** Bump `API_VERSION` and explain the
-  change. See [docs/API-CONTRACT.md §5](docs/API-CONTRACT.md#5-changing-the-contract).
+  change. See [docs/API-CONTRACT.md §6](docs/API-CONTRACT.md#6-changing-the-contract).
 - **Show unavailable features honestly.** A control with nothing behind it is either
   hidden or clearly marked unavailable, never faked.
 - Match the style of the surrounding code. The type scale uses the `--text-*`
