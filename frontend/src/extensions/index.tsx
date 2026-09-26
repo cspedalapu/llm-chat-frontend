@@ -25,6 +25,5 @@ export const composerTools: ComposerTool[] = [
   // Shown so the toolbar reads as the full product does, marked unavailable rather
   // than faked: nothing behind these exists in the base.
   { id: "create_image", label: "Create image", available: false },
-  { id: "deep_research", label: "Deep research", available: false },
   { id: "web_search", label: "Web search", available: false },
 ];
