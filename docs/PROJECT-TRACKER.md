@@ -10,8 +10,8 @@ messages so the history stays searchable. Move finished items into §5 with a da
 - **Last updated:** 2026-09-25
 - **Role of this repo:** the permanent base every new product forks. See
   [BASE-ROADMAP.md](BASE-ROADMAP.md) and [FORKING.md](FORKING.md).
-- **Health:** ruff clean · 49 backend tests (33 behaviour + 16 contract) · `tsc` clean ·
-  5/5 full e2e · 1/1 core-tier e2e
+- **Health:** ruff clean · 76 backend tests (33 behaviour + 25 research + 18 contract) ·
+  `tsc` clean · 6/6 full e2e · 1/1 core-tier e2e
 
 ---
 
@@ -22,10 +22,10 @@ runs the same set, plus the contract test against `examples/minimal_backend`.
 
 | Check | Command | Expected |
 |---|---|---|
-| Lint | `./.venv-dev/Scripts/python.exe -m ruff check backend examples` | `All checks passed!` |
-| Backend + contract tests | `./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable>` | 49 passed |
+| Lint | `./.venv-dev/Scripts/python.exe -m ruff check backend examples evals` | `All checks passed!` |
+| Backend + contract tests | `./.venv-dev/Scripts/python.exe -m pytest backend -q --basetemp=<writable>` | 76 passed |
 | Types | `cd frontend && npm run typecheck` | exit 0 |
-| End-to-end, full | `cd frontend && npm run test:e2e` | 5 passed |
+| End-to-end, full | `cd frontend && npm run test:e2e` | 6 passed |
 | End-to-end, core tier | `cd frontend && npm run test:e2e:core` | 1 passed |
 
 ---
@@ -64,12 +64,13 @@ runs the same set, plus the contract test against `examples/minimal_backend`.
 | Typing indicator | Three pulsing dots while awaiting first token. |
 | **Thinking effort** | Per-message Standard/Low/Medium/High, overrides the connection default. |
 | **Tools menu** | Attach documents live; unavailable tools shown disabled, not faked. |
+| **Research tab (09-25)** | Plan → approve → parallel tool-using researchers → cited report with citation check; steer, stop, per-tool Ask/Allow/Block, budgets, export MD/DOCX/PDF, continue in chat. Tools: SearXNG/Tavily/Brave, OpenAlex/arXiv/Semantic Scholar/PubMed, library + Excel/Word, Google Drive, OneDrive/SharePoint, custom MCP (none/token/OAuth). Tool-call tracking. See RESEARCH.md. |
 | **Chat UI (09-25 redesign)** | ChatGPT-style: pill composer with + menu (attach, Sources ▸, Assistant ▸), compact thinking effort, round send/stop; user bubbles and icon actions (copy, regenerate, save, More); header Share + ••• menu (view files, rename, context, pin, archive, delete, Move to project ▸); home suggestions; Pinned section; Show more projects; phone drawer. |
 | **Customize** | Account menu → Customize: users hide Library, Workspace, LLMs, the tools menu, Sources, Thinking and the assistant picker. Fixed: New chat, Search chats, Projects, chat history, model selector. Hiding never deletes anything. Defined in `app.config.ts`. |
 
 ### Placeholder — hidden by default, no backend
 
-Images · Apps · Deep Research. Hidden unless `features.placeholderPages` is on in
+Images · Apps. (Deep Research became the real Research tab on 09-25.) Hidden unless `features.placeholderPages` is on in
 `app.config.ts`, and then they render an honest "not connected" notice. A fork that
 registers `extensions.pages[key]` gets its own page there instead. (O-8, resolved 09-25.)
 
@@ -106,6 +107,11 @@ registers `extensions.pages[key]` gets its own page there instead. (O-8, resolve
 | **O-10** | `styles.css` still one 1,939-line file | Low | No section boundaries to split on safely; splitting by guesswork risks cascade changes. Split when a restyle pass defines areas. |
 | **O-11** | CI e2e job not yet run on GitHub | Medium | Backend and frontend jobs dry-run clean in `python:3.12-slim` / `node:20-alpine`. The Linux Playwright job is confirmed only after the first push. |
 | **O-12** | Store is single-tenant | Low (local) | Any fork with multiple users must scope records per `request.state.user`. Documented in ARCHITECTURE.md. |
+| **O-14** | Research: web search needs a provider key | Medium | DR-1: pick Tavily / Brave (key) or run SearXNG. Until then only Academic, Library and connected drives work. |
+| **O-15** | Research: Google/Microsoft sign-in untested against the real services | Medium | Flows are unit-tested with mocks; needs real OAuth apps (`.env.example`) to verify end to end. |
+| **O-16** | Research: "Google Cloud" (R-28) not built | Low | Waiting for DR-3: Workspace files (done via Drive) or GCP data such as BigQuery / Cloud Storage? |
+| **O-17** | Research: arXiv and Semantic Scholar rate limits | Low | arXiv answers 406 when requests are < 3 s apart (now spaced + retried); Semantic Scholar needs `SEMANTIC_SCHOLAR_API_KEY` for reliable use. OpenAlex and PubMed verified live. |
+| **O-18** | Research eval set needs real questions | Low | `evals/research/run_eval.py` is ready; add 5–10 of your questions and run it against a real model. |
 | **O-13** | Customize choices are per browser | Low | Saved in `localStorage`, so they don't follow a user to another device. Move them into the backend once forks have real users (O-6, O-12). |
 
 ---
@@ -167,7 +173,10 @@ Things that cost time before. Check here first.
 - **`frontend/.env.local` overrides the API base.** A local
   `VITE_API_BASE_URL=http://127.0.0.1:8000` sends the browser straight to the backend
   (CORS applies) instead of through the `/api` proxy.
-- **`ruff.toml` lives at the repo root** so `backend/` and `examples/` share it.
+- **`ruff.toml` lives at the repo root** so `backend/`, `examples/` and `evals/` share it.
+- **e2e research fetches the local fixture**, so the test backend runs with
+  `RESEARCH_ALLOW_PRIVATE_NETWORK=1` (playwright.config.ts). Never set it in production.
+- **arXiv throttles by IP.** Rapid manual testing can get 406s for a while; wait a minute.
 - **Run pytest as `python -m pytest`.** A bare `pytest` doesn't put the repo root on
   `sys.path`, so `import backend` fails.
 
