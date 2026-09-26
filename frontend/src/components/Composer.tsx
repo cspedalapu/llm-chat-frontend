@@ -2,13 +2,13 @@ import { FormEvent, ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { appConfig } from "@/app.config";
 import { composerTools } from "@/extensions";
 import { DocumentRecord, Preset } from "@/types";
-import { ArrowUpIcon, ChevronIcon, FileIcon, PaperclipIcon, PlusIcon, SparkIcon, StopIcon } from "./icons";
+import { ArrowUpIcon, ChevronIcon, DeepResearchIcon as ResearchIcon, FileIcon, PaperclipIcon, PlusIcon, SparkIcon, StopIcon } from "./icons";
 import { Menu, MenuDivider, MenuItem, MenuNote, SubMenu } from "./Menu";
 
 // Sent per message and applied over the connection default. Providers that do not
 // expose a thinking-effort parameter ignore it.
 const EFFORTS = [{ id: "", label: "Standard" }, { id: "low", label: "Low" }, { id: "medium", label: "Medium" }, { id: "high", label: "High" }];
-const ACCEPT = ".pdf,.txt,.md,.csv,.json,.py,.js,.ts,.log";
+const ACCEPT = ".pdf,.docx,.xlsx,.txt,.md,.csv,.json,.py,.js,.ts,.log";
 // Past this height the text gets the full width and the controls move below it.
 const MULTILINE_PX = 52;
 function readDraft(key: string) { try { return localStorage.getItem(key) || ""; } catch { return ""; } }
@@ -17,9 +17,9 @@ function readDraft(key: string) { try { return localStorage.getItem(key) || ""; 
  * Which optional controls to show: backend capabilities combined with the user's
  * Customize choices. `documents` allows attaching; `sources` shows the picker.
  */
-export interface ComposerFeatures { documents: boolean; tools: boolean; sources: boolean; presets: boolean; reasoning: boolean }
+export interface ComposerFeatures { documents: boolean; tools: boolean; sources: boolean; presets: boolean; reasoning: boolean; research?: boolean }
 export function Composer({ draftKey, initialText = "", busy, disabled, features, documents, presets, selectedDocuments, onDocuments,
-  presetId, onPreset, reasoning, onReasoning, onSend, onStop, onUpload, placeholder = "Ask anything", empty = false, notice, disabledReason,
+  presetId, onPreset, reasoning, onReasoning, onSend, onStop, onUpload, placeholder = "Ask anything", empty = false, notice, disabledReason, onResearch,
 }: { draftKey: string; initialText?: string; busy: boolean; disabled: boolean; features: ComposerFeatures; documents: DocumentRecord[]; presets: Preset[];
   selectedDocuments: string[]; onDocuments: (ids: string[]) => void; presetId: string; onPreset: (id: string) => void;
   reasoning: string; onReasoning: (value: string) => void;
@@ -29,6 +29,8 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
   notice?: ReactNode;
   /** Tooltip on the disabled Send button. */
   disabledReason?: string;
+  /** Hand the draft to the Research tab (shown when features.research). */
+  onResearch?: (question: string) => void;
 }) {
   const storageKey = "local-chat:draft:" + draftKey;
   const [draft, setDraft] = useState(() => initialText || readDraft(storageKey));
@@ -39,7 +41,8 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const tools = composerTools.filter(tool => tool.available !== false || appConfig.features.placeholderTools);
-  const hasToolsMenu = features.tools && (features.documents || features.sources || features.presets || tools.length > 0);
+  const canResearch = Boolean(features.research && onResearch);
+  const hasToolsMenu = features.tools && (features.documents || features.sources || features.presets || canResearch || tools.length > 0);
   const preset = presets.find(p => p.id === presetId);
   const effort = EFFORTS.find(e => e.id === reasoning) || EFFORTS[0];
 
@@ -89,7 +92,9 @@ export function Composer({ draftKey, initialText = "", busy, disabled, features,
             {presets.map(p => <MenuItem key={p.id} checked={presetId === p.id} onSelect={() => { onPreset(p.id); close(); }}>{p.title}</MenuItem>)}
             {!presets.length && <MenuNote>No saved assistants yet. Create one under Workspace.</MenuNote>}
           </SubMenu>}
-          {tools.length > 0 && (features.documents || features.sources || features.presets) && <MenuDivider />}
+          {canResearch && <MenuItem icon={ResearchIcon} hint="Open this question in the Research tab"
+            onSelect={() => { close(); onResearch!(draft.trim()); update(""); }}>Research this</MenuItem>}
+          {tools.length > 0 && (features.documents || features.sources || features.presets || canResearch) && <MenuDivider />}
           {tools.map(tool => <MenuItem key={tool.id} disabled={tool.available === false} hint={tool.available === false ? "Not connected in this release" : undefined}
             onSelect={() => { close(); tool.run?.({ draft, setDraft: update }); }}>{tool.label}</MenuItem>)}
         </>}</Menu>
