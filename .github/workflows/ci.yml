@@ -23,7 +23,7 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Lint
-        run: ruff check backend examples
+        run: ruff check backend examples evals
       - name: Unit and contract tests (in-process)
         run: python -m pytest backend -q
       - name: Contract test against the core-tier reference backend
